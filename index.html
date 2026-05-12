@@ -24,6 +24,21 @@
     </style>
 </head>
 <body>
+    <script>
+  // الصق الكود الذي أعطيتك إياه هنا
+  const scriptURL = 'رابط_الـ_WEB_APP_الذي_نسخته_من_جوجل_شيت';
+  const form = document.forms['production-form'];
+
+  form.addEventListener('submit', e => {
+      e.preventDefault();
+      fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+          .then(response => {
+              alert("تم حفظ البيانات بنجاح!");
+              form.reset();
+          })
+          .catch(error => alert("خطأ في الاتصال!"));
+  });
+</script>
 
 <div class="container">
     <h2>Hawa-Tech Enterprise System</h2>
