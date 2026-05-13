@@ -3,31 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech Enterprise System</title>
-    <!-- مكتبة تحويل البيانات إلى إكسل -->
+    <title>Hawa-Tech Enterprise System Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #003366; --dark: #333; --light: #f4f4f4; --yellow: #fffbe6; --border-yellow: #ffe58f; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--light); margin: 0; padding: 10px; }
-        .container { max-width: 600px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); overflow: hidden; }
-        .header { background: white; padding: 15px; text-align: center; border-bottom: 3px solid var(--primary); }
-        .header h1 { color: var(--primary); font-size: 20px; margin: 0; }
-        .info-bar { background: var(--dark); color: white; padding: 10px; font-size: 13px; display: flex; justify-content: space-between; }
+        :root { 
+            --primary: #003366; --dark-bg: #121212; --card-bg: #1e1e1e; 
+            --text-light: #e0e0e0; --yellow-glow: #332b00; --border-yellow: #ffd700;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            background-color: var(--dark-bg); color: var(--text-light);
+            margin: 0; padding: 10px; transition: 0.3s;
+        }
+        .container { 
+            max-width: 600px; margin: auto; background: var(--card-bg); 
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); overflow: hidden; 
+            border: 1px solid #333;
+        }
+        .header { background: #252525; padding: 15px; text-align: center; border-bottom: 3px solid var(--primary); }
+        .header h1 { color: #fff; font-size: 20px; margin: 0; }
+        .info-bar { background: #000; color: #0f0; padding: 10px; font-size: 13px; display: flex; justify-content: space-between; font-family: monospace; }
         .form-content { padding: 20px; }
         .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
-        input, select { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; text-align: center; font-size: 15px; box-sizing: border-box; }
-        .weight-display { background: var(--yellow); border: 2px solid var(--border-yellow); padding: 20px; font-size: 40px; font-weight: bold; color: var(--primary); text-align: center; border-radius: 8px; margin-bottom: 15px; }
-        .btn-main { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-main:hover { background: #002244; }
+        input, select { 
+            flex: 1; padding: 12px; border: 1px solid #444; border-radius: 6px; 
+            text-align: center; font-size: 15px; background: #2d2d2d; color: #fff; outline: none;
+        }
+        input:focus { border-color: var(--primary); }
+        .weight-display { 
+            background: var(--yellow-glow); border: 2px solid var(--border-yellow); 
+            padding: 20px; font-size: 50px; font-weight: bold; color: var(--border-yellow); 
+            text-align: center; border-radius: 8px; margin-bottom: 15px; text-shadow: 0 0 10px rgba(255,215,0,0.3);
+        }
+        .btn-connect { width: 100%; background: #444; color: #fff; padding: 8px; margin-bottom: 10px; border: 1px dashed #666; cursor: pointer; border-radius: 5px; }
+        .btn-main { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer; }
         .footer-btns { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-excel { flex: 2; background: #28a745; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-clear { flex: 1; background: #6c757d; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-        th, td { border: 1px solid var(--primary); padding: 10px; text-align: center; }
+        .btn-excel { flex: 2; background: #1d6f42; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-clear { flex: 1; background: #800000; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; }
+        .total-box { margin-top: 15px; padding: 15px; background: #252525; border: 1px solid var(--primary); border-radius: 8px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; background: #1a1a1a; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: center; }
         th { background: var(--primary); color: white; }
-        .net-val { color: #d32f2f; font-weight: bold; }
-        .add-item-zone { display: flex; gap: 5px; margin-top: 5px; margin-bottom: 15px; }
-        .btn-add-item { background: var(--primary); color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-size: 20px; }
+        .net-val { color: #ff4d4d; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -38,51 +55,49 @@
     </div>
     
     <div class="info-bar">
-        <span id="liveTime">الوقت: جاري التحميل...</span>
+        <span id="liveTime">الوقت: --:--</span>
         <span id="liveDate">التاريخ: --/--/--</span>
     </div>
 
-    <form id="hawaForm" class="form-content">
-        <div class="input-row">
-            <input type="text" id="supervisor" placeholder="اسم المسؤول" required>
-            <input type="text" id="worker" placeholder="اسم العامل" required>
+    <div class="form-content">
+        <button class="btn-connect" onclick="connectSerial()">🔌 ربط الميزان الإلكتروني</button>
+        
+        <form id="hawaForm">
+            <div class="input-row">
+                <input type="text" id="supervisor" placeholder="اسم المسؤول" required>
+                <input type="text" id="worker" placeholder="اسم العامل" required>
+            </div>
+
+            <div class="input-row">
+                <input type="email" id="email" placeholder="البريد (اختياري)">
+                <input type="number" id="cages" placeholder="الأقفاص" value="1" required>
+            </div>
+
+            <div class="weight-display" id="displayWeight">0.00</div>
+            <input type="number" id="gross" step="0.01" placeholder="الوزن القائم" style="width: 100%; margin-bottom: 15px;" required>
+
+            <select id="item" required>
+                <option value="">-- اختر الصنف --</option>
+                <option value="فروج مسحب">فروج مسحب</option>
+                <option value="صدر">صدر</option>
+                <option value="جوانح">جوانح</option>
+                <option value="سودة">سودة</option>
+            </select>
+
+            <button type="submit" class="btn-main">تثبيت وحفظ البيانات ✅</button>
+        </form>
+
+        <div class="total-box">
+            <span>إجمالي الصافي اليومي: </span>
+            <span id="totalNetWeight" style="font-size: 22px; color: #0f0;">0.00</span> كغ
         </div>
 
-        <div class="input-row">
-            <input type="email" id="email" placeholder="البريد الإلكتروني">
-            <input type="number" id="cages" placeholder="عدد الأقفاص" value="1" required>
-        </div>
-
-        <div class="weight-display" id="displayWeight">0.00</div>
-        <input type="number" id="gross" step="0.01" placeholder="أدخل الوزن القائم هنا" style="width: 100%; margin-bottom: 15px;" required>
-
-        <select id="item" required>
-            <option value="">-- اختر الصنف --</option>
-            <option value="فروج مسحب كامل">فروج مسحب كامل</option>
-            <option value="صدر مسحب">صدر مسحب</option>
-            <option value="فخاد مسحب">فخاد مسحب</option>
-            <option value="جوانح">جوانح</option>
-            <option value="طاووق">طاووق</option>
-            <option value="سودة">سودة</option>
-            <option value="قوانص">قوانص</option>
-        </select>
-
-        <div class="add-item-zone">
-            <input type="text" id="newItem" placeholder="أضف صنفاً جديداً إذا لم تجده">
-            <button type="button" class="btn-add-item" onclick="addNewItem()">+</button>
-        </div>
-
-        <button type="submit" class="btn-main">تثبيت الوزن وحفظ البيانات ✅</button>
-    </form>
-
-    <div style="padding: 0 20px 20px;">
         <table id="dataTable">
             <thead>
                 <tr>
                     <th>الوقت</th>
-                    <th>المسؤول</th>
                     <th>الصنف</th>
-                    <th>الخام</th>
+                    <th>القائم</th>
                     <th>الصافي</th>
                 </tr>
             </thead>
@@ -90,102 +105,95 @@
         </table>
 
         <div class="footer-btns">
-            <button class="btn-excel" onclick="exportToExcel()">📊 تحميل ملف Excel</button>
-            <button class="btn-clear" onclick="clearData()">❌ تصفير السجل</button>
+            <button class="btn-excel" onclick="exportToExcel()">📊 Excel</button>
+            <button class="btn-clear" onclick="secureClear()">❌ تصفير</button>
         </div>
     </div>
 </div>
 
 <script>
-    // جلب البيانات من ذاكرة الهاتف
-    let db = JSON.parse(localStorage.getItem('hawa_enterprise_db')) || [];
+    let db = JSON.parse(localStorage.getItem('hawa_pro_db')) || [];
 
-    // تحديث الساعة والتاريخ فوراً
-    function updateClock() {
+    // تحديث الساعة
+    setInterval(() => {
         const now = new Date();
         document.getElementById('liveTime').innerText = "الوقت: " + now.toLocaleTimeString('ar-LB');
         document.getElementById('liveDate').innerText = "التاريخ: " + now.toLocaleDateString('ar-LB');
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+    }, 1000);
 
-    // ربط خانة الوزن بالشاشة الكبيرة
-    document.getElementById('gross').addEventListener('input', function(e) {
+    // ربط الشاشة بالمدخلات
+    document.getElementById('gross').addEventListener('input', e => {
         document.getElementById('displayWeight').innerText = e.target.value || "0.00";
     });
 
-    // إضافة صنف جديد للقائمة
-    function addNewItem() {
-        const name = document.getElementById('newItem').value.trim();
-        if (name) {
-            const sel = document.getElementById('item');
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.text = name;
-            sel.add(opt);
-            sel.value = name;
-            document.getElementById('newItem').value = "";
-        }
+    // دالة ربط الميزان (Web Serial)
+    async function connectSerial() {
+        try {
+            const port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 9600 });
+            const reader = port.readable.getReader();
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                const weight = new TextDecoder().decode(value).replace(/[^0-9.]/g, '');
+                if (weight) {
+                    document.getElementById('gross').value = weight;
+                    document.getElementById('displayWeight').innerText = weight;
+                }
+            }
+        } catch (e) { alert("الميزان غير متصل أو المتصفح لا يدعم الربط المباشر."); }
     }
 
     // حفظ البيانات
-    document.getElementById('hawaForm').addEventListener('submit', function(e) {
+    document.getElementById('hawaForm').onsubmit = e => {
         e.preventDefault();
-        
         const gross = parseFloat(document.getElementById('gross').value);
         const cages = parseInt(document.getElementById('cages').value);
-        const net = (gross - (cages * 1.5)).toFixed(2); // طرح وزن الأقفاص تلقائياً
+        const net = (gross - (cages * 1.5)).toFixed(2);
         
-        const entry = {
+        db.push({
             time: new Date().toLocaleTimeString('ar-LB'),
-            date: new Date().toLocaleDateString('ar-LB'),
             supervisor: document.getElementById('supervisor').value,
-            worker: document.getElementById('worker').value,
-            email: document.getElementById('email').value,
             item: document.getElementById('item').value,
             gross: gross,
             net: net
-        };
+        });
 
-        db.push(entry);
-        localStorage.setItem('hawa_enterprise_db', JSON.stringify(db));
-        renderTable();
-        
-        // تصفير الوزن فقط بعد الحفظ لسرعة العمل
+        localStorage.setItem('hawa_pro_db', JSON.stringify(db));
+        render();
         document.getElementById('gross').value = "";
-        document.getElementById('displayWeight').innerText = "0.00";
-    });
+    };
 
-    function renderTable() {
+    function render() {
         const tbody = document.querySelector('#dataTable tbody');
-        tbody.innerHTML = db.slice(-5).map(r => `
-            <tr>
-                <td>${r.time}</td>
-                <td>${r.supervisor}</td>
-                <td>${r.item}</td>
-                <td>${r.gross}</td>
-                <td class="net-val">${r.net}</td>
-            </tr>
-        `).reverse().join('');
+        let total = 0;
+        tbody.innerHTML = db.slice(-5).map(r => {
+            total += parseFloat(r.net);
+            return `<tr><td>${r.time}</td><td>${r.item}</td><td>${r.gross}</td><td class="net-val">${r.net}</td></tr>`;
+        }).reverse().join('');
+        document.getElementById('totalNetWeight').innerText = total.toFixed(2);
+    }
+
+    // تصفير السجل بكلمة السر 1957
+    function secureClear() {
+        const pass = prompt("أدخل كلمة السر للتصفير:");
+        if (pass === "1957") {
+            if (confirm("هل أنت متأكد من مسح جميع البيانات؟")) {
+                db = [];
+                localStorage.removeItem('hawa_pro_db');
+                render();
+            }
+        } else { alert("كلمة السر خاطئة!"); }
     }
 
     function exportToExcel() {
-        if(db.length === 0) return alert("السجل فارغ!");
         const ws = XLSX.utils.json_to_sheet(db);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "إنتاج هوا تيك");
-        XLSX.writeFile(wb, `Hawa_Tech_Report_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "إنتاج");
+        XLSX.writeFile(wb, "Hawa_Tech_Report.xlsx");
     }
 
-    function clearData() {
-        if(confirm("هل أنت متأكد من مسح جميع بيانات اليوم؟")) {
-            db = [];
-            localStorage.removeItem('hawa_enterprise_db');
-            renderTable();
-        }
-    }
-
-    renderTable();
+    render();
 </script>
 </body>
 </html>
