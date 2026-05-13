@@ -3,144 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech Pro | نظام إدارة الإنتاج</title>
-    <!-- مكتبة توليد الإكسل -->
+    <title>Hawa-Tech Enterprise System</title>
+    <!-- مكتبة تحويل البيانات إلى إكسل -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #0c356a; --secondary: #279eff; --success: #28a745; --danger: #d32f2f; --bg: #f8f9fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; }
-        .app-card { background: #fff; max-width: 600px; margin: 10px auto; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 8px solid var(--primary); }
-        h2 { text-align: center; color: var(--primary); margin-bottom: 20px; font-size: 24px; }
-        .input-box { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        input, select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; }
-        input:focus { border-color: var(--secondary); }
-        .row { display: flex; gap: 10px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn-save { background: var(--primary); color: #fff; }
-        .btn-save:active { transform: scale(0.98); }
-        .btn-excel { background: var(--success); color: #fff; margin-top: 20px; font-size: 16px; }
-        .table-container { margin-top: 25px; overflow-x: auto; border-radius: 10px; border: 1px solid #eee; }
-        table { width: 100%; border-collapse: collapse; background: #fff; min-width: 400px; }
-        th { background: #f1f1f1; padding: 12px; font-size: 14px; color: var(--primary); }
-        td { padding: 12px; border-top: 1px solid #eee; text-align: center; font-size: 14px; }
-        .net-total { color: var(--danger); font-weight: bold; background: #fff0f0; border-radius: 5px; padding: 2px 5px; }
-        .footer-tools { text-align: center; margin-top: 20px; }
-        .btn-clear { background: none; color: #999; font-size: 13px; text-decoration: underline; border: none; cursor: pointer; }
+        :root { --primary: #003366; --dark: #333; --light: #f4f4f4; --yellow: #fffbe6; --border-yellow: #ffe58f; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--light); margin: 0; padding: 10px; }
+        .container { max-width: 600px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); overflow: hidden; }
+        .header { background: white; padding: 15px; text-align: center; border-bottom: 3px solid var(--primary); }
+        .header h1 { color: var(--primary); font-size: 20px; margin: 0; }
+        .info-bar { background: var(--dark); color: white; padding: 10px; font-size: 13px; display: flex; justify-content: space-between; }
+        .form-content { padding: 20px; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        input, select { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; text-align: center; font-size: 15px; box-sizing: border-box; }
+        .weight-display { background: var(--yellow); border: 2px solid var(--border-yellow); padding: 20px; font-size: 40px; font-weight: bold; color: var(--primary); text-align: center; border-radius: 8px; margin-bottom: 15px; }
+        .btn-main { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-main:hover { background: #002244; }
+        .footer-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-excel { flex: 2; background: #28a745; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-clear { flex: 1; background: #6c757d; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        th, td { border: 1px solid var(--primary); padding: 10px; text-align: center; }
+        th { background: var(--primary); color: white; }
+        .net-val { color: #d32f2f; font-weight: bold; }
+        .add-item-zone { display: flex; gap: 5px; margin-top: 5px; margin-bottom: 15px; }
+        .btn-add-item { background: var(--primary); color: white; border: none; padding: 0 15px; border-radius: 6px; cursor: pointer; font-size: 20px; }
     </style>
 </head>
 <body>
 
-<div class="app-card">
-    <h2>Hawa-Tech 🐔 <br><span style="font-size: 14px; color: var(--secondary);">نظام الإنتاج الذكي</span></h2>
+<div class="container">
+    <div class="header">
+        <h1>Hawa-Tech Enterprise System 🐔</h1>
+    </div>
     
-    <div class="input-box">
-        <label>المشرف المسؤول</label>
-        <input type="text" id="supervisor" placeholder="أدخل اسمك">
+    <div class="info-bar">
+        <span id="liveTime">الوقت: جاري التحميل...</span>
+        <span id="liveDate">التاريخ: --/--/--</span>
     </div>
 
-    <div class="input-box">
-        <label>نوع الصنف</label>
-        <select id="item">
+    <form id="hawaForm" class="form-content">
+        <div class="input-row">
+            <input type="text" id="supervisor" placeholder="اسم المسؤول" required>
+            <input type="text" id="worker" placeholder="اسم العامل" required>
+        </div>
+
+        <div class="input-row">
+            <input type="email" id="email" placeholder="البريد الإلكتروني (إلزامي)" required>
+            <input type="number" id="cages" placeholder="عدد الأقفاص" value="1" required>
+        </div>
+
+        <div class="weight-display" id="displayWeight">0.00</div>
+        <input type="number" id="gross" step="0.01" placeholder="أدخل الوزن القائم هنا" style="width: 100%; margin-bottom: 15px;" required>
+
+        <select id="item" required>
+            <option value="">-- اختر الصنف --</option>
             <option value="فروج مسحب كامل">فروج مسحب كامل</option>
             <option value="صدر مسحب">صدر مسحب</option>
             <option value="فخاد مسحب">فخاد مسحب</option>
-            <option value="ورك مسحب">ورك مسحب</option>
             <option value="جوانح">جوانح</option>
             <option value="طاووق">طاووق</option>
+            <option value="سودة">سودة</option>
+            <option value="قوانص">قوانص</option>
         </select>
-    </div>
 
-    <div class="row">
-        <div class="input-box" style="flex: 2;">
-            <label>الوزن القائم (كغ)</label>
-            <input type="number" id="gross" placeholder="0.00" step="0.01">
+        <div class="add-item-zone">
+            <input type="text" id="newItem" placeholder="أضف صنفاً جديداً إذا لم تجده">
+            <button type="button" class="btn-add-item" onclick="addNewItem()">+</button>
         </div>
-        <div class="input-box" style="flex: 1;">
-            <label>الأقفاص</label>
-            <input type="number" id="cages" value="1">
-        </div>
-    </div>
 
-    <button class="btn btn-save" onclick="addEntry()">تثبيت الوزن الآن ✅</button>
+        <button type="submit" class="btn-main">تثبيت الوزن وحفظ البيانات ✅</button>
+    </form>
 
-    <div class="table-container">
-        <table id="logTable">
+    <div style="padding: 0 20px 20px;">
+        <table id="dataTable">
             <thead>
                 <tr>
                     <th>الوقت</th>
+                    <th>المسؤول</th>
                     <th>الصنف</th>
+                    <th>الخام</th>
                     <th>الصافي</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
-    </div>
 
-    <button class="btn btn-excel" onclick="exportData()">📊 تحميل تقرير الوردية (Excel)</button>
-
-    <div class="footer-tools">
-        <button class="btn-clear" onclick="resetApp()">تصفير السجل لبدء يوم جديد</button>
+        <div class="footer-btns">
+            <button class="btn-excel" onclick="exportToExcel()">📊 تحميل ملف Excel</button>
+            <button class="btn-clear" onclick="clearData()">❌ تصفير السجل</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // تهيئة البيانات من الذاكرة المحلية
-    let logs = JSON.parse(localStorage.getItem('hawa_pro_logs')) || [];
+    // جلب البيانات من ذاكرة الهاتف
+    let db = JSON.parse(localStorage.getItem('hawa_enterprise_db')) || [];
 
-    function addEntry() {
-        const sup = document.getElementById('supervisor').value;
-        const itm = document.getElementById('item').value;
-        const grs = parseFloat(document.getElementById('gross').value);
-        const cgs = parseInt(document.getElementById('cages').value) || 0;
+    // تحديث الساعة والتاريخ فوراً
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('liveTime').innerText = "الوقت: " + now.toLocaleTimeString('ar-LB');
+        document.getElementById('liveDate').innerText = "التاريخ: " + now.toLocaleDateString('ar-LB');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-        if (!sup || !grs) {
-            alert("عذراً! يرجى إدخال اسم المشرف والوزن.");
-            return;
+    // ربط خانة الوزن بالشاشة الكبيرة
+    document.getElementById('gross').addEventListener('input', function(e) {
+        document.getElementById('displayWeight').innerText = e.target.value || "0.00";
+    });
+
+    // إضافة صنف جديد للقائمة
+    function addNewItem() {
+        const name = document.getElementById('newItem').value.trim();
+        if (name) {
+            const sel = document.getElementById('item');
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.text = name;
+            sel.add(opt);
+            sel.value = name;
+            document.getElementById('newItem').value = "";
         }
-
-        // الحساب: القائم - (عدد الأقفاص * 1.5 كغ وزن القفص الفارغ)
-        const net = (grs - (cgs * 1.5)).toFixed(2);
-        const time = new Date().toLocaleTimeString('ar-LB', {hour: '2-digit', minute:'2-digit'});
-
-        const entry = { "الوقت": time, "المشرف": sup, "الصنف": itm, "الوزن القائم": grs, "الأقفاص": cgs, "الوزن الصافي": net };
-        
-        logs.push(entry);
-        localStorage.setItem('hawa_pro_logs', JSON.stringify(logs));
-        
-        render();
-        document.getElementById('gross').value = ""; // تصفير الوزن لسرعة الإدخال التالي
     }
 
-    function render() {
-        const tbody = document.querySelector('#logTable tbody');
-        tbody.innerHTML = logs.map((r, index) => `
+    // حفظ البيانات
+    document.getElementById('hawaForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const gross = parseFloat(document.getElementById('gross').value);
+        const cages = parseInt(document.getElementById('cages').value);
+        const net = (gross - (cages * 1.5)).toFixed(2); // طرح وزن الأقفاص تلقائياً
+        
+        const entry = {
+            time: new Date().toLocaleTimeString('ar-LB'),
+            date: new Date().toLocaleDateString('ar-LB'),
+            supervisor: document.getElementById('supervisor').value,
+            worker: document.getElementById('worker').value,
+            email: document.getElementById('email').value,
+            item: document.getElementById('item').value,
+            gross: gross,
+            net: net
+        };
+
+        db.push(entry);
+        localStorage.setItem('hawa_enterprise_db', JSON.stringify(db));
+        renderTable();
+        
+        // تصفير الوزن فقط بعد الحفظ لسرعة العمل
+        document.getElementById('gross').value = "";
+        document.getElementById('displayWeight').innerText = "0.00";
+    });
+
+    function renderTable() {
+        const tbody = document.querySelector('#dataTable tbody');
+        tbody.innerHTML = db.slice(-5).map(r => `
             <tr>
-                <td>${r["الوقت"]}</td>
-                <td>${r["الصنف"]}</td>
-                <td><span class="net-total">${r["الوزن الصافي"]}</span></td>
+                <td>${r.time}</td>
+                <td>${r.supervisor}</td>
+                <td>${r.item}</td>
+                <td>${r.gross}</td>
+                <td class="net-val">${r.net}</td>
             </tr>
         `).reverse().join('');
     }
 
-    function exportData() {
-        if (logs.length === 0) return alert("لا توجد بيانات!");
-        const ws = XLSX.utils.json_to_sheet(logs);
+    function exportToExcel() {
+        if(db.length === 0) return alert("السجل فارغ!");
+        const ws = XLSX.utils.json_to_sheet(db);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "إنتاج اليوم");
-        XLSX.writeFile(wb, `Hawa_Report_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "إنتاج هوا تيك");
+        XLSX.writeFile(wb, `Hawa_Tech_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
-    function resetApp() {
-        if (confirm("هل تريد مسح السجل الحالي والبدء من الصفر؟")) {
-            logs = [];
-            localStorage.removeItem('hawa_pro_logs');
-            render();
+    function clearData() {
+        if(confirm("هل أنت متأكد من مسح جميع بيانات اليوم؟")) {
+            db = [];
+            localStorage.removeItem('hawa_enterprise_db');
+            renderTable();
         }
     }
 
-    render(); // عرض البيانات المخزنة فور فتح البرنامج
+    renderTable();
 </script>
-
 </body>
 </html>
