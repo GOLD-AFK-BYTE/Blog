@@ -2,199 +2,179 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech Pro | Final Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <!-- تعريف التطبيق للهاتف -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Hawa-Tech">
+    <title>Hawa-Tech App</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root {
-            --primary: #003366; --bg: #f4f7f6; --card: #ffffff; --text: #333;
-            --display-bg: #fffbe6; --display-border: #ffe58f; --info-bar: #222;
-        }
-        [data-theme="dark"] {
-            --bg: #121212; --card: #1e1e1e; --text: #e0e0e0;
-            --display-bg: #2a2600; --display-border: #ffd700; --info-bar: #000;
-        }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; transition: 0.3s; }
-        .container { max-width: 600px; margin: auto; background: var(--card); border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); overflow: hidden; border: 1px solid rgba(0,0,0,0.1); }
-        .header { background: var(--card); padding: 15px; text-align: center; border-bottom: 3px solid var(--primary); position: relative; }
-        .theme-toggle { position: absolute; left: 15px; top: 15px; background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 50%; cursor: pointer; font-size: 18px; }
-        .info-bar { background: var(--info-bar); color: #fff; padding: 10px; font-size: 12px; display: flex; justify-content: space-between; font-family: monospace; }
-        .form-content { padding: 20px; }
-        .input-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-        input, select { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px; background: var(--card); color: var(--text); text-align: center; font-size: 15px; }
-        .weight-display { background: var(--display-bg); border: 2px solid var(--display-border); padding: 20px; font-size: 50px; font-weight: bold; color: var(--primary); text-align: center; border-radius: 10px; margin-bottom: 15px; }
-        [data-theme="dark"] .weight-display { color: #ffd700; }
-        .btn-main { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .item-management { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; }
-        .btn-action { padding: 10px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
-        .btn-add { background: #28a745; }
-        .btn-del { background: #dc3545; }
-        .total-box { margin-top: 15px; padding: 15px; background: rgba(0,51,102,0.1); border: 1px solid var(--primary); border-radius: 8px; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background: var(--primary); color: white; }
+        :root { --p: #003366; --bg: #f4f7f6; --c: #fff; --t: #333; --d: #fffbe6; }
+        [data-theme="dark"] { --bg: #121212; --c: #1e1e1e; --t: #e0e0e0; --d: #2a2600; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; transition: 0.3s; -webkit-tap-highlight-color: transparent; }
+        .box { max-width: 500px; margin: auto; background: var(--c); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); }
+        .head { padding: 20px; text-align: center; border-bottom: 4px solid var(--p); position: relative; background: var(--c); }
+        .mode { position: absolute; left: 15px; top: 20px; cursor: pointer; border: none; background: var(--p); color: #fff; padding: 8px 12px; border-radius: 50%; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .info { background: #1a1a1a; color: #00ff00; padding: 10px; font-size: 12px; display: flex; justify-content: space-between; font-family: monospace; border-bottom: 2px solid #333; }
+        .pad { padding: 20px; }
+        .row { display: flex; gap: 10px; margin-bottom: 12px; }
+        input, select { flex: 1; padding: 14px; border: 1px solid #ddd; border-radius: 12px; background: var(--c); color: var(--t); text-align: center; font-size: 16px; outline: none; transition: 0.2s; }
+        input:focus { border-color: var(--p); box-shadow: 0 0 8px rgba(0,51,102,0.1); }
+        .screen { background: var(--d); border: 2px solid #ffe58f; padding: 25px; font-size: 55px; font-weight: bold; color: var(--p); text-align: center; border-radius: 15px; margin-bottom: 20px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); }
+        [data-theme="dark"] .screen { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.2); }
+        .btn-go { width: 100%; padding: 18px; background: var(--p); color: #fff; border: none; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,51,102,0.3); }
+        .btn-go:active { transform: scale(0.98); }
+        .manage { background: rgba(0,0,0,0.04); padding: 15px; border-radius: 15px; margin: 20px 0; border: 1px dashed #ccc; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; border-radius: 10px; overflow: hidden; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
+        th { background: var(--p); color: #fff; font-weight: 600; }
+        .tot-box { text-align: center; margin: 20px 0; padding: 15px; background: rgba(211, 47, 47, 0.05); border-radius: 10px; border: 1px solid rgba(211, 47, 47, 0.2); }
     </style>
 </head>
 <body data-theme="light">
 
-<div class="container">
-    <div class="header">
-        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
-        <h1>Hawa-Tech Enterprise System 🐔</h1>
+<div class="box">
+    <div class="head">
+        <button class="mode" onclick="document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')=='light'?'dark':'light')">🌓</button>
+        <h2 style="margin:0; color:var(--p); font-size: 22px;">Hawa-Tech App 🐔</h2>
     </div>
     
-    <div class="info-bar">
-        <span id="liveTime">--:--</span>
-        <span id="liveDate">--/--/--</span>
+    <div class="info">
+        <span id="t">--:--</span>
+        <span id="d">--/--/--</span>
     </div>
 
-    <div class="form-content">
-        <div class="input-row">
-            <input type="text" id="supervisor" placeholder="اسم المسؤول" required>
-            <input type="text" id="worker" placeholder="اسم العامل" required>
+    <div class="pad">
+        <div class="row">
+            <input type="text" id="sup" placeholder="اسم المسؤول">
+            <input type="text" id="wrk" placeholder="اسم العامل">
         </div>
-        <div class="input-row">
-            <input type="email" id="email" placeholder="البريد (اختياري)">
-            <input type="number" id="cages" placeholder="الأقفاص" value="1" required>
+        <div class="row">
+            <input type="number" id="cag" placeholder="عدد الأقفاص" value="1">
+            <input type="email" id="eml" placeholder="الإيميل (اختياري)">
         </div>
 
-        <div class="weight-display" id="displayWeight">0.00</div>
-        <input type="number" id="gross" step="0.01" placeholder="أدخل الوزن القائم هنا" style="width: 100%; margin-bottom: 15px; display: block;" required>
+        <div class="screen" id="scr">0.00</div>
+        <input type="number" id="grs" step="0.01" placeholder="أدخل الوزن القائم هنا" style="width:100%; margin-bottom:20px; display:block;">
 
-        <!-- إدارة الأصناف في مكان واحد -->
-        <div class="item-management">
-            <label style="display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px;">إدارة الأصناف:</label>
-            <div class="input-row">
-                <select id="item" required style="flex: 3;">
+        <div class="manage">
+            <label style="display:block; margin-bottom:10px; font-weight:bold; font-size:14px; color:var(--p)">إدارة الأصناف:</label>
+            <div class="row">
+                <select id="itm">
                     <option value="">-- اختر الصنف --</option>
-                    <option value="فروج مسحب كامل">فروج مسحب كامل</option>
-                    <option value="صدر مسحب">صدر مسحب</option>
-                    <option value="فخاد مسحب">فخاد مسحب</option>
-                    <option value="جوانح">جوانح</option>
+                    <option>فروج مسحب كامل</option>
+                    <option>صدر مسحب</option>
+                    <option>فخاد مسحب</option>
+                    <option>جوانح</option>
                 </select>
-                <button type="button" class="btn-action btn-del" onclick="removeSelectedItem()">حذف 🗑️</button>
+                <button onclick="delItm()" style="background:#ff4d4d; color:#fff; border:none; padding:10px 15px; border-radius:10px; cursor:pointer;">حذف 🗑️</button>
             </div>
-            <div class="input-row">
-                <input type="text" id="newItem" placeholder="اكتب صنفاً جديداً هنا..." style="flex: 3;">
-                <button type="button" class="btn-action btn-add" onclick="addNewItem()">إضافة +</button>
+            <div class="row">
+                <input type="text" id="new" placeholder="أضف صنفاً جديداً...">
+                <button onclick="addItm()" style="background:#28a745; color:#fff; border:none; padding:10px 15px; border-radius:10px; cursor:pointer;">إضافة +</button>
             </div>
         </div>
 
-        <button type="button" onclick="saveEntry()" class="btn-main">تثبيت وحفظ البيانات ✅</button>
+        <button onclick="save()" class="btn-go">تثبيت وحفظ الوزن ✅</button>
 
-        <div class="total-box">
-            <strong>إجمالي الصافي اليومي: </strong>
-            <span id="totalNetWeight" style="font-size: 20px; color: #d32f2f; font-weight: bold;">0.00</span> كغ
+        <div class="tot-box">
+            <span style="font-weight:bold; font-size:16px;">إجمالي الصافي: </span>
+            <span id="tot" style="color:#d32f2f; font-size:24px; font-weight:bold;">0.00</span> <small>كغ</small>
         </div>
 
-        <table id="dataTable">
+        <table id="tbl">
             <thead><tr><th>الوقت</th><th>الصنف</th><th>الصافي</th></tr></thead>
             <tbody></tbody>
         </table>
 
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button onclick="exportToExcel()" style="flex: 2; padding: 10px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;">📊 Excel</button>
-            <button onclick="secureClear()" style="flex: 1; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">❌ تصفير</button>
+        <div class="row" style="margin-top:20px;">
+            <button onclick="exportX()" style="flex:2; background:#1d6f42; color:#fff; border:none; padding:15px; border-radius:10px; font-weight:bold; cursor:pointer;">📊 تحميل ملف Excel</button>
+            <button onclick="clearDB()" style="flex:1; background:#6c757d; color:#fff; border:none; padding:15px; border-radius:10px; cursor:pointer;">❌ تصفير</button>
         </div>
-        <button onclick="connectSerial()" style="width: 100%; margin-top: 10px; font-size: 11px; background: none; border: 1px solid #ccc; cursor: pointer; color: #888;">🔌 ربط الميزان</button>
+        
+        <button onclick="conn()" style="width:100%; margin-top:15px; padding:8px; background:none; border:1px solid #ccc; border-radius:8px; color:#888; font-size:11px; cursor:pointer;">🔌 ربط الميزان الإلكتروني</button>
     </div>
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('hawa_final_db')) || [];
+    let db = JSON.parse(localStorage.getItem('hawa_db')) || [];
 
-    function toggleTheme() {
-        const body = document.body;
-        body.setAttribute('data-theme', body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
-    }
-
+    // تحديث الوقت
     setInterval(() => {
-        const now = new Date();
-        document.getElementById('liveTime').innerText = "الوقت: " + now.toLocaleTimeString('ar-LB');
-        document.getElementById('liveDate').innerText = "التاريخ: " + now.toLocaleDateString('ar-LB');
+        let n = new Date();
+        document.getElementById('t').innerText = "الوقت: " + n.toLocaleTimeString('ar-LB');
+        document.getElementById('d').innerText = "التاريخ: " + n.toLocaleDateString('ar-LB');
     }, 1000);
 
-    document.getElementById('gross').addEventListener('input', e => {
-        document.getElementById('displayWeight').innerText = e.target.value || "0.00";
-    });
+    // ربط الوزن بالشاشة
+    document.getElementById('grs').oninput = e => document.getElementById('scr').innerText = e.target.value || "0.00";
 
-    function addNewItem() {
-        const val = document.getElementById('newItem').value.trim();
-        if (val) {
-            const sel = document.getElementById('item');
-            const opt = document.createElement('option');
-            opt.value = val; opt.text = val;
-            sel.add(opt); sel.value = val;
-            document.getElementById('newItem').value = "";
-        } else { alert("اكتب اسم الصنف أولاً"); }
-    }
-
-    function removeSelectedItem() {
-        const sel = document.getElementById('item');
-        if (sel.selectedIndex > 0) {
-            if(confirm("حذف الصنف المختار؟")) sel.remove(sel.selectedIndex);
-        } else { alert("اختر صنفاً من القائمة لحذفه"); }
-    }
-
-    function saveEntry() {
-        const gross = document.getElementById('gross').value;
-        const item = document.getElementById('item').value;
-        const supervisor = document.getElementById('supervisor').value;
-        const worker = document.getElementById('worker').value;
-
-        if (!gross || !item || !supervisor || !worker) {
-            alert("يرجى ملء جميع الخانات (المسؤول، العامل، الوزن، والصنف)");
-            return;
+    function addItm() {
+        let v = document.getElementById('new').value.trim();
+        if(v){
+            let s = document.getElementById('itm');
+            let o = document.createElement('option');
+            o.text = v; s.add(o); s.value = v;
+            document.getElementById('new').value = '';
         }
+    }
 
-        const cages = parseInt(document.getElementById('cages').value);
-        const net = (parseFloat(gross) - (cages * 1.5)).toFixed(2);
+    function delItm() {
+        let s = document.getElementById('itm');
+        if(s.selectedIndex > 0 && confirm('هل تريد حذف هذا الصنف؟')) s.remove(s.selectedIndex);
+    }
+
+    function save() {
+        let g = document.getElementById('grs').value, i = document.getElementById('itm').value;
+        let su = document.getElementById('sup').value, wr = document.getElementById('wrk').value;
+        if(!g || !i || !su || !wr) return alert("يرجى إكمال جميع الخانات الأساسية!");
         
-        db.push({
-            time: new Date().toLocaleTimeString('ar-LB'),
-            item: item,
-            net: net
-        });
-
-        localStorage.setItem('hawa_final_db', JSON.stringify(db));
+        let c = document.getElementById('cag').value;
+        let n = (parseFloat(g) - (c * 1.5)).toFixed(2);
+        
+        db.push({t: new Date().toLocaleTimeString('ar-LB'), i: i, n: n, s: su, w: wr});
+        localStorage.setItem('hawa_db', JSON.stringify(db));
         render();
-        document.getElementById('gross').value = "";
-        document.getElementById('displayWeight').innerText = "0.00";
+        document.getElementById('grs').value = ""; 
+        document.getElementById('scr').innerText = "0.00";
     }
 
     function render() {
-        const tbody = document.querySelector('#dataTable tbody');
-        let total = 0;
-        tbody.innerHTML = db.slice(-5).map(r => {
-            total += parseFloat(r.net);
-            return `<tr><td>${r.time}</td><td>${r.item}</td><td style="color:red; font-weight:bold;">${r.net}</td></tr>`;
-        }).reverse().join('');
-        document.getElementById('totalNetWeight').innerText = total.toFixed(2);
+        let b = document.querySelector('#tbl tbody'), t = 0;
+        b.innerHTML = db.slice(-5).reverse().map(r => {
+            t += parseFloat(r.n);
+            return `<tr><td>${r.t}</td><td>${r.i}</td><td style="color:#d32f2f; font-weight:bold;">${r.n}</td></tr>`;
+        }).join('');
+        document.getElementById('tot').innerText = t.toFixed(2);
     }
 
-    function secureClear() {
-        if (prompt("كلمة السر (1957):") === "1957") {
-            db = []; localStorage.removeItem('hawa_final_db'); render();
-        }
+    function clearDB() {
+        if(prompt('أدخل كلمة السر (1957):') === '1957') {
+            if(confirm('سيتم مسح جميع البيانات، هل أنت متأكد؟')) {
+                db = []; localStorage.removeItem('hawa_db'); render();
+            }
+        } else { alert('كلمة السر خاطئة!'); }
     }
 
-    function exportToExcel() {
-        const ws = XLSX.utils.json_to_sheet(db);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Production");
-        XLSX.writeFile(wb, "Hawa_Report.xlsx");
+    function exportX() {
+        if(db.length === 0) return alert("السجل فارغ!");
+        let ws = XLSX.utils.json_to_sheet(db);
+        let wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "إنتاج هوا تيك");
+        XLSX.writeFile(wb, `Hawa_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
-    async function connectSerial() {
+    async function conn() {
         try {
-            const port = await navigator.serial.requestPort();
-            await port.open({ baudRate: 9600 });
-            const reader = port.readable.getReader();
+            const p = await navigator.serial.requestPort();
+            await p.open({ baudRate: 9600 });
+            const r = p.readable.getReader();
             while (true) {
-                const { value, done } = await reader.read();
+                const { value, done } = await r.read();
                 if (done) break;
-                const weight = new TextDecoder().decode(value).replace(/[^0-9.]/g, '');
-                if (weight) { document.getElementById('gross').value = weight; document.getElementById('displayWeight').innerText = weight; }
+                const w = new TextDecoder().decode(value).replace(/[^0-9.]/g, '');
+                if (w) { document.getElementById('grs').value = w; document.getElementById('scr').innerText = w; }
             }
         } catch (e) { alert("الميزان غير متصل."); }
     }
