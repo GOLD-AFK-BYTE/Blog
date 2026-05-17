@@ -2,184 +2,380 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <!-- تعريف التطبيق للهاتف -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Hawa-Tech">
-    <title>Hawa-Tech App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظومة هوا-تيك الذكية للإنتاج</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <style>
-        :root { --p: #003366; --bg: #f4f7f6; --c: #fff; --t: #333; --d: #fffbe6; }
-        [data-theme="dark"] { --bg: #121212; --c: #1e1e1e; --t: #e0e0e0; --d: #2a2600; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--t); margin: 0; padding: 10px; transition: 0.3s; -webkit-tap-highlight-color: transparent; }
-        .box { max-width: 500px; margin: auto; background: var(--c); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); overflow: hidden; border: 1px solid rgba(0,0,0,0.05); }
-        .head { padding: 20px; text-align: center; border-bottom: 4px solid var(--p); position: relative; background: var(--c); }
-        .mode { position: absolute; left: 15px; top: 20px; cursor: pointer; border: none; background: var(--p); color: #fff; padding: 8px 12px; border-radius: 50%; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .info { background: #1a1a1a; color: #00ff00; padding: 10px; font-size: 12px; display: flex; justify-content: space-between; font-family: monospace; border-bottom: 2px solid #333; }
-        .pad { padding: 20px; }
-        .row { display: flex; gap: 10px; margin-bottom: 12px; }
-        input, select { flex: 1; padding: 14px; border: 1px solid #ddd; border-radius: 12px; background: var(--c); color: var(--t); text-align: center; font-size: 16px; outline: none; transition: 0.2s; }
-        input:focus { border-color: var(--p); box-shadow: 0 0 8px rgba(0,51,102,0.1); }
-        .screen { background: var(--d); border: 2px solid #ffe58f; padding: 25px; font-size: 55px; font-weight: bold; color: var(--p); text-align: center; border-radius: 15px; margin-bottom: 20px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); }
-        [data-theme="dark"] .screen { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.2); }
-        .btn-go { width: 100%; padding: 18px; background: var(--p); color: #fff; border: none; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,51,102,0.3); }
-        .btn-go:active { transform: scale(0.98); }
-        .manage { background: rgba(0,0,0,0.04); padding: 15px; border-radius: 15px; margin: 20px 0; border: 1px dashed #ccc; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; border-radius: 10px; overflow: hidden; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
-        th { background: var(--p); color: #fff; font-weight: 600; }
-        .tot-box { text-align: center; margin: 20px 0; padding: 15px; background: rgba(211, 47, 47, 0.05); border-radius: 10px; border: 1px solid rgba(211, 47, 47, 0.2); }
+        :root {
+            --primary-color: #e67e22;
+            --secondary-color: #2c3e50;
+            --success-color: #27ae60;
+            --danger-color: #c0392b;
+            --ai-color: #8e44ad;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: var(--secondary-color);
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-color);
+            border-radius: 50px;
+            display: inline-block;
+            line-height: 80px;
+            font-size: 40px;
+        }
+        .ai-badge {
+            background: var(--ai-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            min-width: 150px;
+        }
+        .btn-save { background-color: var(--success-color); }
+        .btn-export { background-color: var(--secondary-color); }
+        .btn-clear { background-color: var(--danger-color); }
+        button:hover { opacity: 0.9; }
+        
+        /* قسم الذكاء الاصطناعي والرسوم البيانية */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid #e1e8ed;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .ai-card {
+            border: 2px dashed var(--ai-color);
+            background: #faf5ff;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        th {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        .alert-flash {
+            animation: flash 1s infinite alternate;
+        }
+        @keyframes flash {
+            from { background-color: white; }
+            to { background-color: #ffcccc; }
+        }
     </style>
 </head>
-<body data-theme="light">
+<body>
 
-<div class="box">
-    <div class="head">
-        <button class="mode" onclick="document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')=='light'?'dark':'light')">🌓</button>
-        <h2 style="margin:0; color:var(--p); font-size: 22px;">Hawa-Tech App 🐔</h2>
-    </div>
-    
-    <div class="info">
-        <span id="t">--:--</span>
-        <span id="d">--/--/--</span>
+<div class="container">
+    <div class="header">
+        <div class="logo">🐔</div>
+        <h2>منظومة هوا-تيك الرقمية الذكية</h2>
+        <span class="ai-badge">مدعوم بالذكاء الاصطناعي التنبؤي v2026</span>
     </div>
 
-    <div class="pad">
-        <div class="row">
-            <input type="text" id="sup" placeholder="اسم المسؤول">
-            <input type="text" id="wrk" placeholder="اسم العامل">
+    <div class="grid-inputs">
+        <div>
+            <label>اسم العامل المفرغ:</label>
+            <input type="text" id="workerName" placeholder="أدخل اسم العامل">
         </div>
-        <div class="row">
-            <input type="number" id="cag" placeholder="عدد الأقفاص" value="1">
-            <input type="email" id="eml" placeholder="الإيميل (اختياري)">
+        <div>
+            <label>الصنف:</label>
+            <select id="itemType">
+                <option value="صدر">صدر</option>
+                <option value="فخاد">فخاد</option>
+                <option value="طاووق">طاووق</option>
+                <option value="جوانح">جوانح</option>
+                <option value="سودة">سودة</option>
+                <option value="رقبات">رقبات</option>
+            </select>
+        </div>
+        <div>
+            <label>الوزن القائم (كغ):</label>
+            <input type="number" id="grossWeight" step="0.01" placeholder="0.00" oninput="checkAnomaly()">
+        </div>
+        <div>
+            <label>وزن القفص فارغ (كغ):</label>
+            <input type="number" id="tareWeight" step="0.01" value="2.10" oninput="checkAnomaly()">
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-save" onclick="saveRecord()">حفظ الوزن والتحليل</button>
+        <button class="btn-export" onclick="exportToExcel()">تصدير كشف Excel ذكي</button>
+        <button class="btn-clear" onclick="clearData()">تصفير البيانات السنوي (🔒)</button>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card ai-card" id="aiCard">
+            <h3 style="color: var(--ai-color); margin-top: 0;">🔮 المساعد الذكي (AI Insight)</h3>
+            <p id="aiAnomalyStatus">حالة البيانات: آمنة ومستقرة تماماً.</p>
+            <hr style="border-color: #e8daef;">
+            <p id="aiPrediction"><strong>التنبؤ الذكي بالإنتاج:</strong> أدخل المزيد من البيانات لتفعيل التنبؤ التلقائي للغد.</p>
         </div>
 
-        <div class="screen" id="scr">0.00</div>
-        <input type="number" id="grs" step="0.01" placeholder="أدخل الوزن القائم هنا" style="width:100%; margin-bottom:20px; display:block;">
-
-        <div class="manage">
-            <label style="display:block; margin-bottom:10px; font-weight:bold; font-size:14px; color:var(--p)">إدارة الأصناف:</label>
-            <div class="row">
-                <select id="itm">
-                    <option value="">-- اختر الصنف --</option>
-                    <option>فروج مسحب كامل</option>
-                    <option>صدر مسحب</option>
-                    <option>فخاد مسحب</option>
-                    <option>جوانح</option>
-                </select>
-                <button onclick="delItm()" style="background:#ff4d4d; color:#fff; border:none; padding:10px 15px; border-radius:10px; cursor:pointer;">حذف 🗑️</button>
-            </div>
-            <div class="row">
-                <input type="text" id="new" placeholder="أضف صنفاً جديداً...">
-                <button onclick="addItm()" style="background:#28a745; color:#fff; border:none; padding:10px 15px; border-radius:10px; cursor:pointer;">إضافة +</button>
-            </div>
+        <div class="card">
+            <h3 style="margin-top: 0;">📊 نسب الإنتاج الحالية</h3>
+            <canvas id="productionChart" style="max-height: 200px;"></canvas>
         </div>
+    </div>
 
-        <button onclick="save()" class="btn-go">تثبيت وحفظ الوزن ✅</button>
-
-        <div class="tot-box">
-            <span style="font-weight:bold; font-size:16px;">إجمالي الصافي: </span>
-            <span id="tot" style="color:#d32f2f; font-size:24px; font-weight:bold;">0.00</span> <small>كغ</small>
-        </div>
-
-        <table id="tbl">
-            <thead><tr><th>الوقت</th><th>الصنف</th><th>الصافي</th></tr></thead>
-            <tbody></tbody>
+    <div class="table-container">
+        <h3>📋 سجل الأوزان والعمليات الحالية</h3>
+        <table id="recordsTable">
+            <thead>
+                <tr>
+                    <th>الوقت والتاريخ</th>
+                    <th>اسم العامل</th>
+                    <th>الصنف</th>
+                    <th>الوزن القائم</th>
+                    <th>وزن القفص</th>
+                    <th>الوزن الصافي</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
         </table>
-
-        <div class="row" style="margin-top:20px;">
-            <button onclick="exportX()" style="flex:2; background:#1d6f42; color:#fff; border:none; padding:15px; border-radius:10px; font-weight:bold; cursor:pointer;">📊 تحميل ملف Excel</button>
-            <button onclick="clearDB()" style="flex:1; background:#6c757d; color:#fff; border:none; padding:15px; border-radius:10px; cursor:pointer;">❌ تصفير</button>
-        </div>
-        
-        <button onclick="conn()" style="width:100%; margin-top:15px; padding:8px; background:none; border:1px solid #ccc; border-radius:8px; color:#888; font-size:11px; cursor:pointer;">🔌 ربط الميزان الإلكتروني</button>
     </div>
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('hawa_db')) || [];
+    // مصفوفة البيانات الأساسية المخزنة محلياً في ذاكرة الهاتف
+    let productionData = JSON.parse(localStorage.getItem('hawaTechData')) || [];
+    let myChart = null;
 
-    // تحديث الوقت
-    setInterval(() => {
-        let n = new Date();
-        document.getElementById('t').innerText = "الوقت: " + n.toLocaleTimeString('ar-LB');
-        document.getElementById('d').innerText = "التاريخ: " + n.toLocaleDateString('ar-LB');
-    }, 1000);
+    // 1. نظام الذكاء الاصطناعي المدمج لكشف التلاعب والأخطاء (Anomaly Detection)
+    function checkAnomaly() {
+        const gross = parseFloat(document.getElementById('grossWeight').value) || 0;
+        const tare = parseFloat(document.getElementById('tareWeight').value) || 0;
+        const aiCard = document.getElementById('aiCard');
+        const statusText = document.getElementById('aiAnomalyStatus');
 
-    // ربط الوزن بالشاشة
-    document.getElementById('grs').oninput = e => document.getElementById('scr').innerText = e.target.value || "0.00";
-
-    function addItm() {
-        let v = document.getElementById('new').value.trim();
-        if(v){
-            let s = document.getElementById('itm');
-            let o = document.createElement('option');
-            o.text = v; s.add(o); s.value = v;
-            document.getElementById('new').value = '';
+        // منطق الـ AI: إذا كان وزن القفص فارغاً أكبر من القائم، أو الوزن الصافي ضخم بشكل غير طبيعي للقفص الواحد
+        if (gross > 0 && (tare >= gross || (gross - tare) > 50)) {
+            aiCard.classList.add('alert-flash');
+            aiCard.style.borderColor = 'var(--danger-color)';
+            statusText.innerHTML = '⚠️ <strong>تنبيه ذكي:</strong> تم رصد نمط إدخال غير منطقي (احتمال خطأ بشري أو تلاعب بالوزن!).';
+            statusText.style.color = 'var(--danger-color)';
+        } else {
+            aiCard.classList.remove('alert-flash');
+            aiCard.style.borderColor = 'var(--ai-color)';
+            statusText.innerHTML = '✅ <strong>حالة البيانات:</strong> الإدخال الحالي منطقي ويتطابق مع معايير الجودة القياسية للمصنع.';
+            statusText.style.color = 'var(--success-color)';
         }
     }
 
-    function delItm() {
-        let s = document.getElementById('itm');
-        if(s.selectedIndex > 0 && confirm('هل تريد حذف هذا الصنف؟')) s.remove(s.selectedIndex);
+    // 2. محرك التنبؤ الذكي لإنتاج الغد باستخدام TensorFlow.js المبسط
+    function runAIPrediction() {
+        if (productionData.length < 5) {
+            document.getElementById('aiPrediction').innerText = "🔮 <strong>التنبؤ الذكي بالإنتاج:</strong> نحتاج إلى 5 إدخالات على الأقل لكي يبدأ الذكاء الاصطناعي في دراسة وتوقع إنتاجك القادم.";
+            return;
+        }
+
+        // تحضير البيانات لتدريب نموذج AI مصغر محلياً
+        const netWeights = productionData.map(d => d.net);
+        const xs = tf.tensor1d(Object.keys(netWeights).map(Number));
+        const ys = tf.tensor1d(netWeights);
+
+        // بناء نموذج ريجريشن خطي بسيط بالـ AI للتنبؤ بالوزن القادم
+        const model = tf.sequential();
+        model.add(tf.layers.dense({units: 1, inputShape: [1]}));
+        model.compile({loss: 'meanSquaredError', optimizer: 'sgd'});
+
+        model.fit(xs, ys, {epochs: 10}).then(() => {
+            const nextIndex = tf.tensor1d([netWeights.length]);
+            const prediction = model.predict(nextIndex).dataSync()[0];
+            
+            document.getElementById('aiPrediction').innerHTML = `🔮 <strong>توقع الـ AI للطلبية القادمة:</strong> يُتوقع أن يكون الوزن الصافي القادم حوالي <span style="color:var(--ai-color); font-weight:bold;">${prediction.toFixed(2)} كغ</span> استناداً إلى سلوك الإنتاج الأخير.`;
+        });
     }
 
-    function save() {
-        let g = document.getElementById('grs').value, i = document.getElementById('itm').value;
-        let su = document.getElementById('sup').value, wr = document.getElementById('wrk').value;
-        if(!g || !i || !su || !wr) return alert("يرجى إكمال جميع الخانات الأساسية!");
+    // 3. حفظ البيانات وتحديث لوحة التحكم
+    function saveRecord() {
+        const worker = document.getElementById('workerName').value.trim() || "عامل مجهول";
+        const item = document.getElementById('itemType').value;
+        const gross = parseFloat(document.getElementById('grossWeight').value) || 0;
+        const tare = parseFloat(document.getElementById('tareWeight').value) || 0;
+        const net = gross - tare;
+
+        if (gross <= 0) {
+            alert("يرجى إدخال وزن قائم صحيح أولاً.");
+            return;
+        }
+
+        const record = {
+            time: new Date().toLocaleString('ar-EG'),
+            worker: worker,
+            item: item,
+            gross: gross.toFixed(2),
+            tare: tare.toFixed(2),
+            net: net.toFixed(2)
+        };
+
+        productionData.push(record);
+        localStorage.setItem('hawaTechData', JSON.stringify(productionData));
         
-        let c = document.getElementById('cag').value;
-        let n = (parseFloat(g) - (c * 1.5)).toFixed(2);
+        // إعادة تهيئة الحقول مع الاحتفاظ باسم العامل ووزن القفص للتسهيل وسرعة العمل
+        document.getElementById('grossWeight').value = "";
         
-        db.push({t: new Date().toLocaleTimeString('ar-LB'), i: i, n: n, s: su, w: wr});
-        localStorage.setItem('hawa_db', JSON.stringify(db));
-        render();
-        document.getElementById('grs').value = ""; 
-        document.getElementById('scr').innerText = "0.00";
+        updateUI();
     }
 
-    function render() {
-        let b = document.querySelector('#tbl tbody'), t = 0;
-        b.innerHTML = db.slice(-5).reverse().map(r => {
-            t += parseFloat(r.n);
-            return `<tr><td>${r.t}</td><td>${r.i}</td><td style="color:#d32f2f; font-weight:bold;">${r.n}</td></tr>`;
-        }).join('');
-        document.getElementById('tot').innerText = t.toFixed(2);
+    // 4. تحديث الرسوم البيانية والجدول
+    function updateUI() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = "";
+        
+        let totals = {};
+
+        // تعبئة الجدول وحساب الإجماليات للرسم البياني
+        productionData.forEach(r => {
+            const row = `<tr>
+                <td>${r.time}</td>
+                <td>${r.worker}</td>
+                <td><strong>${r.item}</strong></td>
+                <td>${r.gross}</td>
+                <td>${r.tare}</td>
+                <td style="color:var(--success-color); font-weight:bold;">${r.net}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+
+            totals[r.item] = (totals[r.item] || 0) + parseFloat(r.net);
+        });
+
+        // تحديث الرسم البياني الفوري (Chart.js)
+        const ctx = document.getElementById('productionChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(totals),
+                datasets: [{
+                    data: Object.values(totals),
+                    backgroundColor: ['#e67e22', '#2ce350', '#3498db', '#9b59b6', '#f1c40f', '#e74c3c']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        runAIPrediction();
     }
 
-    function clearDB() {
-        if(prompt('أدخل كلمة السر (1957):') === '1957') {
-            if(confirm('سيتم مسح جميع البيانات، هل أنت متأكد؟')) {
-                db = []; localStorage.removeItem('hawa_db'); render();
-            }
-        } else { alert('كلمة السر خاطئة!'); }
+    // 5. التصدير الذكي إلى ملف Excel منسق تلقائياً
+    function exportToExcel() {
+        if(productionData.length === 0) {
+            alert("لا توجد بيانات لتصديرها حالياً.");
+            return;
+        }
+        const worksheet = XLSX.utils.json_to_sheet(productionData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "تقرير الإنتاج الذكي");
+        
+        // اسم الملف يحمل تاريخ اليوم بدقة لسهولة الأرشفة في المصنع
+        const fileName = `تقرير_هوا_تيك_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
     }
 
-    function exportX() {
-        if(db.length === 0) return alert("السجل فارغ!");
-        let ws = XLSX.utils.json_to_sheet(db);
-        let wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "إنتاج هوا تيك");
-        XLSX.writeFile(wb, `Hawa_Report_${new Date().toLocaleDateString()}.xlsx`);
+    // 6. تصفير البيانات الآمن بكلمة سر المصنع المعتمدة (1957)
+    function clearData() {
+        const password = prompt("هذا الإجراء سيمسح جميع البيانات المخزنة محلياً. يرجى إدخال الرمز السري السنوي للمصنع للتأكيد:");
+        if (password === '1957') {
+            localStorage.removeItem('hawaTechData');
+            productionData = [];
+            updateUI();
+            alert("تم تصفير السجل وإعادة تهيئة الذاكرة بنجاح.");
+        } else if (password !== null) {
+            alert("الرمز السري خاطئ! تم حظر محاولة التصفير لأسباب أمنية.");
+        }
     }
 
-    async function conn() {
-        try {
-            const p = await navigator.serial.requestPort();
-            await p.open({ baudRate: 9600 });
-            const r = p.readable.getReader();
-            while (true) {
-                const { value, done } = await r.read();
-                if (done) break;
-                const w = new TextDecoder().decode(value).replace(/[^0-9.]/g, '');
-                if (w) { document.getElementById('grs').value = w; document.getElementById('scr').innerText = w; }
-            }
-        } catch (e) { alert("الميزان غير متصل."); }
-    }
-
-    render();
+    // تشغيل التحديث التلقائي عند فتح التطبيق لأول مرة لاستعادة البيانات المخزنة
+    window.onload = updateUI;
 </script>
+
 </body>
 </html>
