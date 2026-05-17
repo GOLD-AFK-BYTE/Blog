@@ -66,7 +66,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* زر التحكم بالوضع الداكن والفاتح */
         .theme-toggle-btn {
             position: absolute;
             top: 20px;
@@ -380,13 +379,10 @@
     let myChart = null;
     const tarePerBox = 1.40;
 
-    // دالة التحكم اليدوي بالوضع الداكن والفاتح
     function toggleTheme() {
         const body = document.body;
         const btn = document.getElementById('themeBtn');
-        
         body.classList.toggle('dark-version');
-        
         if(body.classList.contains('dark-version')) {
             btn.innerText = "☀️ فاتح";
             localStorage.setItem('hawaTechTheme', 'dark');
@@ -394,11 +390,9 @@
             btn.innerText = "🌙 داكن";
             localStorage.setItem('hawaTechTheme', 'light');
         }
-        // تحديث ألوان الرسم البياني ليتناسب مع الوضع الجديد
         updateUI(); 
     }
 
-    // استعادة الوضع المفضل المحفوظ قديماً عند فتح الصفحة مباشرة
     function applySavedTheme() {
         const savedTheme = localStorage.getItem('hawaTechTheme');
         if(savedTheme === 'dark') {
@@ -443,21 +437,31 @@
         });
     }
 
+    // هنا يتم التقاط وحفظ كافة البيانات المدخلة في الموقع بالكامل
     function saveCurrentRecord() {
         const item = document.getElementById('itemSelect').value;
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
+        
+        // جلب البيانات الفوقية بالكامل
+        const manager = document.getElementById('managerName').value || "غير محدد";
         const worker = document.getElementById('workerName').value || "عام";
+        const email = document.getElementById('emailOpt').value || "لا يوجد";
+        
         const totalTare = boxes * tarePerBox;
         const net = gross - totalTare;
 
         if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
 
         const newRecord = {
+            manager: manager,
+            worker: worker,
+            email: email,
+            boxes: boxes,
+            gross: gross.toFixed(2),
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             item: item,
-            net: net.toFixed(2),
-            worker: worker
+            net: net.toFixed(2)
         };
 
         records.push(newRecord);
@@ -514,7 +518,6 @@
 
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
 
-        // جلب الألوان الديناميكية الحالية للرسم البياني بناءً على الوضع المختار
         const computedStyle = getComputedStyle(document.body);
         const barColor = computedStyle.getPropertyValue('--chart-bar').trim();
         const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
@@ -550,12 +553,26 @@
         }
     }
 
+    // الدالة المطورة بالكامل لتصدير كل تفصيلة من الموقع إلى أعمدة منسقة في ملف الإكسل
     function exportToExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
-        const ws = XLSX.utils.json_to_sheet(records);
+        
+        // إعادة صياغة وهيكلة البيانات لترتيب مسميات الأعمدة باللغة العربية داخل ملف الـ Excel
+        const customDataForExcel = records.map(r => ({
+            "اسم المسؤول": r.manager,
+            "اسم العامل": r.worker,
+            "البريد الإلكتروني": r.email,
+            "الوقت": r.time,
+            "الصنف": r.item,
+            "عدد الأقفاص": r.boxes,
+            "الوزن القائم (كغ)": r.gross,
+            "الوزن الصافي (كغ)": r.net
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(customDataForExcel);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "الإنتاج");
-        XLSX.writeFile(wb, `HawaTech_Pro_Report_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "تقرير الإنتاج الشامل");
+        XLSX.writeFile(wb, `HawaTech_Full_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
     function resetDataWithPassword() {
