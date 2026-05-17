@@ -3,205 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App</title>
+    <title>Hawa-Tech App Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
+        /* تصميم الوضع الداكن الاحترافي الفاخر */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
             margin: 0;
             padding: 10px;
             display: flex;
             justify-content: center;
+            transition: background-color 0.3s ease;
         }
         .app-container {
             width: 100%;
             max-width: 450px;
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            padding: 15px;
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+            padding: 20px;
             box-sizing: border-box;
+            animation: fadeInApp 0.6s ease-out;
+        }
+        @keyframes fadeInApp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .header {
             text-align: center;
             font-weight: bold;
-            color: #003366;
-            margin-bottom: 10px;
-            font-size: 18px;
+            color: #58a6ff;
+            margin-bottom: 12px;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         .top-bar {
             background-color: #051907;
             color: #4caf50;
-            padding: 6px 12px;
+            padding: 8px 14px;
             font-size: 11px;
             display: flex;
             justify-content: space-between;
-            border-radius: 4px;
-            margin-bottom: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #1b4d22;
         }
         .inputs-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 10px;
+            gap: 10px;
+            margin-bottom: 12px;
         }
         input, select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
             box-sizing: border-box;
             text-align: center;
             font-size: 14px;
-            background-color: #fafafa;
+            background-color: #0d1117;
+            color: #f0f6fc;
+            transition: all 0.25s ease;
         }
+        input:focus, select:focus {
+            border-color: #58a6ff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(88,166,255,0.15);
+        }
+        /* الشاشة الصفراء الكبيرة مع حركة التنبؤ والنبض */
         .weight-display {
-            background-color: #fffde7;
-            border: 1px solid #ffe082;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #fffde7 0%, #fff59d 100%);
+            border: 2px solid #fbc02d;
+            border-radius: 12px;
             text-align: center;
-            padding: 15px 0;
-            font-size: 42px;
-            font-weight: bold;
-            color: #003366;
-            margin-bottom: 12px;
+            padding: 18px 0;
+            font-size: 46px;
+            font-weight: 800;
+            color: #002244;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(255,235,59,0.1);
+            transition: transform 0.15s ease-in-out;
+        }
+        .weight-display.pulse {
+            transform: scale(1.04);
         }
         .btn-main {
             width: 100%;
-            background-color: #003366;
+            background: linear-gradient(135deg, #1f6feb 0%, #0d57d2 100%);
             color: white;
             border: none;
-            padding: 14px;
+            padding: 15px;
             font-size: 16px;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(31,111,235,0.2);
+            transition: all 0.2s ease;
+        }
+        .btn-main:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(31,111,235,0.3);
+        }
+        .btn-main:active {
+            transform: translateY(1px);
         }
         .total-display {
-            background-color: #ffeeed;
-            border: 1px solid #ffcdd2;
-            color: #d32f2f;
+            background-color: rgba(248,81,73,0.1);
+            border: 1px solid rgba(248,81,73,0.2);
+            color: #ff7b72;
             text-align: center;
-            padding: 10px;
+            padding: 12px;
             font-weight: bold;
-            font-size: 16px;
-            border-radius: 6px;
-            margin-bottom: 15px;
+            font-size: 17px;
+            border-radius: 8px;
+            margin-bottom: 18px;
         }
         .manage-section {
-            border: 1px dashed #b0bec5;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            background-color: #fbfbfb;
+            border: 1px dashed #424b55;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            background-color: #161b22;
         }
         .manage-title {
-            font-size: 12px;
-            color: #003366;
+            font-size: 13px;
+            color: #58a6ff;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         .btn-action {
-            padding: 10px;
+            padding: 10px 14px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             color: white;
             font-weight: bold;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
-        .btn-delete { background-color: #e53935; }
-        .btn-add { background-color: #2e7d32; }
+        .btn-delete { background-color: #da3637; }
+        .btn-delete:hover { background-color: #b62324; }
+        .btn-add { background-color: #238636; }
+        .btn-add:hover { background-color: #1a6528; }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
-            font-size: 12px;
+            margin-bottom: 18px;
+            font-size: 13px;
         }
         th, td {
-            padding: 8px;
-            border: 1px solid #ddd;
+            padding: 10px;
+            border: 1px solid #30363d;
             text-align: center;
         }
         th {
-            background-color: #004d80;
-            color: white;
+            background-color: #21262d;
+            color: #58a6ff;
+        }
+        tr {
+            animation: tableRowSlide 0.35s ease-out forwards;
+        }
+        @keyframes tableRowSlide {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         td.net-weight {
-            color: #e53935;
+            color: #ff7b72;
             font-weight: bold;
         }
         .btn-row-delete {
             background: none;
             border: none;
-            color: #e53935;
+            color: #f85149;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
+            font-size: 15px;
+            transition: transform 0.1s;
+        }
+        .btn-row-delete:hover {
+            transform: scale(1.25);
         }
         .footer-btns {
             display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
         .btn-excel {
             flex: 2;
-            background-color: #1b5e20;
+            background-color: #238636;
             color: white;
-            padding: 12px;
+            padding: 14px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
+            transition: all 0.2s;
         }
+        .btn-excel:hover { background-color: #2ea043; transform: translateY(-1px); }
         .btn-reset {
             flex: 1;
-            background-color: #78909c;
-            color: white;
-            padding: 12px;
+            background-color: #484f58;
+            color: #f0f6fc;
+            padding: 14px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
+            transition: all 0.2s;
         }
+        .btn-reset:hover { background-color: #6e7681; }
         .scale-link {
             text-align: center;
             font-size: 11px;
-            color: #757575;
-            border: 1px solid #e0e0e0;
-            padding: 6px;
-            border-radius: 4px;
+            color: #8b949e;
+            border: 1px solid #30363d;
+            padding: 8px;
+            border-radius: 6px;
+            background-color: #0d1117;
         }
-
+        /* لوحة الـ AI المتوهجة والمتحركة بحركة سينمائية */
         .ai-panel {
-            background-color: #f3e5f5;
-            border: 1px dashed #8e44ad;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 12px;
-            font-size: 12px;
-            color: #4a148c;
+            background: linear-gradient(135deg, #2c1a4d 0%, #1a0f30 100%);
+            border: 1px solid #8957e5;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 12.5px;
+            color: #d3b6ff;
+            box-shadow: 0 0 10px rgba(137,87,229,0.1);
+            animation: aiGlow 3s ease-in-out infinite alternate;
+        }
+        @keyframes aiGlow {
+            from { box-shadow: 0 0 4px rgba(137,87,229,0.15); }
+            to { box-shadow: 0 0 12px rgba(137,87,229,0.35); }
         }
         .chart-container {
-            margin-bottom: 15px;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
+            margin-bottom: 18px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 12px;
         }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="header">🐔 Hawa-Tech App</div>
+    <div class="header">🐔 Hawa-Tech App Pro</div>
     
     <div class="top-bar">
         <span id="liveDate">التاريخ: جارٍ التحميل...</span>
@@ -217,7 +275,7 @@
 
     <div class="weight-display" id="weightDisplayBox">0.00</div>
     
-    <div style="margin-bottom: 12px;">
+    <div style="margin-bottom: 15px;">
         <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن القائم هنا" oninput="updateLiveWeight()">
     </div>
 
@@ -227,7 +285,7 @@
 
     <div class="manage-section">
         <div class="manage-title">إدارة الأصناف:</div>
-        <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
             <select id="itemSelect">
                 <option value="">-- اختر الصنف --</option>
                 <option value="جوانح">جوانح</option>
@@ -237,7 +295,7 @@
             </select>
             <button class="btn-action btn-delete" onclick="deleteItem()">حذف 🗑️</button>
         </div>
-        <div style="display: flex; gap: 5px;">
+        <div style="display: flex; gap: 6px;">
             <input type="text" id="newItemInput" placeholder="أضف صنفاً جديداً...">
             <button class="btn-action btn-add" onclick="addItem()">إضافة +</button>
         </div>
@@ -250,7 +308,7 @@
     </div>
 
     <div class="chart-container" id="chartDiv" style="display:none;">
-        <canvas id="miniChart" style="max-height: 130px;"></canvas>
+        <canvas id="miniChart" style="max-height: 140px;"></canvas>
     </div>
 
     <table>
@@ -277,9 +335,7 @@
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
     let myChart = null;
-    
-    // التعديل الأساسي المعتمد لوزن القفص فارغاً
-    const tarePerBox = 1.40; 
+    const tarePerBox = 1.40; // الوزن الثابت والشرعي للقفص
 
     function updateDateTime() {
         const now = new Date();
@@ -288,17 +344,21 @@
     }
     setInterval(updateDateTime, 1000);
 
-    // دالة الحساب المباشر المرنة والخالية من أي قيود تصفير
+    // دالة الحساب المباشر مع إضافة حركة النبض التفاعلية للشاشة الصفراء
     function updateLiveWeight() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const totalTare = boxes * tarePerBox;
         const net = gross - totalTare;
         
-        document.getElementById('weightDisplayBox').innerText = gross > 0 ? net.toFixed(2) : "0.00";
+        const displayBox = document.getElementById('weightDisplayBox');
+        displayBox.innerText = gross > 0 ? net.toFixed(2) : "0.00";
+
+        // إحداث نبضة حركية خفيفة عند تعديل الأرقام لجذب الانتباه
+        displayBox.classList.add('pulse');
+        setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
-    // تشغيل محرك الذكاء الاصطناعي بشكل خلفي ومستقر
     function runAIPrediction() {
         if (records.length < 3) return;
         const netWeights = records.map(r => r.net);
@@ -311,11 +371,10 @@
         model.fit(xs, ys, {epochs: 5}).then(() => {
             const nextIdx = tf.tensor1d([netWeights.length]);
             const pred = model.predict(nextIdx).dataSync()[0];
-            document.getElementById('aiPanel').innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold;">${pred.toFixed(2)} كغ</span> بناءً على السجلات الحالية.`;
+            document.getElementById('aiPanel').innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#fbc02d;">${pred.toFixed(2)} كغ</span> بناءً على السجلات.`;
         });
     }
 
-    // دالة الحفظ الفوري المباشر لأي حجم إنتاج
     function saveCurrentRecord() {
         const item = document.getElementById('itemSelect').value;
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
@@ -336,19 +395,17 @@
         records.push(newRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
-        // تصفير حقل المدخلات فقط للاستعداد للوزنة التالية بسرعة وبقاء شاشة الوزن صفرية
         document.getElementById('grossInput').value = "";
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
     }
 
-    // دالة الحذف الفردي الآمن لأي وزنة خاطئة بالجدول
     function deleteRecord(index) {
-        if(confirm("هل أنت متأكد من حذف هذه الوزنة المحددة؟")) {
+        if(confirm("هل أنت متأكد من حذف هذه الوزنة؟")) {
             records.splice(index, 1);
             localStorage.setItem('hawaTechAppData', JSON.stringify(records));
-            updateUI(); // إعادة بناء وتحديث الواجهة والرسم البياني تلقائياً
+            updateUI();
         }
     }
 
@@ -368,7 +425,6 @@
         if(select.selectedIndex > 0) { select.remove(select.selectedIndex); }
     }
 
-    // دالة بناء الواجهة وتأمين بقاء الرسم البياني في شاشة الموقع بنسبة 100%
     function updateUI() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
@@ -379,6 +435,7 @@
             totalNet += parseFloat(r.net);
             chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
 
+            // تتدفق الصفوف برمجياً وحركياً عبر الـ CSS المدمج
             const row = `<tr>
                 <td>${r.time}</td>
                 <td>${r.item}</td>
@@ -390,7 +447,6 @@
 
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
 
-        // تشغيل وعرض الرسم البياني على شاشة الموقع بدقة ودون أي اختفاء
         if (records.length > 0) {
             document.getElementById('chartDiv').style.display = "block";
             const ctx = document.getElementById('miniChart').getContext('2d');
@@ -402,10 +458,19 @@
                     datasets: [{
                         label: 'إجمالي الأوزان لكل صنف',
                         data: Object.values(chartData),
-                        backgroundColor: '#004d80'
+                        backgroundColor: '#58a6ff', // لون يتناسب مع جمالية الـ Dark Mode
+                        borderColor: '#1f6feb',
+                        borderWidth: 1
                     }]
                 },
-                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                options: { 
+                    responsive: true, 
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: '#30363d' }, ticks: { color: '#c9d1d9' } },
+                        x: { ticks: { color: '#c9d1d9' } }
+                    },
+                    plugins: { labels: { color: '#fff' } }
+                }
             });
             runAIPrediction();
         } else {
@@ -418,7 +483,7 @@
         const ws = XLSX.utils.json_to_sheet(records);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "الإنتاج");
-        XLSX.writeFile(wb, `HawaTech_Report_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.writeFile(wb, `HawaTech_Pro_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
     function resetDataWithPassword() {
