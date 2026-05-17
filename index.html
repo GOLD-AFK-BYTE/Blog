@@ -69,7 +69,6 @@
             font-weight: bold;
             color: #003366;
             margin-bottom: 12px;
-            transition: all 0.3s ease;
         }
         .btn-main {
             width: 100%;
@@ -211,11 +210,11 @@
     <div class="weight-display" id="weightDisplayBox">0.00</div>
     
     <div style="margin-bottom: 12px;">
-        <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن القائم هنا" oninput="updateLiveWeight(); checkAIAnomaly();">
+        <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن القائم هنا" oninput="updateLiveWeight()">
     </div>
 
     <div class="ai-panel" id="aiPanel">
-        🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل. أدخل الأوزان لتفعيل التنبؤ الذكي.
+        🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة وبانتظار الحفظ للتحليل والتنبؤ التلقائي بالإنتاج القادم.
     </div>
 
     <div class="manage-section">
@@ -269,7 +268,9 @@
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
     let myChart = null;
-    const tarePerBox = 2.10; // الوزن الثابت للقفص الواحد
+    
+    // تعديل رسمي: اعتماد وزن القفص بدقة على 1.40 كغ بناءً على طلبك
+    const tarePerBox = 1.40; 
 
     function updateDateTime() {
         const now = new Date();
@@ -278,38 +279,17 @@
     }
     setInterval(updateDateTime, 1000);
 
-    // حساب الوزن الصافي بشكل مرن وتلقائي بناءً على أي مدخلات
+    // الحساب المباشر بالوزن الجديد للقفص 1.40 كغ
     function updateLiveWeight() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const totalTare = boxes * tarePerBox;
         const net = gross - totalTare;
         
-        // يعرض الوزن الصافي الفعلي مهما كان الرقم
         document.getElementById('weightDisplayBox').innerText = gross > 0 ? net.toFixed(2) : "0.00";
     }
 
-    // تحليل الأنماط بالذكاء الاصطناعي دون تقييد أو منع المستخدم من الحفظ
-    function checkAIAnomaly() {
-        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
-        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
-        const totalTare = boxes * tarePerBox;
-        const aiPanel = document.getElementById('aiPanel');
-
-        if (gross > 0 && (totalTare >= gross)) {
-            aiPanel.innerHTML = "💡 <strong>ملاحظة ذكية:</strong> إجمالي وزن الأقفاص الفارغة أكبر من الوزن القائم المدخل. (يرجى التحقق من الأرقام).";
-            aiPanel.style.backgroundColor = "#fff3cd";
-            aiPanel.style.color = "#856404";
-            aiPanel.style.borderColor = "#ffeeba";
-        } else {
-            aiPanel.innerHTML = "✅ <strong>مساعد الـ AI:</strong> تم تحليل الوزن المدخل، وهو جاهز للحفظ المباشر.";
-            aiPanel.style.backgroundColor = "#f3e5f5";
-            aiPanel.style.color = "#4a148c";
-            aiPanel.style.borderColor = "#8e44ad";
-        }
-    }
-
-    // تشغيل محرك التنبؤ TensorFlow.js بشكل خلفي مرن
+    // تشغيل محرك التنبؤ الذكي بشكل خلفي مرن
     function runAIPrediction() {
         if (records.length < 3) return;
         const netWeights = records.map(r => r.net);
@@ -326,7 +306,7 @@
         });
     }
 
-    // حفظ السجل الحالي بمرونة تامة لأي أرقام مدخلة
+    // حفظ السجلات فوري وبحرية كاملة
     function saveCurrentRecord() {
         const item = document.getElementById('itemSelect').value;
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
@@ -336,7 +316,6 @@
         const net = gross - totalTare;
 
         if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
-        if (gross === 0) { alert("يرجى إدخال الوزن القائم أولاً"); return; }
 
         const newRecord = {
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
@@ -348,7 +327,6 @@
         records.push(newRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
-        // تفريغ حقل الوزن القائم ليكون جاهزاً للوزنة التالية مباشرة
         document.getElementById('grossInput').value = "";
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
