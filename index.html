@@ -142,6 +142,7 @@
             color: #e53935;
             cursor: pointer;
             font-size: 14px;
+            font-weight: bold;
         }
         .footer-btns {
             display: flex;
@@ -221,7 +222,7 @@
     </div>
 
     <div class="ai-panel" id="aiPanel">
-        🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل الفوري والتنبؤ التلقائي بالأوزان.
+        🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل الفوري والتنبؤ التلقائي بالأوزان القادمة.
     </div>
 
     <div class="manage-section">
@@ -267,7 +268,7 @@
 
     <div class="footer-btns">
         <button class="btn-excel" onclick="exportToExcel()">📊 تحميل ملف Excel</button>
-        <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير</button>
+        <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد</button>
     </div>
 
     <div class="scale-link">📍 ربط الميزان الإلكتروني</div>
@@ -276,7 +277,9 @@
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
     let myChart = null;
-    const tarePerBox = 1.40; // وزن القفص الثابت المعتمد
+    
+    // التعديل الأساسي المعتمد لوزن القفص فارغاً
+    const tarePerBox = 1.40; 
 
     function updateDateTime() {
         const now = new Date();
@@ -285,14 +288,17 @@
     }
     setInterval(updateDateTime, 1000);
 
+    // دالة الحساب المباشر المرنة والخالية من أي قيود تصفير
     function updateLiveWeight() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const totalTare = boxes * tarePerBox;
         const net = gross - totalTare;
+        
         document.getElementById('weightDisplayBox').innerText = gross > 0 ? net.toFixed(2) : "0.00";
     }
 
+    // تشغيل محرك الذكاء الاصطناعي بشكل خلفي ومستقر
     function runAIPrediction() {
         if (records.length < 3) return;
         const netWeights = records.map(r => r.net);
@@ -309,6 +315,7 @@
         });
     }
 
+    // دالة الحفظ الفوري المباشر لأي حجم إنتاج
     function saveCurrentRecord() {
         const item = document.getElementById('itemSelect').value;
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
@@ -329,18 +336,19 @@
         records.push(newRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
+        // تصفير حقل المدخلات فقط للاستعداد للوزنة التالية بسرعة وبقاء شاشة الوزن صفرية
         document.getElementById('grossInput').value = "";
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
     }
 
-    // [الدالة الجديدة]: لمسح وزنة واحدة محددة عند الضغط على الـ ❌
+    // دالة الحذف الفردي الآمن لأي وزنة خاطئة بالجدول
     function deleteRecord(index) {
-        if(confirm("هل أنت متأكد من حذف هذه الوزنة؟")) {
-            records.splice(index, 1); // حذف السجل من المصفوفة بناءً على مكانه
-            localStorage.setItem('hawaTechAppData', JSON.stringify(records)); // تحديث الذاكرة
-            updateUI(); // إعادة بناء الجدول والرسم البياني
+        if(confirm("هل أنت متأكد من حذف هذه الوزنة المحددة؟")) {
+            records.splice(index, 1);
+            localStorage.setItem('hawaTechAppData', JSON.stringify(records));
+            updateUI(); // إعادة بناء وتحديث الواجهة والرسم البياني تلقائياً
         }
     }
 
@@ -360,13 +368,13 @@
         if(select.selectedIndex > 0) { select.remove(select.selectedIndex); }
     }
 
+    // دالة بناء الواجهة وتأمين بقاء الرسم البياني في شاشة الموقع بنسبة 100%
     function updateUI() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
         let totalNet = 0;
         let chartData = {};
 
-        // عرض السجلات مع إضافة زر الحذف لكل صف وتمرير الـ index الخاص به
         records.forEach((r, index) => {
             totalNet += parseFloat(r.net);
             chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
@@ -382,6 +390,7 @@
 
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
 
+        // تشغيل وعرض الرسم البياني على شاشة الموقع بدقة ودون أي اختفاء
         if (records.length > 0) {
             document.getElementById('chartDiv').style.display = "block";
             const ctx = document.getElementById('miniChart').getContext('2d');
@@ -413,12 +422,12 @@
     }
 
     function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل:");
+        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
             localStorage.removeItem('hawaTechAppData');
             records = [];
             updateUI();
-            alert("تم التصفير بنجاح");
+            alert("تم تصفير المنظومة بنجاح");
         } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
     }
 
