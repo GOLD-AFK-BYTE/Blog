@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro</title>
+    <title>Hawa-Tech App Pro (Google AI Edition)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -319,7 +320,7 @@
     </div>
 
     <div class="ai-panel" id="aiPanel">
-        🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل الفوري والتنبؤ التلقائي بالأوزان القادمة.
+        🔮 <strong>مساعد Google AI:</strong> جاري تهيئة خوارزميات TensorFlow النشطة... أدخل 3 وزنات للتحليل.
     </div>
 
     <div class="manage-section">
@@ -418,25 +419,54 @@
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
-    // دالة التنبؤ المستقلة تماماً والمضمونة 100%
-    function runAIPrediction() {
+    // دالة التنبؤ المتقدمة المعتمدة على محرك Google TensorFlow.js بشكل آمن وسلس ومستقر
+    async function runAIPrediction() {
         const panel = document.getElementById('aiPanel');
         
         if (records.length < 3) {
-            panel.innerHTML = `🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل الفوري والتنبؤ التلقائي بالأوزان القادمة.`;
+            panel.innerHTML = `🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow. أدخل 3 وزنات لبدء التنبؤ الشبكي الحقيقي.`;
             return;
         }
-        
-        // جلب آخر 3 أوزان صافية مسجلة
-        const lastWeights = records.slice(-3).map(r => parseFloat(r.net));
-        
-        // عملية حسابية ذكية للاتجاه والمعدل
-        const avg = (lastWeights[0] + lastWeights[1] + lastWeights[2]) / 3;
-        const trend = lastWeights[2] - lastWeights[0]; 
-        const predictedNext = avg + (trend * 0.1); 
 
-        // تغيير النص اللحظي بشكل مباشر وإجباري على الشاشة
-        panel.innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#ffc107; font-size:14px;">${predictedNext.toFixed(2)} كغ</span> بناءً على نمط الإنتاج الحالي.`;
+        try {
+            // إعداد البيانات المدخلة والمخرجة لتدريب نموذج جوجل اللحظي
+            const xsData = records.map((_, index) => index + 1);
+            const ysData = records.map(r => parseFloat(r.net));
+
+            const xs = tf.tensor1d(xsData);
+            const ys = tf.tensor1d(ysData);
+
+            // إنشاء نموذج تعلم شبكي خطي بسيط وخفيف جداً يناسب الهواتف
+            const model = tf.sequential();
+            model.add(tf.layers.dense({units: 1, inputShape: [1]}));
+            model.compile({loss: 'meanSquaredError', optimizer: 'sgd'});
+
+            // تدريب النموذج بشكل آمن وخلفي خفيف (10 دورات سريعة لتفادي التعليق)
+            await model.fit(xs, ys, {epochs: 10});
+
+            // التنبؤ بالوزنة القادمة (رقم السجل القادم)
+            const nextIndex = records.length + 1;
+            const prediction = model.predict(tf.tensor1d([nextIndex]));
+            const predictedValue = (await prediction.data())[0];
+
+            // تنظيف الذاكرة لـ TensorFlow فوراً حتى لا يثقل الهاتف
+            xs.dispose();
+            ys.dispose();
+            prediction.dispose();
+            model.dispose();
+
+            // تحديث الشاشة فوراً بختم غوغل الرسمي
+            panel.innerHTML = `🔮 <strong>توقع Google TensorFlow للوزنة ${nextIndex}:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#ffc107; font-size:14px;">${predictedValue.toFixed(2)} كغ</span> (تحليل مستمر عبر الذاكرة العصبية الحية).`;
+
+        } catch (error) {
+            // حل الحماية الاحتياطي (Fallback) في حال حدوث أي تعليق أو بطء من مكتبة جوجل
+            const lastWeights = records.slice(-3).map(r => parseFloat(r.net));
+            const avg = (lastWeights[0] + lastWeights[1] + lastWeights[2]) / 3;
+            const trend = lastWeights[2] - lastWeights[0]; 
+            const fallbackPrediction = avg + (trend * 0.1);
+
+            panel.innerHTML = `🔮 <strong>توقع الـ AI الاستباقي:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#ffc107; font-size:14px;">${fallbackPrediction.toFixed(2)} كغ</span> (محرك الأنماط السريع).`;
+        }
     }
 
     function saveCurrentRecord() {
@@ -551,7 +581,7 @@
             document.getElementById('chartDiv').style.display = "none";
         }
 
-        // تشغيل التنبؤ هنا بشكل إجباري ومستقل تماماً عن حالة الرسم البياني
+        // استدعاء دالة التنبؤ الشبكية الذكية والآمنة
         runAIPrediction();
     }
 
