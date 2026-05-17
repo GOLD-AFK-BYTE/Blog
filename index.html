@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        /* المتغيرات الأساسية للتحكم بالألوان بسهولة */
         :root {
             --bg-body: #f4f4f4;
             --bg-container: white;
@@ -23,7 +22,6 @@
             --chart-bar: #004d80;
         }
 
-        /* ألوان الوضع الداكن عند تفعيله */
         .dark-version {
             --bg-body: #0d1117;
             --bg-container: #161b22;
@@ -420,24 +418,25 @@
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
-    // دالة التنبؤ الفورية فائقة السرعة والمستقرة 100%
+    // دالة التنبؤ المستقلة تماماً والمضمونة 100%
     function runAIPrediction() {
-        // تعمل بمجرد إدخال 3 وزنات أو أكثر
+        const panel = document.getElementById('aiPanel');
+        
         if (records.length < 3) {
-            document.getElementById('aiPanel').innerHTML = `🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل الفوري والتنبؤ التلقائي بالأوزان القادمة.`;
+            panel.innerHTML = `🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل الفوري والتنبؤ التلقائي بالأوزان القادمة.`;
             return;
         }
         
         // جلب آخر 3 أوزان صافية مسجلة
         const lastWeights = records.slice(-3).map(r => parseFloat(r.net));
         
-        // حساب المتوسط الحسابي واتجاه التدفق الحالي
+        // عملية حسابية ذكية للاتجاه والمعدل
         const avg = (lastWeights[0] + lastWeights[1] + lastWeights[2]) / 3;
         const trend = lastWeights[2] - lastWeights[0]; 
-        const predictedNext = avg + (trend * 0.1); // معادلة تنبؤ مرنة وسريعة جداً
+        const predictedNext = avg + (trend * 0.1); 
 
-        // تحديث النص في الواجهة البنفسجية فوراً وبدون أي تعليق
-        document.getElementById('aiPanel').innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#ffc107;">${predictedNext.toFixed(2)} كغ</span> بناءً على نمط الإنتاج الأخير.`;
+        // تغيير النص اللحظي بشكل مباشر وإجباري على الشاشة
+        panel.innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#ffc107; font-size:14px;">${predictedNext.toFixed(2)} كغ</span> بناءً على نمط الإنتاج الحالي.`;
     }
 
     function saveCurrentRecord() {
@@ -548,12 +547,12 @@
                     plugins: { legend: { labels: { color: textColor } } }
                 }
             });
-            // استدعاء دالة التنبؤ المحدثة والفورية
-            runAIPrediction();
         } else {
             document.getElementById('chartDiv').style.display = "none";
-            document.getElementById('aiPanel').innerHTML = `🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل الفوري والتنبؤ التلقائي بالأوزان القادمة.`;
         }
+
+        // تشغيل التنبؤ هنا بشكل إجباري ومستقل تماماً عن حالة الرسم البياني
+        runAIPrediction();
     }
 
     function exportToExcel() {
@@ -577,3 +576,21 @@
     }
 
     function resetDataWithPassword() {
+        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد:");
+        if (pw === '1957') {
+            localStorage.removeItem('hawaTechAppData');
+            records = [];
+            updateUI();
+            alert("تم تصفير المنظومة بنجاح");
+        } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
+    }
+
+    window.onload = function() { 
+        applySavedTheme();
+        updateDateTime(); 
+        updateUI(); 
+    };
+</script>
+
+</body>
+</html>
