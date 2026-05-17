@@ -136,6 +136,13 @@
             color: #e53935;
             font-weight: bold;
         }
+        .btn-row-delete {
+            background: none;
+            border: none;
+            color: #e53935;
+            cursor: pointer;
+            font-size: 14px;
+        }
         .footer-btns {
             display: flex;
             gap: 8px;
@@ -251,6 +258,7 @@
                 <th>الوقت</th>
                 <th>الصنف</th>
                 <th>الصافي</th>
+                <th>إجراء</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -268,9 +276,7 @@
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
     let myChart = null;
-    
-    // [تعديل معتمد]: وزن القفص 1.40 كغ بدقة وحرية إدخال مطلقة
-    const tarePerBox = 1.40; 
+    const tarePerBox = 1.40; // وزن القفص الثابت المعتمد
 
     function updateDateTime() {
         const now = new Date();
@@ -284,7 +290,6 @@
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const totalTare = boxes * tarePerBox;
         const net = gross - totalTare;
-        
         document.getElementById('weightDisplayBox').innerText = gross > 0 ? net.toFixed(2) : "0.00";
     }
 
@@ -330,6 +335,15 @@
         updateUI();
     }
 
+    // [الدالة الجديدة]: لمسح وزنة واحدة محددة عند الضغط على الـ ❌
+    function deleteRecord(index) {
+        if(confirm("هل أنت متأكد من حذف هذه الوزنة؟")) {
+            records.splice(index, 1); // حذف السجل من المصفوفة بناءً على مكانه
+            localStorage.setItem('hawaTechAppData', JSON.stringify(records)); // تحديث الذاكرة
+            updateUI(); // إعادة بناء الجدول والرسم البياني
+        }
+    }
+
     function addItem() {
         const name = document.getElementById('newItemInput').value.trim();
         if(name) {
@@ -352,7 +366,8 @@
         let totalNet = 0;
         let chartData = {};
 
-        records.forEach(r => {
+        // عرض السجلات مع إضافة زر الحذف لكل صف وتمرير الـ index الخاص به
+        records.forEach((r, index) => {
             totalNet += parseFloat(r.net);
             chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
 
@@ -360,13 +375,13 @@
                 <td>${r.time}</td>
                 <td>${r.item}</td>
                 <td class="net-weight">${r.net}</td>
+                <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
             </tr>`;
             tbody.innerHTML += row;
         });
 
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
 
-        // إعادة تشغيل وعرض الرسم البياني على شاشة الموقع بدقة وبدون أي اختفاء
         if (records.length > 0) {
             document.getElementById('chartDiv').style.display = "block";
             const ctx = document.getElementById('miniChart').getContext('2d');
@@ -398,7 +413,7 @@
     }
 
     function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخال الرمز السري للتصفير:");
+        const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل:");
         if (pw === '1957') {
             localStorage.removeItem('hawaTechAppData');
             records = [];
