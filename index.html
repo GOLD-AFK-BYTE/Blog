@@ -69,6 +69,7 @@
             font-weight: bold;
             color: #003366;
             margin-bottom: 12px;
+            transition: all 0.3s ease;
         }
         .btn-main {
             width: 100%;
@@ -117,7 +118,6 @@
         .btn-delete { background-color: #e53935; }
         .btn-add { background-color: #2e7d32; }
         
-        /* تصميم الجدول الأصلي تماماً */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -173,7 +173,6 @@
             border-radius: 4px;
         }
 
-        /* الإضافات الجديدة المدمجة بذكاء دون المساس بالتصميم الأصلي */
         .ai-panel {
             background-color: #f3e5f5;
             border: 1px dashed #8e44ad;
@@ -190,14 +189,6 @@
             border-radius: 8px;
             padding: 10px;
         }
-        .alert-active {
-            background-color: #ffcdd2 !important;
-            border: 2px solid #b71c1c !important;
-            animation: pulse 1s infinite alternate;
-        }
-        @keyframes pulse {
-            from { opacity: 1; } to { opacity: 0.8; }
-        }
     </style>
 </head>
 <body>
@@ -206,15 +197,15 @@
     <div class="header">🐔 Hawa-Tech App</div>
     
     <div class="top-bar">
-        <span id="liveDate">التاريخ: ٢٠٢٦/٠٥/١٧</span>
-        <span id="liveTime">الوقت: ٠١:٢١ م</span>
+        <span id="liveDate">التاريخ: جارٍ التحميل...</span>
+        <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
     <div class="inputs-grid">
         <input type="text" id="managerName" placeholder="اسم المسؤول">
         <input type="text" id="workerName" placeholder="اسم العامل">
         <input type="text" id="emailOpt" placeholder="الإيميل (اختياري)">
-        <input type="number" id="boxCount" value="1" placeholder="عدد الصناديق">
+        <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="updateLiveWeight()">
     </div>
 
     <div class="weight-display" id="weightDisplayBox">0.00</div>
@@ -224,7 +215,7 @@
     </div>
 
     <div class="ai-panel" id="aiPanel">
-        🔮 <strong>مساعد الـ AI:</strong> البيانات مستقرة. أدخل أوزاناً لتفعيل التنبؤ التلقائي للطلبية القادمة.
+        🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل. أدخل الأوزان لتفعيل التنبؤ الذكي.
     </div>
 
     <div class="manage-section">
@@ -278,9 +269,8 @@
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
     let myChart = null;
-    const tarePerBox = 2.10; // وزن القفص الثابت
+    const tarePerBox = 2.10; // الوزن الثابت للقفص الواحد
 
-    // تحديث الوقت والتاريخ تلقائياً
     function updateDateTime() {
         const now = new Date();
         document.getElementById('liveDate').innerText = "التاريخ: " + now.toLocaleDateString('ar-EG');
@@ -288,38 +278,38 @@
     }
     setInterval(updateDateTime, 1000);
 
-    // تحديث شاشة الوزن الكبيرة أثناء الكتابة
+    // حساب الوزن الصافي بشكل مرن وتلقائي بناءً على أي مدخلات
     function updateLiveWeight() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
-        const boxes = parseInt(document.getElementById('boxCount').value) || 1;
+        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const totalTare = boxes * tarePerBox;
         const net = gross - totalTare;
         
-        document.getElementById('weightDisplayBox').innerText = net > 0 ? net.toFixed(2) : "0.00";
+        // يعرض الوزن الصافي الفعلي مهما كان الرقم
+        document.getElementById('weightDisplayBox').innerText = gross > 0 ? net.toFixed(2) : "0.00";
     }
 
-    // [الجديد] نظام الذكاء الاصطناعي لكشف الأخطاء والتلاعب محلياً
+    // تحليل الأنماط بالذكاء الاصطناعي دون تقييد أو منع المستخدم من الحفظ
     function checkAIAnomaly() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
-        const boxes = parseInt(document.getElementById('boxCount').value) || 1;
+        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const totalTare = boxes * tarePerBox;
-        const displayBox = document.getElementById('weightDisplayBox');
         const aiPanel = document.getElementById('aiPanel');
 
-        if (gross > 0 && (totalTare >= gross || (gross - totalTare) > 60)) {
-            displayBox.classList.add('alert-active');
-            aiPanel.innerHTML = "⚠️ <strong>تنبيه ذكي:</strong> الوزن المدخل غير منطقي لعدد الأقفاص! يرجى التأكد منعاً للتلاعب أو الخطأ.";
-            aiPanel.style.backgroundColor = "#ffeeed";
-            aiPanel.style.color = "#c0392b";
+        if (gross > 0 && (totalTare >= gross)) {
+            aiPanel.innerHTML = "💡 <strong>ملاحظة ذكية:</strong> إجمالي وزن الأقفاص الفارغة أكبر من الوزن القائم المدخل. (يرجى التحقق من الأرقام).";
+            aiPanel.style.backgroundColor = "#fff3cd";
+            aiPanel.style.color = "#856404";
+            aiPanel.style.borderColor = "#ffeeba";
         } else {
-            displayBox.classList.remove('alert-active');
-            aiPanel.innerHTML = "✅ <strong>مساعد الـ AI:</strong> نمط الوزن الحالي سليم ومتطابق مع معايير جودة المصنع.";
+            aiPanel.innerHTML = "✅ <strong>مساعد الـ AI:</strong> تم تحليل الوزن المدخل، وهو جاهز للحفظ المباشر.";
             aiPanel.style.backgroundColor = "#f3e5f5";
             aiPanel.style.color = "#4a148c";
+            aiPanel.style.borderColor = "#8e44ad";
         }
     }
 
-    // [الجديد] محرك التنبؤ الذكي باستخدام TensorFlow.js للطلبية القادمة
+    // تشغيل محرك التنبؤ TensorFlow.js بشكل خلفي مرن
     function runAIPrediction() {
         if (records.length < 3) return;
         const netWeights = records.map(r => r.net);
@@ -332,21 +322,21 @@
         model.fit(xs, ys, {epochs: 5}).then(() => {
             const nextIdx = tf.tensor1d([netWeights.length]);
             const pred = model.predict(nextIdx).dataSync()[0];
-            document.getElementById('aiPanel').innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold;">${pred.toFixed(2)} كغ</span> بناءً على السلوك الأخير.`;
+            document.getElementById('aiPanel').innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold;">${pred.toFixed(2)} كغ</span> بناءً على الأرقام الحالية المحفوظة.`;
         });
     }
 
-    // حفظ السجل وتحديث الواجهة
+    // حفظ السجل الحالي بمرونة تامة لأي أرقام مدخلة
     function saveCurrentRecord() {
         const item = document.getElementById('itemSelect').value;
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
-        const boxes = parseInt(document.getElementById('boxCount').value) || 1;
+        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const worker = document.getElementById('workerName').value || "عام";
         const totalTare = boxes * tarePerBox;
         const net = gross - totalTare;
 
         if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
-        if (gross <= 0 || net <= 0) { alert("الوزن غير صحيح"); return; }
+        if (gross === 0) { alert("يرجى إدخال الوزن القائم أولاً"); return; }
 
         const newRecord = {
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
@@ -358,13 +348,13 @@
         records.push(newRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
+        // تفريغ حقل الوزن القائم ليكون جاهزاً للوزنة التالية مباشرة
         document.getElementById('grossInput').value = "";
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
     }
 
-    // إضافة صنف جديد للقائمة
     function addItem() {
         const name = document.getElementById('newItemInput').value.trim();
         if(name) {
@@ -376,7 +366,6 @@
         }
     }
 
-    // حذف صنف من القائمة
     function deleteItem() {
         const select = document.getElementById('itemSelect');
         if(select.selectedIndex > 0) {
@@ -384,7 +373,6 @@
         }
     }
 
-    // تحديث الجدول والرسوم البيانية والإجماليات
     function updateUI() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
@@ -405,7 +393,6 @@
 
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
 
-        // تحديث الرسم البياني المدمج دون التأثير على التصميم العلوي
         if (records.length > 0) {
             document.getElementById('chartDiv').style.display = "block";
             const ctx = document.getElementById('miniChart').getContext('2d');
@@ -428,7 +415,6 @@
         }
     }
 
-    // تحميل ملف Excel
     function exportToExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
         const ws = XLSX.utils.json_to_sheet(records);
@@ -437,7 +423,6 @@
         XLSX.writeFile(wb, `HawaTech_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
-    // تصفير آمن ومحمي بكلمة السر للمصنع (1957)
     function resetDataWithPassword() {
         const pw = prompt("الرجاء إدخال الرمز السري للتصفير:");
         if (pw === '1957') {
