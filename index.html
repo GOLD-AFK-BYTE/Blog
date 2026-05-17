@@ -9,40 +9,91 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        /* تصميم الوضع الداكن الاحترافي الفاخر */
+        /* المتغيرات الأساسية للتحكم بالألوان بسهولة */
+        :root {
+            --bg-body: #f4f4f4;
+            --bg-container: white;
+            --border-color: #ddd;
+            --text-color: #333;
+            --input-bg: #fafafa;
+            --header-color: #003366;
+            --panel-bg: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            --panel-text: #4a148c;
+            --panel-border: #8e44ad;
+            --chart-grid: #ddd;
+            --chart-bar: #004d80;
+        }
+
+        /* ألوان الوضع الداكن عند تفعيله */
+        .dark-version {
+            --bg-body: #0d1117;
+            --bg-container: #161b22;
+            --border-color: #30363d;
+            --text-color: #c9d1d9;
+            --input-bg: #0d1117;
+            --header-color: #58a6ff;
+            --panel-bg: linear-gradient(135deg, #2c1a4d 0%, #1a0f30 100%);
+            --panel-text: #d3b6ff;
+            --panel-border: #8957e5;
+            --chart-grid: #30363d;
+            --chart-bar: #58a6ff;
+        }
+
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #0d1117;
-            color: #c9d1d9;
+            background-color: var(--bg-body);
+            color: var(--text-color);
             margin: 0;
             padding: 10px;
             display: flex;
             justify-content: center;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
         }
         .app-container {
             width: 100%;
             max-width: 450px;
-            background-color: #161b22;
-            border: 1px solid #30363d;
+            background-color: var(--bg-container);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
             padding: 20px;
             box-sizing: border-box;
             animation: fadeInApp 0.6s ease-out;
+            position: relative;
         }
         @keyframes fadeInApp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        /* زر التحكم بالوضع الداكن والفاتح */
+        .theme-toggle-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .theme-toggle-btn:hover {
+            transform: scale(1.05);
+        }
+
         .header {
             text-align: center;
             font-weight: bold;
-            color: #58a6ff;
+            color: var(--header-color);
             margin-bottom: 12px;
             font-size: 22px;
             letter-spacing: 0.5px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: color 0.3s ease;
         }
         .top-bar {
             background-color: #051907;
@@ -64,13 +115,13 @@
         input, select {
             width: 100%;
             padding: 12px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             box-sizing: border-box;
             text-align: center;
             font-size: 14px;
-            background-color: #0d1117;
-            color: #f0f6fc;
+            background-color: var(--input-bg);
+            color: var(--text-color);
             transition: all 0.25s ease;
         }
         input:focus, select:focus {
@@ -78,7 +129,7 @@
             outline: none;
             box-shadow: 0 0 0 3px rgba(88,166,255,0.15);
         }
-        /* الشاشة الصفراء الكبيرة مع حركة التنبؤ والنبض */
+        
         .weight-display {
             background: linear-gradient(135deg, #fffde7 0%, #fff59d 100%);
             border: 2px solid #fbc02d;
@@ -113,9 +164,6 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 18px rgba(31,111,235,0.3);
         }
-        .btn-main:active {
-            transform: translateY(1px);
-        }
         .total-display {
             background-color: rgba(248,81,73,0.1);
             border: 1px solid rgba(248,81,73,0.2);
@@ -128,15 +176,15 @@
             margin-bottom: 18px;
         }
         .manage-section {
-            border: 1px dashed #424b55;
+            border: 1px dashed var(--border-color);
             padding: 12px;
             border-radius: 10px;
             margin-bottom: 18px;
-            background-color: #161b22;
+            background-color: var(--bg-container);
         }
         .manage-title {
             font-size: 13px;
-            color: #58a6ff;
+            color: var(--header-color);
             font-weight: bold;
             margin-bottom: 10px;
         }
@@ -150,9 +198,7 @@
             transition: background-color 0.2s;
         }
         .btn-delete { background-color: #da3637; }
-        .btn-delete:hover { background-color: #b62324; }
         .btn-add { background-color: #238636; }
-        .btn-add:hover { background-color: #1a6528; }
         
         table {
             width: 100%;
@@ -162,12 +208,12 @@
         }
         th, td {
             padding: 10px;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border-color);
             text-align: center;
         }
         th {
-            background-color: #21262d;
-            color: #58a6ff;
+            background-color: var(--input-bg);
+            color: var(--header-color);
         }
         tr {
             animation: tableRowSlide 0.35s ease-out forwards;
@@ -206,9 +252,7 @@
             font-weight: bold;
             font-size: 14px;
             cursor: pointer;
-            transition: all 0.2s;
         }
-        .btn-excel:hover { background-color: #2ea043; transform: translateY(-1px); }
         .btn-reset {
             flex: 1;
             background-color: #484f58;
@@ -219,38 +263,35 @@
             font-weight: bold;
             font-size: 14px;
             cursor: pointer;
-            transition: all 0.2s;
         }
-        .btn-reset:hover { background-color: #6e7681; }
         .scale-link {
             text-align: center;
             font-size: 11px;
-            color: #8b949e;
-            border: 1px solid #30363d;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
             padding: 8px;
             border-radius: 6px;
-            background-color: #0d1117;
+            background-color: var(--input-bg);
         }
-        /* لوحة الـ AI المتوهجة والمتحركة بحركة سينمائية */
+        
         .ai-panel {
-            background: linear-gradient(135deg, #2c1a4d 0%, #1a0f30 100%);
-            border: 1px solid #8957e5;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
             border-radius: 10px;
             padding: 12px;
             margin-bottom: 15px;
             font-size: 12.5px;
-            color: #d3b6ff;
-            box-shadow: 0 0 10px rgba(137,87,229,0.1);
+            color: var(--panel-text);
             animation: aiGlow 3s ease-in-out infinite alternate;
         }
         @keyframes aiGlow {
-            from { box-shadow: 0 0 4px rgba(137,87,229,0.15); }
-            to { box-shadow: 0 0 12px rgba(137,87,229,0.35); }
+            from { box-shadow: 0 0 4px rgba(137,87,229,0.1); }
+            to { box-shadow: 0 0 12px rgba(137,87,229,0.25); }
         }
         .chart-container {
             margin-bottom: 18px;
-            background: #161b22;
-            border: 1px solid #30363d;
+            background: var(--bg-container);
+            border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 12px;
         }
@@ -259,6 +300,8 @@
 <body>
 
 <div class="app-container">
+    <button class="theme-toggle-btn" id="themeBtn" onclick="toggleTheme()">🌙 داكن</button>
+
     <div class="header">🐔 Hawa-Tech App Pro</div>
     
     <div class="top-bar">
@@ -335,7 +378,34 @@
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
     let myChart = null;
-    const tarePerBox = 1.40; // الوزن الثابت والشرعي للقفص
+    const tarePerBox = 1.40;
+
+    // دالة التحكم اليدوي بالوضع الداكن والفاتح
+    function toggleTheme() {
+        const body = document.body;
+        const btn = document.getElementById('themeBtn');
+        
+        body.classList.toggle('dark-version');
+        
+        if(body.classList.contains('dark-version')) {
+            btn.innerText = "☀️ فاتح";
+            localStorage.setItem('hawaTechTheme', 'dark');
+        } else {
+            btn.innerText = "🌙 داكن";
+            localStorage.setItem('hawaTechTheme', 'light');
+        }
+        // تحديث ألوان الرسم البياني ليتناسب مع الوضع الجديد
+        updateUI(); 
+    }
+
+    // استعادة الوضع المفضل المحفوظ قديماً عند فتح الصفحة مباشرة
+    function applySavedTheme() {
+        const savedTheme = localStorage.getItem('hawaTechTheme');
+        if(savedTheme === 'dark') {
+            document.body.classList.add('dark-version');
+            document.getElementById('themeBtn').innerText = "☀️ فاتح";
+        }
+    }
 
     function updateDateTime() {
         const now = new Date();
@@ -344,7 +414,6 @@
     }
     setInterval(updateDateTime, 1000);
 
-    // دالة الحساب المباشر مع إضافة حركة النبض التفاعلية للشاشة الصفراء
     function updateLiveWeight() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
@@ -354,7 +423,6 @@
         const displayBox = document.getElementById('weightDisplayBox');
         displayBox.innerText = gross > 0 ? net.toFixed(2) : "0.00";
 
-        // إحداث نبضة حركية خفيفة عند تعديل الأرقام لجذب الانتباه
         displayBox.classList.add('pulse');
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
@@ -435,7 +503,6 @@
             totalNet += parseFloat(r.net);
             chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
 
-            // تتدفق الصفوف برمجياً وحركياً عبر الـ CSS المدمج
             const row = `<tr>
                 <td>${r.time}</td>
                 <td>${r.item}</td>
@@ -446,6 +513,12 @@
         });
 
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
+
+        // جلب الألوان الديناميكية الحالية للرسم البياني بناءً على الوضع المختار
+        const computedStyle = getComputedStyle(document.body);
+        const barColor = computedStyle.getPropertyValue('--chart-bar').trim();
+        const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
+        const textColor = computedStyle.getPropertyValue('--text-color').trim();
 
         if (records.length > 0) {
             document.getElementById('chartDiv').style.display = "block";
@@ -458,18 +531,17 @@
                     datasets: [{
                         label: 'إجمالي الأوزان لكل صنف',
                         data: Object.values(chartData),
-                        backgroundColor: '#58a6ff', // لون يتناسب مع جمالية الـ Dark Mode
-                        borderColor: '#1f6feb',
-                        borderWidth: 1
+                        backgroundColor: barColor,
+                        borderWidth: 0
                     }]
                 },
                 options: { 
                     responsive: true, 
                     scales: { 
-                        y: { beginAtZero: true, grid: { color: '#30363d' }, ticks: { color: '#c9d1d9' } },
-                        x: { ticks: { color: '#c9d1d9' } }
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { ticks: { color: textColor } }
                     },
-                    plugins: { labels: { color: '#fff' } }
+                    plugins: { legend: { labels: { color: textColor } } }
                 }
             });
             runAIPrediction();
@@ -496,7 +568,11 @@
         } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
     }
 
-    window.onload = function() { updateDateTime(); updateUI(); };
+    window.onload = function() { 
+        applySavedTheme();
+        updateDateTime(); 
+        updateUI(); 
+    };
 </script>
 
 </body>
