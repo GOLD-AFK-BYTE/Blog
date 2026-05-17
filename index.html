@@ -6,8 +6,7 @@
     <title>Hawa-Tech App</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
         body {
@@ -215,7 +214,7 @@
     </div>
 
     <div class="ai-panel" id="aiPanel">
-        🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة وبانتظار الحفظ للتحليل والتنبؤ التلقائي بالإنتاج القادم.
+        🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل الفوري والتنبؤ التلقائي بالأوزان.
     </div>
 
     <div class="manage-section">
@@ -259,7 +258,7 @@
     </table>
 
     <div class="footer-btns">
-        <button class="btn-excel" onclick="exportToExcelWithChart()">📊 تحميل ملف Excel الذكي</button>
+        <button class="btn-excel" onclick="exportToExcel()">📊 تحميل ملف Excel</button>
         <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير</button>
     </div>
 
@@ -269,7 +268,9 @@
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
     let myChart = null;
-    const tarePerBox = 1.40; // الوزن الثابت للقفص المعتمد
+    
+    // [تعديل معتمد]: وزن القفص 1.40 كغ بدقة وحرية إدخال مطلقة
+    const tarePerBox = 1.40; 
 
     function updateDateTime() {
         const now = new Date();
@@ -283,6 +284,7 @@
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const totalTare = boxes * tarePerBox;
         const net = gross - totalTare;
+        
         document.getElementById('weightDisplayBox').innerText = gross > 0 ? net.toFixed(2) : "0.00";
     }
 
@@ -298,7 +300,7 @@
         model.fit(xs, ys, {epochs: 5}).then(() => {
             const nextIdx = tf.tensor1d([netWeights.length]);
             const pred = model.predict(nextIdx).dataSync()[0];
-            document.getElementById('aiPanel').innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold;">${pred.toFixed(2)} كغ</span> بناءً على السلوك الأخير.`;
+            document.getElementById('aiPanel').innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold;">${pred.toFixed(2)} كغ</span> بناءً على السجلات الحالية.`;
         });
     }
 
@@ -306,7 +308,6 @@
         const item = document.getElementById('itemSelect').value;
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
-        const manager = document.getElementById('managerName').value || "غير محدد";
         const worker = document.getElementById('workerName').value || "عام";
         const totalTare = boxes * tarePerBox;
         const net = gross - totalTare;
@@ -314,12 +315,10 @@
         if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
 
         const newRecord = {
-            date: new Date().toLocaleDateString('ar-EG'),
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
-            manager: manager,
-            worker: worker,
             item: item,
-            net: parseFloat(net.toFixed(2))
+            net: net.toFixed(2),
+            worker: worker
         };
 
         records.push(newRecord);
@@ -354,8 +353,8 @@
         let chartData = {};
 
         records.forEach(r => {
-            totalNet += r.net;
-            chartData[r.item] = (chartData[r.item] || 0) + r.net;
+            totalNet += parseFloat(r.net);
+            chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
 
             const row = `<tr>
                 <td>${r.time}</td>
@@ -367,6 +366,7 @@
 
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
 
+        // إعادة تشغيل وعرض الرسم البياني على شاشة الموقع بدقة وبدون أي اختفاء
         if (records.length > 0) {
             document.getElementById('chartDiv').style.display = "block";
             const ctx = document.getElementById('miniChart').getContext('2d');
@@ -389,61 +389,12 @@
         }
     }
 
-    // [الجديد] دالة تصدير ملف إكسل منسق بالكامل ومزود برسم بياني داخلي تلقائي
-    async function exportToExcelWithChart() {
+    function exportToExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
-        
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('تقرير الإنتاج الذكي');
-        worksheet.views = [{ rightToLeft: true }]; // دعم القراءة العربية
-
-        // تعريف الأعمدة
-        worksheet.columns = [
-            { header: 'التاريخ', key: 'date', width: 15 },
-            { header: 'الوقت', key: 'time', width: 12 },
-            { header: 'المسؤول', key: 'manager', width: 15 },
-            { header: 'العامل', key: 'worker', width: 15 },
-            { header: 'الصنف', key: 'item', width: 15 },
-            { header: 'الصافي (كغ)', key: 'net', width: 15 }
-        ];
-
-        // تنسيق صف الهيدر
-        worksheet.getRow(1).eachCell((cell) => {
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '003366' } };
-            cell.font = { name: 'Arial', bold: true, color: { argb: 'FFFFFF' } };
-            cell.alignment = { horizontal: 'center' };
-        });
-
-        // كتابة السجلات وتنسيقها
-        records.forEach((r, idx) => {
-            const row = worksheet.addRow(r);
-            row.eachCell((cell, colNumber) => {
-                cell.alignment = { horizontal: 'center' };
-                cell.border = {
-                    top: {style:'thin', color: {argb:'DDDDDD'}},
-                    left: {style:'thin', color: {argb:'DDDDDD'}},
-                    bottom: {style:'thin', color: {argb:'DDDDDD'}},
-                    right: {style:'thin', color: {argb:'DDDDDD'}}
-                };
-                if(colNumber === 6) {
-                    cell.font = { bold: true, color: { argb: 'E53935' } }; // اللون الأحمر للصافي
-                }
-            });
-        });
-
-        // إضافة صف الإجمالي
-        const totalRowNum = records.length + 2;
-        worksheet.getCell(`E${totalRowNum}`).value = "إجمالي الصافي:";
-        worksheet.getCell(`E${totalRowNum}`).font = { bold: true };
-        
-        const totalCell = worksheet.getCell(`F${totalRowNum}`);
-        totalCell.value = { formula: `SUM(F2:F${totalRowNum-1})` };
-        totalCell.font = { bold: true, color: { argb: '2E7D32' } };
-        totalCell.alignment = { horizontal: 'center' };
-
-        // بناء وتحميل الملف
-        const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `HawaTech_Report_${new Date().toLocaleDateString()}.xlsx`);
+        const ws = XLSX.utils.json_to_sheet(records);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "الإنتاج");
+        XLSX.writeFile(wb, `HawaTech_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
     function resetDataWithPassword() {
