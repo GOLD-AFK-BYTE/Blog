@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hawa-Tech App Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
@@ -421,29 +420,31 @@
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
+    // دالة التنبؤ الفورية فائقة السرعة والمستقرة 100%
     function runAIPrediction() {
-        if (records.length < 3) return;
-        const netWeights = records.map(r => r.net);
-        const xs = tf.tensor1d(Object.keys(netWeights).map(Number));
-        const ys = tf.tensor1d(netWeights);
-        const model = tf.sequential();
-        model.add(tf.layers.dense({units: 1, inputShape: [1]}));
-        model.compile({loss: 'meanSquaredError', optimizer: 'sgd'});
+        // تعمل بمجرد إدخال 3 وزنات أو أكثر
+        if (records.length < 3) {
+            document.getElementById('aiPanel').innerHTML = `🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل الفوري والتنبؤ التلقائي بالأوزان القادمة.`;
+            return;
+        }
         
-        model.fit(xs, ys, {epochs: 5}).then(() => {
-            const nextIdx = tf.tensor1d([netWeights.length]);
-            const pred = model.predict(nextIdx).dataSync()[0];
-            document.getElementById('aiPanel').innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#fbc02d;">${pred.toFixed(2)} كغ</span> بناءً على السجلات.`;
-        });
+        // جلب آخر 3 أوزان صافية مسجلة
+        const lastWeights = records.slice(-3).map(r => parseFloat(r.net));
+        
+        // حساب المتوسط الحسابي واتجاه التدفق الحالي
+        const avg = (lastWeights[0] + lastWeights[1] + lastWeights[2]) / 3;
+        const trend = lastWeights[2] - lastWeights[0]; 
+        const predictedNext = avg + (trend * 0.1); // معادلة تنبؤ مرنة وسريعة جداً
+
+        // تحديث النص في الواجهة البنفسجية فوراً وبدون أي تعليق
+        document.getElementById('aiPanel').innerHTML = `🔮 <strong>توقع الـ AI للوزنة القادمة:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#ffc107;">${predictedNext.toFixed(2)} كغ</span> بناءً على نمط الإنتاج الأخير.`;
     }
 
-    // هنا يتم التقاط وحفظ كافة البيانات المدخلة في الموقع بالكامل
     function saveCurrentRecord() {
         const item = document.getElementById('itemSelect').value;
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         
-        // جلب البيانات الفوقية بالكامل
         const manager = document.getElementById('managerName').value || "غير محدد";
         const worker = document.getElementById('workerName').value || "عام";
         const email = document.getElementById('emailOpt').value || "لا يوجد";
@@ -547,17 +548,17 @@
                     plugins: { legend: { labels: { color: textColor } } }
                 }
             });
+            // استدعاء دالة التنبؤ المحدثة والفورية
             runAIPrediction();
         } else {
             document.getElementById('chartDiv').style.display = "none";
+            document.getElementById('aiPanel').innerHTML = `🔮 <strong>مساعد الـ AI:</strong> المنظومة جاهزة للتحليل الفوري والتنبؤ التلقائي بالأوزان القادمة.`;
         }
     }
 
-    // الدالة المطورة بالكامل لتصدير كل تفصيلة من الموقع إلى أعمدة منسقة في ملف الإكسل
     function exportToExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
         
-        // إعادة صياغة وهيكلة البيانات لترتيب مسميات الأعمدة باللغة العربية داخل ملف الـ Excel
         const customDataForExcel = records.map(r => ({
             "اسم المسؤول": r.manager,
             "اسم العامل": r.worker,
@@ -576,21 +577,3 @@
     }
 
     function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد:");
-        if (pw === '1957') {
-            localStorage.removeItem('hawaTechAppData');
-            records = [];
-            updateUI();
-            alert("تم تصفير المنظومة بنجاح");
-        } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
-    }
-
-    window.onload = function() { 
-        applySavedTheme();
-        updateDateTime(); 
-        updateUI(); 
-    };
-</script>
-
-</body>
-</html>
