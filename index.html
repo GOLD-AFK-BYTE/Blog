@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Weight Units Edition)</title>
+    <title>Hawa-Tech App Pro (Custom Design Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -369,7 +369,7 @@
     </div>
 
     <div class="optional-section">
-        <div class="section-subtitle">⚖️ معايير وزن الفروجة المستهدفة بالطلب (غرام):</div>
+        <div class="section-subtitle">⚖️ معايير وزن الفروج المستهدف بالطلب (غرام):</div>
         <div class="inputs-grid" style="margin-bottom: 10px;">
             <input type="number" id="minWeightOpt" placeholder="الحد الأدنى للفروج (غ)">
             <input type="number" id="maxWeightOpt" placeholder="الحد الأعلى للفروج (غ)">
@@ -500,12 +500,14 @@
             prediction.dispose();
             model.dispose();
 
-            panel.innerHTML = `🔮 <strong>توقع Google TensorFlow للوزنة التراكمية القادمة:</strong> يُتوقع أن تسجل حوالي <span style="font-weight:bold; color:#ffc107; font-size:14px;">${predictedValue.toFixed(2)} كغ</span>.`;
+            // تم تعديل اللون هنا ليصبح أسود داكن (color:#000000) بدلاً من الأصفر
+            panel.innerHTML = `🔮 <strong>توقع Google TensorFlow للوزنة التراكمية القادمة:</strong> يُتوقع أن تسجل حوالي <span style="font-weight:bold; color:#000000; font-size:14px;">${predictedValue.toFixed(2)} كغ</span>.`;
 
         } catch (error) {
             const lastWeights = records.slice(-3).map(r => parseFloat(r.net));
             const avg = (lastWeights[0] + lastWeights[1] + lastWeights[2]) / 3;
-            panel.innerHTML = `🔮 <strong>توقع الـ AI الاستباقي:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#ffc107; font-size:14px;">${avg.toFixed(2)} كغ</span>.`;
+            // تم تعديل لون التوقع الاحتياطي أيضاً ليصبح أسود داكن
+            panel.innerHTML = `🔮 <strong>توقع الـ AI الاستباقي:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#000000; font-size:14px;">${avg.toFixed(2)} كغ</span>.`;
         }
     }
 
@@ -518,7 +520,6 @@
         const worker = document.getElementById('workerName').value || "عام";
         const email = document.getElementById('emailOpt').value || "لا يوجد";
         
-        // جلب مدخلات الرقابة وتوضيح أنها بالغرام
         const minW = document.getElementById('minWeightOpt').value ? parseInt(document.getElementById('minWeightOpt').value) : "-";
         const maxW = document.getElementById('maxWeightOpt').value ? parseInt(document.getElementById('maxWeightOpt').value) : "-";
         const freezeStart = document.getElementById('freezeStartOpt').value || "-";
@@ -587,7 +588,6 @@
             totalNet += parseFloat(r.net);
             chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
 
-            // مظهر نطاق وزن القطعة المستهدفة وعرض وحدة الغرام (غ)
             const rangeText = (r.minW !== "-" || r.maxW !== "-") ? `${r.minW} إلى ${r.maxW} غ` : '-';
             const freezeText = (r.freezeStart !== "-" || r.freezeEnd !== "-") ? `${r.freezeStart} / ${r.freezeEnd}` : '-';
             
