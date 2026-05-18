@@ -306,4 +306,382 @@
             margin-bottom: 15px;
             font-size: 12.5px;
             color: var(--panel-text);
-            animation: ai
+            animation: aiGlow 3s ease-in-out infinite alternate;
+        }
+        @keyframes aiGlow {
+            from { box-shadow: 0 0 4px rgba(137,87,229,0.1); }
+            to { box-shadow: 0 0 12px rgba(137,87,229,0.25); }
+        }
+        .chart-container {
+            margin-bottom: 18px;
+            background: var(--bg-container);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <button class="theme-toggle-btn" id="themeBtn" onclick="toggleTheme()">🌙 داكن</button>
+
+    <div class="header">🐔 Hawa-Tech App Pro</div>
+    
+    <div class="top-bar">
+        <span id="liveDate">التاريخ: جارٍ التحميل...</span>
+        <span id="liveTime">الوقت: جارٍ التحميل...</span>
+    </div>
+
+    <div class="inputs-grid">
+        <input type="text" id="managerName" placeholder="اسم المسؤول">
+        <input type="text" id="workerName" placeholder="اسم العامل">
+        <input type="text" id="emailOpt" placeholder="الإيميل (اختياري)">
+        <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="updateLiveWeight()">
+    </div>
+
+    <div class="weight-display" id="weightDisplayBox">0.00</div>
+    
+    <div style="margin-bottom: 15px;">
+        <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن التراكمي القائم هنا" oninput="updateLiveWeight()">
+    </div>
+
+    <div class="ai-panel" id="aiPanel">
+        🔮 <strong>مساعد Google AI:</strong> جاري تهيئة خوارزميات TensorFlow النشطة... أدخل 3 وزنات للتحليل التراكمي.
+    </div>
+
+    <div class="manage-section">
+        <div class="manage-title">إدارة الأصناف:</div>
+        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+            <select id="itemSelect">
+                <option value="">-- اختر الصنف --</option>
+                <option value="جوانح">جوانح</option>
+                <option value="صدر مسحب">صدر مسحب</option>
+                <option value="فخاد">فخاد</option>
+                <option value="طاووق">طاووق</option>
+            </select>
+            <button class="btn-action btn-delete" onclick="deleteItem()">حذف 🗑️</button>
+        </div>
+        <div style="display: flex; gap: 6px;">
+            <input type="text" id="newItemInput" placeholder="أضف صنفاً جديداً...">
+            <button class="btn-action btn-add" onclick="addItem()">إضافة +</button>
+        </div>
+    </div>
+
+    <div class="optional-section">
+        <div class="section-subtitle">⚖️ معايير وزن الفروجة المستهدفة بالطلب (كغ):</div>
+        <div class="inputs-grid" style="margin-bottom: 10px;">
+            <input type="number" id="minWeightOpt" step="0.01" placeholder="الحد الأدنى للفروج">
+            <input type="number" id="maxWeightOpt" step="0.01" placeholder="الحد الأعلى للفروج">
+        </div>
+
+        <div class="section-subtitle">❄️ فترة حفظ وتجميد البضاعة بالفريزر:</div>
+        <div class="inputs-grid" style="margin-bottom: 0;">
+            <div>
+                <span style="font-size:10px; display:block; text-align:center;">تاريخ التجميد:</span>
+                <input type="date" id="freezeStartOpt">
+            </div>
+            <div>
+                <span style="font-size:10px; display:block; text-align:center;">نهاية الصلاحية:</span>
+                <input type="date" id="freezeEndOpt">
+            </div>
+        </div>
+    </div>
+    <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن ✅</button>
+
+    <div class="total-display">
+        إجمالي الصافي التراكمي: <span id="totalNetDisplay">0.00</span> كغ
+    </div>
+
+    <div class="chart-container" id="chartDiv" style="display:none;">
+        <canvas id="miniChart" style="max-height: 140px;"></canvas>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>الوقت</th>
+                    <th>الصنف</th>
+                    <th>صافي الوجبة</th>
+                    <th>معيار الفروج</th>
+                    <th>صلاحية الفريزر</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <div class="footer-btns">
+        <button class="btn-excel" onclick="exportToExcel()">📊 تحميل ملف Excel</button>
+        <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد</button>
+    </div>
+
+    <div class="scale-link">📍 ربط الميزان الإلكتروني</div>
+</div>
+
+<script>
+    let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
+    let myChart = null;
+    const tarePerBox = 1.40;
+
+    function toggleTheme() {
+        const body = document.body;
+        const btn = document.getElementById('themeBtn');
+        body.classList.toggle('dark-version');
+        if(body.classList.contains('dark-version')) {
+            btn.innerText = "☀️ فاتح";
+            localStorage.setItem('hawaTechTheme', 'dark');
+        } else {
+            btn.innerText = "🌙 داكن";
+            localStorage.setItem('hawaTechTheme', 'light');
+        }
+        updateUI(); 
+    }
+
+    function applySavedTheme() {
+        const savedTheme = localStorage.getItem('hawaTechTheme');
+        if(savedTheme === 'dark') {
+            document.body.classList.add('dark-version');
+            document.getElementById('themeBtn').innerText = "☀️ فاتح";
+        }
+    }
+
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('liveDate').innerText = "التاريخ: " + now.toLocaleDateString('ar-EG');
+        document.getElementById('liveTime').innerText = "الوقت: " + now.toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'});
+    }
+    setInterval(updateDateTime, 1000);
+
+    function updateLiveWeight() {
+        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
+        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
+        const totalTare = boxes * tarePerBox;
+        const net = gross - totalTare;
+        
+        const displayBox = document.getElementById('weightDisplayBox');
+        displayBox.innerText = gross > 0 ? net.toFixed(2) : "0.00";
+
+        displayBox.classList.add('pulse');
+        setTimeout(() => displayBox.classList.remove('pulse'), 150);
+    }
+
+    async function runAIPrediction() {
+        const panel = document.getElementById('aiPanel');
+        
+        if (records.length < 3) {
+            panel.innerHTML = `🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow للتحليل ومراقبة خط تدفق الأوزان التراكمية.`;
+            return;
+        }
+
+        try {
+            const xsData = records.map((_, index) => index + 1);
+            const ysData = records.map(r => parseFloat(r.net));
+
+            const xs = tf.tensor1d(xsData);
+            const ys = tf.tensor1d(ysData);
+
+            const model = tf.sequential();
+            model.add(tf.layers.dense({units: 1, inputShape: [1]}));
+            model.compile({loss: 'meanSquaredError', optimizer: 'sgd'});
+
+            await model.fit(xs, ys, {epochs: 10});
+
+            const nextIndex = records.length + 1;
+            const prediction = model.predict(tf.tensor1d([nextIndex]));
+            const predictedValue = (await prediction.data())[0];
+
+            xs.dispose();
+            ys.dispose();
+            prediction.dispose();
+            model.dispose();
+
+            panel.innerHTML = `🔮 <strong>توقع Google TensorFlow للوزنة التراكمية القادمة:</strong> يُتوقع أن تسجل حوالي <span style="font-weight:bold; color:#ffc107; font-size:14px;">${predictedValue.toFixed(2)} كغ</span> بناءً على وتيرة إنتاج العمال الحالية.`;
+
+        } catch (error) {
+            const lastWeights = records.slice(-3).map(r => parseFloat(r.net));
+            const avg = (lastWeights[0] + lastWeights[1] + lastWeights[2]) / 3;
+            const trend = lastWeights[2] - lastWeights[0]; 
+            const fallbackPrediction = avg + (trend * 0.1);
+
+            panel.innerHTML = `🔮 <strong>توقع الـ AI الاستباقي:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#ffc107; font-size:14px;">${fallbackPrediction.toFixed(2)} كغ</span>.`;
+        }
+    }
+
+    function saveCurrentRecord() {
+        const item = document.getElementById('itemSelect').value;
+        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
+        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
+        
+        const manager = document.getElementById('managerName').value || "غير محدد";
+        const worker = document.getElementById('workerName').value || "عام";
+        const email = document.getElementById('emailOpt').value || "لا يوجد";
+        
+        // جلب مدخلات الرقابة والجودة المستقلة والتواريخ كبيانات توثيقية بحتة
+        const minW = document.getElementById('minWeightOpt').value ? parseFloat(document.getElementById('minWeightOpt').value).toFixed(2) : "-";
+        const maxW = document.getElementById('maxWeightOpt').value ? parseFloat(document.getElementById('maxWeightOpt').value).toFixed(2) : "-";
+        const freezeStart = document.getElementById('freezeStartOpt').value || "-";
+        const freezeEnd = document.getElementById('freezeEndOpt').value || "-";
+
+        const totalTare = boxes * tarePerBox;
+        const net = gross - totalTare;
+
+        if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
+
+        const newRecord = {
+            manager: manager,
+            worker: worker,
+            email: email,
+            boxes: boxes,
+            gross: gross.toFixed(2),
+            time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
+            item: item,
+            net: net.toFixed(2),
+            minW: minW,
+            maxW: maxW,
+            freezeStart: freezeStart,
+            freezeEnd: freezeEnd
+        };
+
+        records.push(newRecord);
+        localStorage.setItem('hawaTechAppData', JSON.stringify(records));
+        
+        document.getElementById('grossInput').value = "";
+        document.getElementById('weightDisplayBox').innerText = "0.00";
+        
+        updateUI();
+    }
+
+    function deleteRecord(index) {
+        if(confirm("هل أنت متأكد من حذف هذه الوزنة؟")) {
+            records.splice(index, 1);
+            localStorage.setItem('hawaTechAppData', JSON.stringify(records));
+            updateUI();
+        }
+    }
+
+    function addItem() {
+        const name = document.getElementById('newItemInput').value.trim();
+        if(name) {
+            const select = document.getElementById('itemSelect');
+            const opt = document.createElement('option');
+            opt.value = name; opt.innerText = name;
+            select.appendChild(opt);
+            document.getElementById('newItemInput').value = "";
+        }
+    }
+
+    function deleteItem() {
+        const select = document.getElementById('itemSelect');
+        if(select.selectedIndex > 0) { select.remove(select.selectedIndex); }
+    }
+
+    function updateUI() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = "";
+        let totalNet = 0;
+        let chartData = {};
+
+        records.forEach((r, index) => {
+            totalNet += parseFloat(r.net);
+            chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
+
+            // مظهر نطاق وزن القطعة المستهدفة
+            const rangeText = (r.minW !== "-" || r.maxW !== "-") ? `${r.minW} إلى ${r.maxW} كغ` : '-';
+            const freezeText = (r.freezeStart !== "-" || r.freezeEnd !== "-") ? `${r.freezeStart} / ${r.freezeEnd}` : '-';
+            
+            const row = `<tr>
+                <td>${r.time}</td>
+                <td>${r.item}</td>
+                <td class="net-weight">${r.net} كغ</td>
+                <td>${rangeText}</td>
+                <td>${freezeText}</td>
+                <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
+
+        const computedStyle = getComputedStyle(document.body);
+        const barColor = computedStyle.getPropertyValue('--chart-bar').trim();
+        const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
+        const textColor = computedStyle.getPropertyValue('--text-color').trim();
+
+        if (records.length > 0) {
+            document.getElementById('chartDiv').style.display = "block";
+            const ctx = document.getElementById('miniChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(chartData),
+                    datasets: [{
+                        label: 'إجمالي الأوزان لكل صنف',
+                        data: Object.values(chartData),
+                        backgroundColor: barColor,
+                        borderWidth: 0
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { ticks: { color: textColor } }
+                    },
+                    plugins: { legend: { labels: { color: textColor } } }
+                }
+            });
+        } else {
+            document.getElementById('chartDiv').style.display = "none";
+        }
+
+        runAIPrediction();
+    }
+
+    function exportToExcel() {
+        if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
+        
+        const customDataForExcel = records.map(r => ({
+            "اسم المسؤول": r.manager,
+            "اسم العامل": r.worker,
+            "البريد الإلكتروني": r.email,
+            "الوقت": r.time,
+            "الصنف": r.item,
+            "عدد الأقفاص": r.boxes,
+            "الوزن القائم الكلي (كغ)": r.gross,
+            "الوزن الصافي الكلي (كغ)": r.net,
+            "معيار وزن الفروجة الأدنى": r.minW,
+            "معيار وزن الفروجة الأعلى": r.maxW,
+            "تاريخ دخول الفريزر": r.freezeStart,
+            "تاريخ انتهاء الصلاحية": r.freezeEnd
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(customDataForExcel);
+        const wb = Workbook ? Workbook : XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "سجل الإنتاج والطلبيات");
+        XLSX.writeFile(wb, `HawaTech_Production_Report_${new Date().toLocaleDateString()}.xlsx`);
+    }
+
+    function resetDataWithPassword() {
+        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد:");
+        if (pw === '1957') {
+            localStorage.removeItem('hawaTechAppData');
+            records = [];
+            updateUI();
+            alert("تم تصفير المنظومة بنجاح");
+        } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
+    }
+
+    window.onload = function() { 
+        applySavedTheme();
+        updateDateTime(); 
+        updateUI(); 
+    };
+</script>
+
+</body>
+</html>
