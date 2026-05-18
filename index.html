@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Google AI Edition)</title>
+    <title>Hawa-Tech App Pro (Enterprise Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -21,6 +21,7 @@
             --panel-border: #8e44ad;
             --chart-grid: #ddd;
             --chart-bar: #004d80;
+            --section-bg: #f9f9f9;
         }
 
         .dark-version {
@@ -35,6 +36,7 @@
             --panel-border: #8957e5;
             --chart-grid: #30363d;
             --chart-bar: #58a6ff;
+            --section-bg: #21262d;
         }
 
         body {
@@ -143,6 +145,25 @@
         .weight-display.pulse {
             transform: scale(1.04);
         }
+
+        /* تنسيق الأقسام الاختيارية الجديدة لجودة الإنتاج والفريزر */
+        .optional-section {
+            background-color: var(--section-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+        .section-subtitle {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--header-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
         .btn-main {
             width: 100%;
             background: linear-gradient(135deg, #1f6feb 0%, #0d57d2 100%);
@@ -197,14 +218,22 @@
         .btn-delete { background-color: #da3637; }
         .btn-add { background-color: #238636; }
         
+        /* تحسين الجدول ليتناسب مع الخانات الجديدة */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            margin-bottom: 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 18px;
-            font-size: 13px;
+            font-size: 12px;
+            min-width: 450px;
         }
         th, td {
-            padding: 10px;
+            padding: 8px 6px;
             border: 1px solid var(--border-color);
             text-align: center;
         }
@@ -222,6 +251,10 @@
         td.net-weight {
             color: #ff7b72;
             font-weight: bold;
+        }
+        .weight-out-range {
+            background-color: rgba(255, 152, 0, 0.15) !important;
+            color: #e65100;
         }
         .btn-row-delete {
             background: none;
@@ -341,6 +374,25 @@
         </div>
     </div>
 
+    <div class="optional-section">
+        <div class="section-subtitle">⚖️ معايير جودة الفروج الاختيارية (كغ):</div>
+        <div class="inputs-grid" style="margin-bottom: 10px;">
+            <input type="number" id="minWeightOpt" step="0.01" placeholder="الحد الأدنى المقبول">
+            <input type="number" id="maxWeightOpt" step="0.01" placeholder="الحد الأعلى المقبول">
+        </div>
+
+        <div class="section-subtitle">❄️ فترة حفظ وتجميد البضاعة (اختياري):</div>
+        <div class="inputs-grid" style="margin-bottom: 0;">
+            <div>
+                <span style="font-size:10px; display:block; text-align:center;">من تاريخ:</span>
+                <input type="date" id="freezeStartOpt">
+            </div>
+            <div>
+                <span style="font-size:10px; display:block; text-align:center;">إلى تاريخ:</span>
+                <input type="date" id="freezeEndOpt">
+            </div>
+        </div>
+    </div>
     <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن ✅</button>
 
     <div class="total-display">
@@ -351,18 +403,22 @@
         <canvas id="miniChart" style="max-height: 140px;"></canvas>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>الوقت</th>
-                <th>الصنف</th>
-                <th>الصافي</th>
-                <th>إجراء</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>الوقت</th>
+                    <th>الصنف</th>
+                    <th>الصافي</th>
+                    <th>نطاق الوزن</th>
+                    <th>فترة التجميد</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+    </div>
 
     <div class="footer-btns">
         <button class="btn-excel" onclick="exportToExcel()">📊 تحميل ملف Excel</button>
@@ -419,7 +475,6 @@
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
-    // دالة التنبؤ المتقدمة المعتمدة على محرك Google TensorFlow.js بشكل آمن وسلس ومستقر
     async function runAIPrediction() {
         const panel = document.getElementById('aiPanel');
         
@@ -429,37 +484,30 @@
         }
 
         try {
-            // إعداد البيانات المدخلة والمخرجة لتدريب نموذج جوجل اللحظي
             const xsData = records.map((_, index) => index + 1);
             const ysData = records.map(r => parseFloat(r.net));
 
             const xs = tf.tensor1d(xsData);
             const ys = tf.tensor1d(ysData);
 
-            // إنشاء نموذج تعلم شبكي خطي بسيط وخفيف جداً يناسب الهواتف
             const model = tf.sequential();
             model.add(tf.layers.dense({units: 1, inputShape: [1]}));
             model.compile({loss: 'meanSquaredError', optimizer: 'sgd'});
 
-            // تدريب النموذج بشكل آمن وخلفي خفيف (10 دورات سريعة لتفادي التعليق)
             await model.fit(xs, ys, {epochs: 10});
 
-            // التنبؤ بالوزنة القادمة (رقم السجل القادم)
             const nextIndex = records.length + 1;
             const prediction = model.predict(tf.tensor1d([nextIndex]));
             const predictedValue = (await prediction.data())[0];
 
-            // تنظيف الذاكرة لـ TensorFlow فوراً حتى لا يثقل الهاتف
             xs.dispose();
             ys.dispose();
             prediction.dispose();
             model.dispose();
 
-            // تحديث الشاشة فوراً بختم غوغل الرسمي
             panel.innerHTML = `🔮 <strong>توقع Google TensorFlow للوزنة ${nextIndex}:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#ffc107; font-size:14px;">${predictedValue.toFixed(2)} كغ</span> (تحليل مستمر عبر الذاكرة العصبية الحية).`;
 
         } catch (error) {
-            // حل الحماية الاحتياطي (Fallback) في حال حدوث أي تعليق أو بطء من مكتبة جوجل
             const lastWeights = records.slice(-3).map(r => parseFloat(r.net));
             const avg = (lastWeights[0] + lastWeights[1] + lastWeights[2]) / 3;
             const trend = lastWeights[2] - lastWeights[0]; 
@@ -478,10 +526,27 @@
         const worker = document.getElementById('workerName').value || "عام";
         const email = document.getElementById('emailOpt').value || "لا يوجد";
         
+        // جلب مدخلات الرقابة والجودة الجديدة (الاختيارية)
+        const minW = document.getElementById('minWeightOpt').value ? parseFloat(document.getElementById('minWeightOpt').value) : null;
+        const maxW = document.getElementById('maxWeightOpt').value ? parseFloat(document.getElementById('maxWeightOpt').value) : null;
+        const freezeStart = document.getElementById('freezeStartOpt').value || "-";
+        const freezeEnd = document.getElementById('freezeEndOpt').value || "-";
+
         const totalTare = boxes * tarePerBox;
         const net = gross - totalTare;
 
         if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
+
+        // التحقق الذكي للتنبيه إذا كان الوزن خارج النطاق الاختياري المسموح به
+        let outOfRange = false;
+        if(minW !== null && net < minW) outOfRange = true;
+        if(maxW !== null && net > maxW) outOfRange = true;
+
+        if(outOfRange) {
+            if(!confirm(`⚠️ تنبيه الجودة: الوزن الصافي (${net.toFixed(2)} كغ) خارج النطاق المحدد للمواصفات المعيارية! هل ترغب في اعتماده وحفظه على أي حال؟`)) {
+                return;
+            }
+        }
 
         const newRecord = {
             manager: manager,
@@ -491,12 +556,18 @@
             gross: gross.toFixed(2),
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             item: item,
-            net: net.toFixed(2)
+            net: net.toFixed(2),
+            minW: minW,
+            maxW: maxW,
+            freezeStart: freezeStart,
+            freezeEnd: freezeEnd,
+            isViolated: outOfRange
         };
 
         records.push(newRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
+        // تفريغ المدخلات الأساسية فقط لسهولة الاستخدام المتكرر
         document.getElementById('grossInput').value = "";
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
@@ -537,10 +608,19 @@
             totalNet += parseFloat(r.net);
             chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
 
-            const row = `<tr>
+            // إعداد عرض النطاق وتواريخ الفريزر في الجدول
+            const rangeText = (r.minW !== undefined && r.minW !== null) ? `${r.minW} - ${r.maxW || '∞'}` : '-';
+            const freezeText = (r.freezeStart !== "-" || r.freezeEnd !== "-") ? `${r.freezeStart} إلى ${r.freezeEnd}` : '-';
+            
+            // إضافة فئة تلوين مميزة إذا كانت الوزنة خارج المواصفات
+            const rowClass = r.isViolated ? 'class="weight-out-range"' : '';
+
+            const row = `<tr ${rowClass}>
                 <td>${r.time}</td>
                 <td>${r.item}</td>
                 <td class="net-weight">${r.net}</td>
+                <td>${rangeText}</td>
+                <td>${freezeText}</td>
                 <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
             </tr>`;
             tbody.innerHTML += row;
@@ -581,7 +661,6 @@
             document.getElementById('chartDiv').style.display = "none";
         }
 
-        // استدعاء دالة التنبؤ الشبكية الذكية والآمنة
         runAIPrediction();
     }
 
@@ -596,13 +675,18 @@
             "الصنف": r.item,
             "عدد الأقفاص": r.boxes,
             "الوزن القائم (كغ)": r.gross,
-            "الوزن الصافي (كغ)": r.net
+            "الوزن الصافي (كغ)": r.net,
+            "الحد الأدنى للمعيار": r.minW || "-",
+            "الحد الأعلى للمعيار": r.maxW || "-",
+            "بداية التجميد بالفريزر": r.freezeStart,
+            "نهاية تاريخ الصلاحية": r.freezeEnd,
+            "حالة مطابقة الجودة": r.isViolated ? "خارج النطاق المعياري" : "مطابق للمواصفات"
         }));
 
         const ws = XLSX.utils.json_to_sheet(customDataForExcel);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "تقرير الإنتاج الشامل");
-        XLSX.writeFile(wb, `HawaTech_Full_Report_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "تقرير الإنتاج والجودة الشامل");
+        XLSX.writeFile(wb, `HawaTech_Enterprise_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
     function resetDataWithPassword() {
