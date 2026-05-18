@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Fix Edition)</title>
+    <title>Hawa-Tech App Pro (Weight Units Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -343,7 +343,7 @@
     <div class="weight-display" id="weightDisplayBox">0.00</div>
     
     <div style="margin-bottom: 15px;">
-        <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن التراكمي القائم هنا" oninput="updateLiveWeight()">
+        <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن التراكمي القائم (كغ)" oninput="updateLiveWeight()">
     </div>
 
     <div class="ai-panel" id="aiPanel">
@@ -369,10 +369,10 @@
     </div>
 
     <div class="optional-section">
-        <div class="section-subtitle">⚖️ معايير وزن الفروجة المستهدفة بالطلب (كغ):</div>
+        <div class="section-subtitle">⚖️ معايير وزن الفروجة المستهدفة بالطلب (غرام):</div>
         <div class="inputs-grid" style="margin-bottom: 10px;">
-            <input type="number" id="minWeightOpt" step="0.01" placeholder="الحد الأدنى للفروج">
-            <input type="number" id="maxWeightOpt" step="0.01" placeholder="الحد الأعلى للفروج">
+            <input type="number" id="minWeightOpt" placeholder="الحد الأدنى للفروج (غ)">
+            <input type="number" id="maxWeightOpt" placeholder="الحد الأعلى للفروج (غ)">
         </div>
 
         <div class="section-subtitle">❄️ فترة حفظ وتجميد البضاعة بالفريزر:</div>
@@ -518,8 +518,9 @@
         const worker = document.getElementById('workerName').value || "عام";
         const email = document.getElementById('emailOpt').value || "لا يوجد";
         
-        const minW = document.getElementById('minWeightOpt').value ? parseFloat(document.getElementById('minWeightOpt').value).toFixed(2) : "-";
-        const maxW = document.getElementById('maxWeightOpt').value ? parseFloat(document.getElementById('maxWeightOpt').value).toFixed(2) : "-";
+        // جلب مدخلات الرقابة وتوضيح أنها بالغرام
+        const minW = document.getElementById('minWeightOpt').value ? parseInt(document.getElementById('minWeightOpt').value) : "-";
+        const maxW = document.getElementById('maxWeightOpt').value ? parseInt(document.getElementById('maxWeightOpt').value) : "-";
         const freezeStart = document.getElementById('freezeStartOpt').value || "-";
         const freezeEnd = document.getElementById('freezeEndOpt').value || "-";
 
@@ -586,7 +587,8 @@
             totalNet += parseFloat(r.net);
             chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
 
-            const rangeText = (r.minW !== "-" || r.maxW !== "-") ? `${r.minW} إلى ${r.maxW} كغ` : '-';
+            // مظهر نطاق وزن القطعة المستهدفة وعرض وحدة الغرام (غ)
+            const rangeText = (r.minW !== "-" || r.maxW !== "-") ? `${r.minW} إلى ${r.maxW} غ` : '-';
             const freezeText = (r.freezeStart !== "-" || r.freezeEnd !== "-") ? `${r.freezeStart} / ${r.freezeEnd}` : '-';
             
             const row = `<tr>
@@ -650,8 +652,8 @@
             "عدد الأقفاص": r.boxes,
             "الوزن القائم الكلي (كغ)": r.gross,
             "الوزن الصافي الكلي (كغ)": r.net,
-            "معيار وزن الفروجة الأدنى": r.minW,
-            "معيار وزن الفروجة الأعلى": r.maxW,
+            "معيار وزن الفروجة الأدنى (غ)": r.minW,
+            "معيار وزن الفروجة الأعلى (غ)": r.maxW,
             "تاريخ دخول الفريزر": r.freezeStart,
             "تاريخ انتهاء الصلاحية": r.freezeEnd
         }));
