@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Perfect Layout Edition)</title>
+    <title>Hawa-Tech App Pro (Chart Fixed Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -318,12 +318,13 @@
             from { box-shadow: 0 0 4px rgba(137,87,229,0.1); }
             to { box-shadow: 0 0 12px rgba(137,87,229,0.25); }
         }
+        /* تم زيادة مساحة الحاوية هنا لمنع اختفاء النصوص */
         .chart-container {
             margin-bottom: 18px;
             background: var(--bg-container);
             border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 12px;
+            padding: 15px;
         }
     </style>
 </head>
@@ -410,7 +411,7 @@
     </div>
 
     <div class="chart-container" id="chartDiv" style="display:none;">
-        <canvas id="miniChart" style="max-height: 140px;"></canvas>
+        <canvas id="miniChart" style="max-height: 190px;"></canvas>
     </div>
 
     <div class="table-responsive">
@@ -568,7 +569,6 @@
         records.push(newRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
-        // تفريغ الخانات بعد الحفظ لتجهيزها للطلبية القادمة
         document.getElementById('grossInput').value = "";
         document.getElementById('chickenCountOpt').value = "";
         document.getElementById('orderNumberOpt').value = "";
@@ -648,8 +648,20 @@
                 options: { 
                     responsive: true, 
                     scales: { 
-                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
-                        x: { ticks: { color: textColor } }
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: gridColor }, 
+                            ticks: { color: textColor } 
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { 
+                                color: textColor,
+                                maxRotation: 45, // تدوير النصوص بزاوية 45 درجة لتظهر كاملة دائماً
+                                minRotation: 45,
+                                autoSkip: false  // منع الخوارزمية من إخفاء أي صنف نهائياً
+                            } 
+                        }
                     },
                     plugins: { legend: { labels: { color: textColor } } }
                 }
