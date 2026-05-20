@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Expanded Live Edition)</title>
+    <title>Hawa-Tech App Pro (Excel Optimized Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -284,7 +284,6 @@
         }
         .btn-row-delete:hover { transform: scale(1.25); }
         
-        /* أزرار مخصصة للنافذة المنبثقة وجدول الإجراءات */
         .btn-details-view {
             background-color: #1f6feb;
             color: white;
@@ -691,7 +690,7 @@
         records.push(newRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
-        // تصفير كافة الحقول طبقاً للشروط عدا خانة "اسم المسؤول"
+        // تصفير الخانات والإبقاء على حقل اسم المسؤول كخيار تذكر مرن قابل للتعديل
         document.getElementById('workerName').value = "";
         document.getElementById('emailOpt').value = "";
         document.getElementById('boxCount').value = "";
@@ -720,7 +719,6 @@
         }
     }
 
-    // وظيفة الـ Expanded Live View لعرض التفاصيل الكاملة داخل الصفحة
     function showExpandedLiveView(index) {
         const r = records[index];
         const modalBody = document.getElementById('modalBody');
@@ -730,7 +728,7 @@
             <div class="modal-item"><span>اسم العامل على الخط:</span> <span>${r.worker}</span></div>
             <div class="modal-item"><span>الصنف المستهدف:</span> <span>${r.item}</span></div>
             <div class="modal-item"><span>الوزنة كاملة (القائم):</span> <span>${r.gross} كغ</span></div>
-            <div class="modal-item"><span>صافي الوزنة التراكمي:</span> <span>${r.net} كغ</span></div>
+            <div class="modal-item"><span>صافي الوزنة التراكمي:</span> <span style="color:#1f6feb; font-weight:bold;">${r.net} كغ</span></div>
             <div class="modal-item"><span>عدد صناديق الأقفاص:</span> <span>${r.boxes} أقفاص</span></div>
             <div class="modal-item"><span>رقم الطلبية المفتوحة:</span> <span>${r.orderNumber}</span></div>
             <div class="modal-item"><span>المكان المرسل إليه:</span> <span>${r.destination}</span></div>
@@ -852,16 +850,17 @@
     function exportOrdersExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
         
-        // إضافة درجة الحرارة إلى ملف إكسل الخاص ببيانات الطلبيات بناء على طلبك
+        // تم إضافة حقل "صافي الوزنة (كغ)" هنا ليكون متواجداً بداخل إكسل الطلبيات بناء على طلبك
         const ordersData = records.map(r => ({
             "رقم الطلبية": r.orderNumber,
             "المكان المرسل إليه": r.destination,
+            "صافي الوزنة (كغ)": r.net,
+            "الصنف": r.item,
+            "عدد الأقفاص": r.boxes,
+            "الوزنة كاملة - القائم (كغ)": r.gross,  
             "موقع البراد": r.fridgeLocation,
             "درجة الحرارة (C°)": r.temperature,
             "عدد الفروج داخل الطلبية": r.chickenCount,
-            "الصنف": r.item,
-            "عدد الأقفاص": r.boxes,
-            "الوزنة كاملة (كغ)": r.gross,  
             "البريد الإلكتروني": r.email,
             "الوقت": r.time,
             "معيار وزن الفروج الأدنى (غ)": r.minW,
