@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Chart Fixed Edition)</title>
+    <title>Hawa-Tech App Pro (Advanced Control Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -51,7 +51,7 @@
         }
         .app-container {
             width: 100%;
-            max-width: 450px;
+            max-width: 550px; /* تم تكبير الحاوية قليلاً لاستيعاب الجدول الموسع */
             background-color: var(--bg-container);
             border: 1px solid var(--border-color);
             border-radius: 20px;
@@ -223,6 +223,20 @@
         .btn-delete { background-color: #da3637; }
         .btn-add { background-color: #238636; }
         
+        .search-box-container {
+            margin-bottom: 10px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--header-color);
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background-color: var(--bg-container);
+            color: var(--text-color);
+        }
+
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -234,7 +248,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
-            min-width: 500px;
+            min-width: 650px; /* تم التكبير ليتسع للأعمدة الـ 8 الجديدة بوضوح */
         }
         th, td {
             padding: 8px 6px;
@@ -252,8 +266,12 @@
             from { opacity: 0; transform: translateX(10px); }
             to { opacity: 1; transform: translateX(0); }
         }
+        td.highlight-weight {
+            color: #238636;
+            font-weight: bold;
+        }
         td.net-weight {
-            color: #4caf50;
+            color: #1f6feb;
             font-weight: bold;
         }
         .btn-row-delete {
@@ -267,32 +285,40 @@
         .btn-row-delete:hover {
             transform: scale(1.25);
         }
-        .footer-btns {
+        .excel-buttons-zone {
             display: flex;
+            flex-direction: column;
             gap: 10px;
             margin-bottom: 15px;
         }
-        .btn-excel {
-            flex: 2;
-            background-color: #238636;
+        .btn-excel-custom {
+            width: 100%;
             color: white;
-            padding: 14px;
+            padding: 12px;
             border: none;
             border-radius: 8px;
             font-weight: bold;
             font-size: 14px;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
+        .btn-excel-custom:hover {
+            opacity: 0.9;
+        }
+        .bg-staff { background-color: #0288d1; }
+        .bg-orders { background-color: #2e7d32; }
+        
         .btn-reset {
-            flex: 1;
+            width: 100%;
             background-color: #484f58;
             color: #f0f6fc;
-            padding: 14px;
+            padding: 12px;
             border: none;
             border-radius: 8px;
             font-weight: bold;
             font-size: 14px;
             cursor: pointer;
+            margin-bottom: 15px;
         }
         .scale-link {
             text-align: center;
@@ -318,7 +344,6 @@
             from { box-shadow: 0 0 4px rgba(137,87,229,0.1); }
             to { box-shadow: 0 0 12px rgba(137,87,229,0.25); }
         }
-        /* تم زيادة مساحة الحاوية هنا لمنع اختفاء النصوص */
         .chart-container {
             margin-bottom: 18px;
             background: var(--bg-container);
@@ -354,7 +379,7 @@
     </div>
 
     <div class="ai-panel" id="aiPanel">
-        🔮 <strong>مساعد Google AI:</strong> جاري تهيئة خوارزميات TensorFlow النشطة... أدخل 3 وزنات للتحليل التراكمي.
+        🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow للتحليل ومراقب خط الأوزان.
     </div>
 
     <div class="manage-section">
@@ -397,10 +422,13 @@
 
     <div class="optional-section" style="border: 1px solid #1f6feb; background-color: rgba(31,111,235,0.03); margin-bottom: 15px;">
         <div class="section-subtitle" style="color: #1f6feb;">📦 معلومات اختيارية للطلبية:</div>
-        <div class="inputs-grid-three">
+        <div class="inputs-grid-three" style="margin-bottom: 8px;">
             <input type="number" id="chickenCountOpt" placeholder="عدد الفروج">
             <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية">
             <input type="text" id="destinationOpt" placeholder="المرسل إليه">
+        </div>
+        <div>
+            <input type="text" id="fridgeLocationOpt" placeholder="موقع البراد (اختياري)">
         </div>
     </div>
 
@@ -414,15 +442,21 @@
         <canvas id="miniChart" style="max-height: 190px;"></canvas>
     </div>
 
+    <div class="search-box-container">
+        <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث في السجل عن أي (اسم عامل، مسؤول، صنف، طلبية)..." oninput="updateUI()">
+    </div>
+
     <div class="table-responsive">
         <table>
             <thead>
                 <tr>
                     <th>الوقت</th>
+                    <th>اسم المسؤول</th>
+                    <th>اسم العامل</th>
                     <th>الصنف</th>
-                    <th>صافي الوجبة</th>
+                    <th>الوزنة كاملة</th>
+                    <th>صافي الوزنة</th>
                     <th>رقم الطلبية</th>
-                    <th>المرسل إليه</th>
                     <th>إجراء</th>
                 </tr>
             </thead>
@@ -431,10 +465,12 @@
         </table>
     </div>
 
-    <div class="footer-btns">
-        <button class="btn-excel" onclick="exportToExcel()">📊 تحميل ملف Excel</button>
-        <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد</button>
+    <div class="excel-buttons-zone">
+        <button class="btn-excel-custom bg-staff" onclick="exportStaffExcel()">📊 1. تحميل ملف إكسل الخاص بالموظفين (البند الرابع)</button>
+        <button class="btn-excel-custom bg-orders" onclick="exportOrdersExcel()">📊 2. تحميل ملف إكسل الخاص بباقي بيانات الطلبيات</button>
     </div>
+
+    <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد</button>
 
     <div class="scale-link">📍 ربط الميزان الإلكتروني</div>
 </div>
@@ -488,9 +524,8 @@
 
     async function runAIPrediction() {
         const panel = document.getElementById('aiPanel');
-        
         if (records.length < 3) {
-            panel.innerHTML = `🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow للتحليل ومراقب خط الأوزان.`;
+            panel.innerHTML = `🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow لمراقبة خط الأوزان الحالية.`;
             return;
         }
 
@@ -511,13 +546,9 @@
             const prediction = model.predict(tf.tensor1d([nextIndex]));
             const predictedValue = (await prediction.data())[0];
 
-            xs.dispose();
-            ys.dispose();
-            prediction.dispose();
-            model.dispose();
+            xs.dispose(); ys.dispose(); prediction.dispose(); model.dispose();
 
             panel.innerHTML = `🔮 <strong>توقع Google TensorFlow للوزنة التراكمية القادمة:</strong> يُتوقع أن تسجل حوالي <span style="font-weight:bold; color:#000000; font-size:14px;">${predictedValue.toFixed(2)} كغ</span>.`;
-
         } catch (error) {
             const lastWeights = records.slice(-3).map(r => parseFloat(r.net));
             const avg = (lastWeights[0] + lastWeights[1] + lastWeights[2]) / 3;
@@ -537,6 +568,7 @@
         const chickenCount = document.getElementById('chickenCountOpt').value || "-";
         const orderNumber = document.getElementById('orderNumberOpt').value || "-";
         const destination = document.getElementById('destinationOpt').value || "-";
+        const fridgeLocation = document.getElementById('fridgeLocationOpt').value || "-";
 
         const minW = document.getElementById('minWeightOpt').value ? parseInt(document.getElementById('minWeightOpt').value) : "-";
         const maxW = document.getElementById('maxWeightOpt').value ? parseInt(document.getElementById('maxWeightOpt').value) : "-";
@@ -553,17 +585,18 @@
             worker: worker,
             email: email,
             boxes: boxes,
-            gross: gross.toFixed(2),
+            gross: gross.toFixed(2), // تعبر عن الوزنة كاملة
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             item: item,
-            net: net.toFixed(2),
+            net: net.toFixed(2),     // تعبر عن صافي الوزنة
             minW: minW,
             maxW: maxW,
             freezeStart: freezeStart,
             freezeEnd: freezeEnd,
             chickenCount: chickenCount,
             orderNumber: orderNumber,
-            destination: destination
+            destination: destination,
+            fridgeLocation: fridgeLocation
         };
 
         records.push(newRecord);
@@ -573,6 +606,7 @@
         document.getElementById('chickenCountOpt').value = "";
         document.getElementById('orderNumberOpt').value = "";
         document.getElementById('destinationOpt').value = "";
+        document.getElementById('fridgeLocationOpt').value = "";
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
@@ -607,17 +641,33 @@
         tbody.innerHTML = "";
         let totalNet = 0;
         let chartData = {};
+        
+        // جلب نص البحث وتحويله لنصوص صغيرة للمقارنة العادلة والمباشرة
+        const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
         records.forEach((r, index) => {
+            // التحقق من مطابقة السجل مع خانة البحث الفوري الذكي
+            const matchSearch = 
+                r.manager.toLowerCase().includes(searchQuery) ||
+                r.worker.toLowerCase().includes(searchQuery) ||
+                r.item.toLowerCase().includes(searchQuery) ||
+                r.orderNumber.toLowerCase().includes(searchQuery) ||
+                r.destination.toLowerCase().includes(searchQuery) ||
+                r.fridgeLocation.toLowerCase().includes(searchQuery);
+
+            if (!matchSearch && searchQuery !== "") return;
+
             totalNet += parseFloat(r.net);
             chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
             
             const row = `<tr>
                 <td>${r.time}</td>
+                <td>${r.manager}</td>
+                <td>${r.worker}</td>
                 <td>${r.item}</td>
+                <td class="highlight-weight">${r.gross} كغ</td>
                 <td class="net-weight">${r.net} كغ</td>
                 <td>${r.orderNumber}</td>
-                <td>${r.destination}</td>
                 <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
             </tr>`;
             tbody.innerHTML += row;
@@ -639,7 +689,7 @@
                 data: {
                     labels: Object.keys(chartData),
                     datasets: [{
-                        label: 'إجمالي الأوزان لكل صنف',
+                        label: 'إجمالي الأوزان لكل صنف (كغ)',
                         data: Object.values(chartData),
                         backgroundColor: barColor,
                         borderWidth: 0
@@ -648,20 +698,8 @@
                 options: { 
                     responsive: true, 
                     scales: { 
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { color: gridColor }, 
-                            ticks: { color: textColor } 
-                        },
-                        x: { 
-                            grid: { display: false },
-                            ticks: { 
-                                color: textColor,
-                                maxRotation: 45, // تدوير النصوص بزاوية 45 درجة لتظهر كاملة دائماً
-                                minRotation: 45,
-                                autoSkip: false  // منع الخوارزمية من إخفاء أي صنف نهائياً
-                            } 
-                        }
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor, maxRotation: 45, minRotation: 45, autoSkip: false } }
                     },
                     plugins: { legend: { labels: { color: textColor } } }
                 }
@@ -673,31 +711,47 @@
         runAIPrediction();
     }
 
-    function exportToExcel() {
+    // ملف الإكسيل الأول: خاص بالبند الرابع (الموظفين والأوزان الصافية فقط)
+    function exportStaffExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
         
-        const customDataForExcel = records.map(r => ({
-            "رقم الطلبية": r.orderNumber,
-            "المكان المرسل إليه": r.destination,
-            "عدد الفروج داخل الطلبية": r.chickenCount,
+        const staffData = records.map(r => ({
             "اسم المسؤول": r.manager,
             "اسم العامل": r.worker,
-            "البريد الإلكتروني": r.email,
-            "الوقت": r.time,
+            "صافي الوزنة (كغ)": r.net,
+            "الوقت": r.time
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(staffData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "كشف الموظفين والأوزان الصافية");
+        XLSX.writeFile(wb, `HawaTech_Staff_Report_${new Date().toLocaleDateString()}.xlsx`);
+    }
+
+    // ملف الإكسيل الثاني: باقي البيانات المشتركة (مع حذف صافي الوزنة وإبقاء الوزنة كاملة)
+    function exportOrdersExcel() {
+        if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
+        
+        const ordersData = records.map(r => ({
+            "رقم الطلبية": r.orderNumber,
+            "المكان المرسل إليه": r.destination,
+            "موقع البراد": r.fridgeLocation,
+            "عدد الفروج داخل الطلبية": r.chickenCount,
             "الصنف": r.item,
             "عدد الأقفاص": r.boxes,
-            "الوزن القائم الكلي (كغ)": r.gross,
-            "الوزن الصافي الكلي (كغ)": r.net,
+            "الوزنة كاملة (كغ)": r.gross,  // تم وضع الوزنة كاملة بدلاً من الصافي وحذف الصافي تماماً بناءً على طلبك
+            "البريد الإلكتروني": r.email,
+            "الوقت": r.time,
             "معيار وزن الفروج الأدنى (غ)": r.minW,
             "معيار وزن الفروج الأعلى (غ)": r.maxW,
             "تاريخ دخول الفريزر": r.freezeStart,
             "تاريخ انتهاء الصلاحية": r.freezeEnd
         }));
 
-        const ws = XLSX.utils.json_to_sheet(customDataForExcel);
+        const ws = XLSX.utils.json_to_sheet(ordersData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "سجل الإنتاج والطلبيات");
-        XLSX.writeFile(wb, `HawaTech_Order_Report_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "سجل تفاصيل الطلبيات والأصناف");
+        XLSX.writeFile(wb, `HawaTech_Orders_Details_${new Date().toLocaleDateString()}.xlsx`);
     }
 
     function resetDataWithPassword() {
