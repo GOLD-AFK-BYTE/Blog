@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Advanced Control Edition)</title>
+    <title>Hawa-Tech App Pro (Ultimate Search Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -51,7 +51,7 @@
         }
         .app-container {
             width: 100%;
-            max-width: 550px; /* تم تكبير الحاوية قليلاً لاستيعاب الجدول الموسع */
+            max-width: 550px;
             background-color: var(--bg-container);
             border: 1px solid var(--border-color);
             border-radius: 20px;
@@ -228,7 +228,7 @@
         }
         .search-input {
             width: 100%;
-            padding: 10px;
+            padding: 11px;
             border: 2px solid var(--header-color);
             border-radius: 8px;
             font-size: 14px;
@@ -248,7 +248,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
-            min-width: 650px; /* تم التكبير ليتسع للأعمدة الـ 8 الجديدة بوضوح */
+            min-width: 650px;
         }
         th, td {
             padding: 8px 6px;
@@ -379,7 +379,7 @@
     </div>
 
     <div class="ai-panel" id="aiPanel">
-        🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow للتحليل ومراقب خط الأوزان.
+        🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow لمراقبة خط الأوزان الحالية.
     </div>
 
     <div class="manage-section">
@@ -443,7 +443,7 @@
     </div>
 
     <div class="search-box-container">
-        <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث في السجل عن أي (اسم عامل، مسؤول، صنف، طلبية)..." oninput="updateUI()">
+        <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث هنا عن أي شيء (اسم، صنف، وزن، صلاحية، تاريخ، رقم طلبية)..." oninput="updateUI()">
     </div>
 
     <div class="table-responsive">
@@ -466,7 +466,7 @@
     </div>
 
     <div class="excel-buttons-zone">
-        <button class="btn-excel-custom bg-staff" onclick="exportStaffExcel()">📊 1. تحميل ملف إكسل الخاص بالموظفين </button>
+        <button class="btn-excel-custom bg-staff" onclick="exportStaffExcel()">📊 1. تحميل ملف إكسل الخاص بالموظفين والأوزان</button>
         <button class="btn-excel-custom bg-orders" onclick="exportOrdersExcel()">📊 2. تحميل ملف إكسل الخاص بباقي بيانات الطلبيات</button>
     </div>
 
@@ -585,10 +585,10 @@
             worker: worker,
             email: email,
             boxes: boxes,
-            gross: gross.toFixed(2), // تعبر عن الوزنة كاملة
+            gross: gross.toFixed(2), 
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             item: item,
-            net: net.toFixed(2),     // تعبر عن صافي الوزنة
+            net: net.toFixed(2),     
             minW: minW,
             maxW: maxW,
             freezeStart: freezeStart,
@@ -642,18 +642,13 @@
         let totalNet = 0;
         let chartData = {};
         
-        // جلب نص البحث وتحويله لنصوص صغيرة للمقارنة العادلة والمباشرة
+        // جلب نص البحث
         const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
         records.forEach((r, index) => {
-            // التحقق من مطابقة السجل مع خانة البحث الفوري الذكي
-            const matchSearch = 
-                r.manager.toLowerCase().includes(searchQuery) ||
-                r.worker.toLowerCase().includes(searchQuery) ||
-                r.item.toLowerCase().includes(searchQuery) ||
-                r.orderNumber.toLowerCase().includes(searchQuery) ||
-                r.destination.toLowerCase().includes(searchQuery) ||
-                r.fridgeLocation.toLowerCase().includes(searchQuery);
+            // ميزة البحث المطلق: تحويل الكائن بأكمله لنص للبحث في كل الخانات والبيانات بدون استثناء
+            const allObjectValuesStr = Object.values(r).join(" ").toLowerCase();
+            const matchSearch = allObjectValuesStr.includes(searchQuery);
 
             if (!matchSearch && searchQuery !== "") return;
 
@@ -711,7 +706,6 @@
         runAIPrediction();
     }
 
-    // ملف الإكسيل الأول: خاص بالبند الرابع (الموظفين والأوزان الصافية فقط)
     function exportStaffExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
         
@@ -728,7 +722,6 @@
         XLSX.writeFile(wb, `HawaTech_Staff_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
-    // ملف الإكسيل الثاني: باقي البيانات المشتركة (مع حذف صافي الوزنة وإبقاء الوزنة كاملة)
     function exportOrdersExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
         
@@ -739,7 +732,7 @@
             "عدد الفروج داخل الطلبية": r.chickenCount,
             "الصنف": r.item,
             "عدد الأقفاص": r.boxes,
-            "الوزنة كاملة (كغ)": r.gross,  // تم وضع الوزنة كاملة بدلاً من الصافي وحذف الصافي تماماً بناءً على طلبك
+            "الوزنة كاملة (كغ)": r.gross,  
             "البريد الإلكتروني": r.email,
             "الوقت": r.time,
             "معيار وزن الفروج الأدنى (غ)": r.minW,
