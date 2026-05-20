@@ -542,7 +542,7 @@
     </div>
 
     <div class="total-display">
-        إجمالي الصافي التراكمي الفعلي للنهار: <span id="totalNetDisplay">0.00</span> كغ
+        إجمالي صافي الفترة الحالية (ما بعد آخر ترحيل): <span id="totalNetDisplay">0.00</span> كغ
     </div>
 
     <div class="chart-container" id="chartDiv" style="display:none;">
@@ -578,7 +578,7 @@
         <button class="btn-excel-custom bg-orders" onclick="exportOrdersExcel()">📊 2. تحميل ملف إكسل التقارير المترحلة للبراد</button>
     </div>
 
-    <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد</button>
+    <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد الكامل والبيانات</button>
 
     <div class="scale-link">📍 ربط الميزان الإلكتروني</div>
 </div>
@@ -680,7 +680,7 @@
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         
-        const manager = document.getElementById('managerName').value || "غير مححدد";
+        const manager = document.getElementById('managerName').value || "غير محدد";
         const worker = document.getElementById('workerName').value || "عام";
         const email = document.getElementById('emailOpt').value || "لا يوجد";
         
@@ -713,7 +713,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert("تم حفظ وزنة العامل وإضافتها للإجمالي التراكمي ✅");
+        alert("تم حفظ وزنة العامل وإضافتها للعداد الحالي ✅");
     }
 
     function transferOrderToFridge() {
@@ -723,7 +723,6 @@
         if (!item) { alert("يرجى اختيار الصنف للطلب المرحل أولاً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
 
-        // يتم حفظ البيانات الوصفية فقط للترحيل ولا يتم سحب أوزان حية تتدخل في العمليات الحسابية
         const manager = document.getElementById('managerName').value || "غير محدد";
         const chickenCount = document.getElementById('chickenCountOpt').value || "-";
         const destination = document.getElementById('destinationOpt').value || "-";
@@ -759,7 +758,6 @@
         records.push(orderRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
 
-        // تصفير حقول الوزن فوراً لضمان عدم حدوث أي تداخل
         document.getElementById('grossInput').value = "";
         document.getElementById('boxCount').value = "";
         document.getElementById('chickenCountOpt').value = "";
@@ -774,7 +772,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل بيانات نهاية الساعة للطلبية (${orderNumber}) بنجاح، ومستبعدة تماماً من كافة العدادات الحسابية 📦.`);
+        alert(`تم ترحيل الطلبية (${orderNumber}) بنجاح. تم تصفير عداد الفترة الحالية للبدء من جديد 📦.`);
     }
 
     function deleteRecord(index) {
@@ -842,14 +840,23 @@
         
         const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
+        // 🌟 العثور على الفهرس (Index) الخاص بآخر عملية ترحيل للبراد
+        let lastTransferIndex = -1;
+        for (let i = records.length - 1; i >= 0; i--) {
+            if (records[i].recordType === "ترحيل_براد") {
+                lastTransferIndex = i;
+                break;
+            }
+        }
+
         records.forEach((r, index) => {
             const allObjectValuesStr = Object.values(r).join(" ").toLowerCase();
             const matchSearch = allObjectValuesStr.includes(searchQuery);
 
             if (!matchSearch && searchQuery !== "") return;
 
-            // 🌟 شرط صارم ومطلق: العدادات لا تقرأ إلا وزنة_فردية فقط لا غير
-            if (r.recordType === "وزنة_فردية") {
+            // 🌟 منطق "عداد السيارة للرحلات": الحساب يبدأ ويجمع فقط للوزنات التي جاءت بعد آخر عملية ترحيل
+            if (r.recordType === "وزنة_فردية" && index > lastTransferIndex) {
                 totalNet += parseFloat(r.net) || 0;
                 totalGross += parseFloat(r.gross) || 0;
                 chartDataNet[r.item] = (chartDataNet[r.item] || 0) + (parseFloat(r.net) || 0);
@@ -872,15 +879,15 @@
             tbody.innerHTML += row;
         });
 
-        // 🌟 العداد الوهمي الممتد المحدث: يلتزم الآن بقيم (totalGross و totalNet) الصافية لوزنات الخط فقط
+        // 🌟 العداد الممتد في أسفل الجدول يعرض الآن إنتاج الرحلة الحالية فقط بعد آخر ترحيل
         if(records.length > 0) {
             const footerRow = `<tr class="row-virtual-footer">
                 <td>لايف</td>
-                <td>📊 عداد وهمي ممتد</td>
-                <td>وزنات الخط فقط</td>
+                <td>📊 عداد الرحلة الحالية</td>
+                <td>ما بعد آخر ترحيل</td>
                 <td>${totalGross.toFixed(2)} كغ</td>
                 <td>${totalNet.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#555;">(مراقب صافي خط الإنتاج الفعلي - معزول تماماً عن الترحيل)</td>
+                <td colspan="2" style="font-size:11px; color:#555;">(مراقب إنتاج الساعة الحالية - يصفّر تلقائياً عند كل ترحيل)</td>
             </tr>`;
             tfoot.innerHTML = footerRow;
         }
@@ -902,7 +909,7 @@
                 data: {
                     labels: Object.keys(chartDataNet),
                     datasets: [{
-                        label: 'صافي الوزن النظيف (كغ)',
+                        label: 'صافي إنتاج الفترة الحالية (كغ)',
                         data: Object.values(chartDataNet),
                         backgroundColor: barColor,
                         borderWidth: 0,
@@ -926,7 +933,7 @@
                                     const grossW = context.dataset.grossValues[index].toFixed(2);
                                     const boxesWeight = (parseFloat(grossW) - parseFloat(netW)).toFixed(2);
                                     return [
-                                        ` • صافي الإنتاج النظيف: ${netW} كغ`,
+                                        ` • صافي الإنتاج الحالي: ${netW} كغ`,
                                         ` • إجمالي الوزن القائم: ${grossW} كغ`,
                                         ` • مخصوم أقفاص (تار): ${boxesWeight} كغ`
                                     ];
@@ -964,7 +971,7 @@
         });
 
         staffData.push({
-            "اسم المسؤول": "الإجمالي النظيف الفعلي",
+            "اسم المسؤول": "الإجمالي النظيف الفعلي الشامل",
             "اسم العامل": "",
             "صافي الوزنة (كغ)": sumNet,
             "الوقت": "", "التاريخ": ""
@@ -1006,7 +1013,7 @@
             localStorage.removeItem('hawaTechAppData');
             records = [];
             updateUI();
-            alert("تم تصفير المنظومة بنجاح");
+            alert("تم تصفير المنظومة وقاعدة البيانات بنجاح");
         } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
     }
 
