@@ -214,7 +214,7 @@
             text-align: center;
             padding: 12px;
             font-weight: bold;
-            font-size: 17px;
+            font-size: 16px;
             border-radius: 8px;
             margin-bottom: 18px;
         }
@@ -491,9 +491,9 @@
     </div>
 
     <div class="manage-section">
-        <div class="manage-title">إدارة الأصناف:</div>
+        <div class="manage-title">إدارة الأصناف الحالية:</div>
         <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-            <select id="itemSelect">
+            <select id="itemSelect" onchange="updateUI()">
                 <option value="">-- اختر الصنف --</option>
                 <option value="جوانح">جوانح</option>
                 <option value="صدر مسحب">صدر مسحب</option>
@@ -543,10 +543,9 @@
     </div>
 
     <div class="total-display">
-        إجمالي صافي الفترة الحالية (ما بعد آخر ترحيل): <span id="totalNetDisplay">0.00</span> كغ
+        إجمالي الصافي للصنف المختار حالياً: <span id="totalNetDisplay">0.00</span> كغ
     </div>
 
-    <!-- 📊 إطار الرسم البياني مثبت دائماً الآن لمنع الاختفاء المفاجئ للواجهة -->
     <div class="chart-container" id="chartDiv">
         <canvas id="miniChart" style="max-height: 220px;"></canvas>
     </div>
@@ -641,35 +640,38 @@
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
-    function getCurrentPeriodNetTotal() {
+    // 🔥 تعديل ذكي: حساب صافي الوزن للصنف المختار تحديداً لمنع التداخل والخلط بين الأصناف
+    function getCurrentPeriodNetTotal(selectedItem) {
+        if (!selectedItem) return 0;
         let lastTransferIndex = -1;
         for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد") {
+            if (records[i].recordType === "ترحيل_براد" && records[i].item === selectedItem) {
                 lastTransferIndex = i;
                 break;
             }
         }
         let total = 0;
         records.forEach((r, index) => {
-            if (r.recordType === "وزنة_فردية" && index > lastTransferIndex) {
+            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && index > lastTransferIndex) {
                 total += parseFloat(r.net) || 0;
             }
         });
         return total;
     }
 
-    // دالة جديدة لحساب الوزن الكلي القائم لهذه الفترة
-    function getCurrentPeriodGrossTotal() {
+    // 🔥 تعديل ذكي: حساب إجمالي الوزن القائم للصنف المختار تحديداً لمنع الخلط
+    function getCurrentPeriodGrossTotal(selectedItem) {
+        if (!selectedItem) return 0;
         let lastTransferIndex = -1;
         for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد") {
+            if (records[i].recordType === "ترحيل_براد" && records[i].item === selectedItem) {
                 lastTransferIndex = i;
                 break;
             }
         }
         let total = 0;
         records.forEach((r, index) => {
-            if (r.recordType === "وزنة_فردية" && index > lastTransferIndex) {
+            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && index > lastTransferIndex) {
                 total += parseFloat(r.gross) || 0;
             }
         });
@@ -750,7 +752,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert("تم حفظ وزنة العامل وإضافتها للعداد الحالي ✅");
+        alert(`تم حفظ وزنة صنف (${item}) وعاملها بنجاح ✅`);
     }
 
     function transferOrderToFridge() {
@@ -759,6 +761,16 @@
         
         if (!item) { alert("يرجى اختيار الصنف للطلب المرحل أولاً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
+
+        // حساب مجموع الأوزان للصنف المختار فقط في هذه الفترة
+        const totalNetCalculated = getCurrentPeriodNetTotal(item);
+        const totalGrossCalculated = getCurrentPeriodGrossTotal(item);
+
+        // 🔥 حماية تامة: منع ترحيل أصفار إذا لم توجد وزنات فعلية للصنف المختار
+        if (totalNetCalculated === 0) {
+            alert(`⚠️ عذراً! لا توجد وزنات مسجلة لصنف (${item}) في هذه الفترة لترحيلها، لا يمكن ترحيل أصفار.`);
+            return;
+        }
 
         const manager = document.getElementById('managerName').value || "غير محدد";
         const chickenCount = document.getElementById('chickenCountOpt').value || "-";
@@ -770,17 +782,13 @@
         const freezeStart = document.getElementById('freezeStartOpt').value || "-";
         const freezeEnd = document.getElementById('freezeEndOpt').value || "-";
 
-        // حساب مجموع الأوزان الحالية قبل الترحيل
-        const totalNetCalculated = getCurrentPeriodNetTotal();
-        const totalGrossCalculated = getCurrentPeriodGrossTotal();
-
         const orderRecord = {
             recordType: "ترحيل_براد",
             manager: manager,
             worker: "-",
             email: document.getElementById('emailOpt').value || "لا يوجد",
             boxes: "-",
-            gross: totalGrossCalculated.toFixed(2), // 🔥 تم توثيق وحفظ الوزن الكلي للبراد هنا بدقة
+            gross: totalGrossCalculated.toFixed(2), 
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
@@ -813,7 +821,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل الطلبية رقم (${orderNumber}) بوزن صافي قدره ${totalNetCalculated.toFixed(2)} كغ ووزن كلي قدره ${totalGrossCalculated.toFixed(2)} كغ بنجاح وتصفير العداد ✅.`);
+        alert(`تم ترحيل طلبيّة صنف (${item}) رقم (${orderNumber}) بنجاح وتصفير العداد الخاص به ✅.`);
     }
 
     function deleteRecord(index) {
@@ -887,30 +895,37 @@
         tbody.innerHTML = "";
         tfoot.innerHTML = "";
         
-        let totalNet = 0;
-        let totalGross = 0;
+        const selectedItem = document.getElementById('itemSelect').value;
+        
+        let displayNetForSelected = 0;
         let chartDataNet = {};
         let chartDataGross = {};
         
         const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
-        let lastTransferIndex = -1;
-        for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد") {
-                lastTransferIndex = i;
-                break;
-            }
+        // عرض إجمالي الصافي المحدث للصنف المختار حالياً بالواجهة لمنع التشتت
+        if (selectedItem) {
+            displayNetForSelected = getCurrentPeriodNetTotal(selectedItem);
         }
+        document.getElementById('totalNetDisplay').innerText = displayNetForSelected.toFixed(2);
 
+        // بناء جداول المخرجات والفلترة للرسم البياني
         records.forEach((r, index) => {
             const allObjectValuesStr = Object.values(r).join(" ").toLowerCase();
             const matchSearch = allObjectValuesStr.includes(searchQuery);
 
             if (!matchSearch && searchQuery !== "") return;
 
-            if (r.recordType === "وزنة_فردية" && index > lastTransferIndex) {
-                totalNet += parseFloat(r.net) || 0;
-                totalGross += parseFloat(r.gross) || 0;
+            // تحديد آخر نقطة ترحيل لكل صنف على حدة لعدم تصفير الأصناف الأخرى بشكل عشوائي
+            let lastTransferIndexForThisItem = -1;
+            for (let i = index - 1; i >= 0; i--) {
+                if (records[i].recordType === "ترحيل_براد" && records[i].item === r.item) {
+                    lastTransferIndexForThisItem = i;
+                    break;
+                }
+            }
+
+            if (r.recordType === "وزنة_فردية" && index > lastTransferIndexForThisItem) {
                 chartDataNet[r.item] = (chartDataNet[r.item] || 0) + (parseFloat(r.net) || 0);
                 chartDataGross[r.item] = (chartDataGross[r.item] || 0) + (parseFloat(r.gross) || 0);
             }
@@ -934,21 +949,20 @@
             tbody.innerHTML += row;
         });
 
-        if(records.length > 0) {
+        if(selectedItem && displayNetForSelected > 0) {
+            const currentGrossForSelected = getCurrentPeriodGrossTotal(selectedItem);
             const footerRow = `<tr class="row-virtual-footer">
                 <td>لايف</td>
-                <td>📊 عداد الرحلة الحالية</td>
-                <td>ما بعد آخر ترحيل</td>
-                <td>${totalGross.toFixed(2)} كغ</td>
-                <td>${totalNet.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#555;">(مراقب إنتاج الساعة الحالية - يصفّر تلقائياً عند كل ترحيل)</td>
+                <td>📊 عداد الحالي للمنتج</td>
+                <td>${selectedItem}</td>
+                <td>${currentGrossForSelected.toFixed(2)} كغ</td>
+                <td>${displayNetForSelected.toFixed(2)} كغ</td>
+                <td colspan="2" style="font-size:11px; color:#555;">(مراقب إنتاج صنف ${selectedItem} الحالي)</td>
             </tr>`;
             tfoot.innerHTML = footerRow;
         }
 
-        document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
-
-        // 📊 بناء وإعادة رسم المخطط البياني (مستقر دائماً ولا يختفي)
+        // رسم وثبات المخطط البياني
         const computedStyle = getComputedStyle(document.body);
         const barColor = computedStyle.getPropertyValue('--chart-bar').trim();
         const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
@@ -964,9 +978,9 @@
         myChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: currentLabels.length > 0 ? currentLabels : ["لا يوجد أوزان حالية"],
+                labels: currentLabels.length > 0 ? currentLabels : ["لا يوجد أوزان معلقة"],
                 datasets: [{
-                    label: 'صافي إنتاج الصنف الحالي (كغ)',
+                    label: 'صافي إنتاج الأصناف غير المترحّلة (كغ)',
                     data: currentValuesNet.length > 0 ? currentValuesNet : [0],
                     backgroundColor: barColor,
                     borderRadius: 6,
@@ -982,7 +996,7 @@
                         labels: { font: { family: 'Segoe UI', size: 12 }, color: textColor }
                     },
                     tooltip: {
-                        enabled: currentLabels.length > 0, // تفعيل النوافذ المنبثقة عند الضغط فقط في حال وجود بيانات
+                        enabled: currentLabels.length > 0,
                         backgroundColor: 'rgba(0, 17, 34, 0.95)',
                         titleColor: '#58a6ff',
                         titleFont: { size: 14, weight: 'bold', family: 'Segoe UI' },
@@ -1062,7 +1076,6 @@
         const filtered = records.filter(r => r.recordType === "ترحيل_براد");
         if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
         
-        // 🔥 تم دمج وحفظ الوزنة كاملة (الوزن الكلي) مع الوزن الصافي للبراد هنا كما طلبت
         const ordersData = filtered.map(r => {
             return {
                 "رقم الطلبية المرحّلة": r.orderNumber,
