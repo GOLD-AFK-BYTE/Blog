@@ -639,6 +639,24 @@
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
+    // حساب العداد الحالي الفعلي (مجموع الأوزان بعد آخر ترحيل للبراد)
+    function getCurrentPeriodNetTotal() {
+        let lastTransferIndex = -1;
+        for (let i = records.length - 1; i >= 0; i--) {
+            if (records[i].recordType === "ترحيل_براد") {
+                lastTransferIndex = i;
+                break;
+            }
+        }
+        let total = 0;
+        records.forEach((r, index) => {
+            if (r.recordType === "وزنة_فردية" && index > lastTransferIndex) {
+                total += parseFloat(r.net) || 0;
+            }
+        });
+        return total;
+    }
+
     async function runAIPrediction() {
         const panel = document.getElementById('aiPanel');
         const filteredWeights = records.filter(r => r.recordType === "وزنة_فردية");
@@ -733,23 +751,20 @@
         const freezeStart = document.getElementById('freezeStartOpt').value || "-";
         const freezeEnd = document.getElementById('freezeEndOpt').value || "-";
 
-        // يتم جلب قيم الوزن الحالية الموجودة في العداد قبل تصفيرها لتوثيق تجميعة الرحلة داخل تفاصيل السجل بدقة
-        const grossVal = parseFloat(document.getElementById('grossInput').value) || 0;
-        const boxesVal = parseFloat(document.getElementById('boxCount').value) || 0;
-        const totalTare = boxesVal * tarePerBox;
-        const netVal = grossVal - totalTare;
+        // 🔥 تعديل جوهري: الترحيل الآن يلتقط إجمالي صافي الوزن التراكمي لهذه الفترة قبل تصفيره ويحفظه في السجل
+        const totalNetCalculated = getCurrentPeriodNetTotal();
 
         const orderRecord = {
             recordType: "ترحيل_براد",
             manager: manager,
             worker: "-",
             email: document.getElementById('emailOpt').value || "لا يوجد",
-            boxes: boxesVal,
-            gross: grossVal > 0 ? grossVal.toFixed(2) : "-",
+            boxes: "-",
+            gross: "-",
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
-            net: grossVal > 0 ? netVal.toFixed(2) : "-",
+            net: totalNetCalculated.toFixed(2), // حفظ صافي وزن الطلبية بالكامل
             chickenCount: chickenCount,
             orderNumber: orderNumber,
             destination: destination,
@@ -778,7 +793,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل الطلبية (${orderNumber}) بنجاح. تم تصفير عداد الفترة الحالية للبدء من جديد 📦.`);
+        alert(`تم ترحيل الطلبية رقم (${orderNumber}) بوزن صافي إجمالي قدره ${totalNetCalculated.toFixed(2)} كغ بنجاح وتصفير عداد الرحلة الحالية ✅.`);
     }
 
     function deleteRecord(index) {
@@ -793,10 +808,19 @@
         const r = records[index];
         const modalBody = document.getElementById('modalBody');
         
-        // 🌟 تعديل ذكي: إظهار الأوزان الحقيقية المخزنة داخل السجل مباشرةً دون اعتماد قيم افتراضية فارغة
-        const displayGross = r.gross !== "0.00" && r.gross !== "-" ? `${r.gross} كغ` : "لا يوجد وزنة حية";
-        const displayNet = r.net !== "0.00" && r.net !== "-" ? `${r.net} كغ` : "سجل وصفي / ترحيل";
-        const displayBoxes = r.boxes > 0 ? `${r.boxes} أقفاص` : "-";
+        // 🌟 عرض الأوزان بشكل واضح حسب نوع العملية لضمان عدم ظهور حقول فارغة أو مبهمة
+        let weightHTML = '';
+        if(r.recordType === "وزنة_فردية") {
+            weightHTML = `
+                <div class="modal-item"><span>الوزن القائم (الإجمالي):</span> <span style="font-weight:bold; color:#238636;">${r.gross} كغ</span></div>
+                <div class="modal-item"><span>عدد الصناديق / الأقفاص:</span> <span>${r.boxes} أقفاص</span></div>
+                <div class="modal-item"><span>صافي الوزن الفعلي:</span> <span style="color:#1f6feb; font-weight:bold;">${r.net} كغ</span></div>
+            `;
+        } else {
+            weightHTML = `
+                <div class="modal-item"><span>إجمالي وزن الطلبية المرحل:</span> <span style="font-weight:bold; color:#e65100; font-size:15px;">${r.net} كغ</span></div>
+            `;
+        }
 
         modalBody.innerHTML = `
             <div class="modal-item"><span>نوع السجل:</span> <span style="font-weight:bold; color:${r.recordType === 'ترحيل_براد' ? '#e65100':'#1f6feb'};">${r.recordType === "ترحيل_براد" ? "📦 ترحيل ساعة للبراد" : "⚖️ وزنة خط إنتاج"}</span></div>
@@ -804,9 +828,7 @@
             <div class="modal-item"><span>اسم المسؤول (المشرف):</span> <span>${r.manager}</span></div>
             <div class="modal-item"><span>اسم العامل على الخط:</span> <span>${r.worker}</span></div>
             <div class="modal-item"><span>الصنف المستهدف:</span> <span>${r.item}</span></div>
-            <div class="modal-item"><span>الوزنة كاملة (القائم):</span> <span style="font-weight:bold; color:#238636;">${displayGross}</span></div>
-            <div class="modal-item"><span>صافي الوزن الحالي:</span> <span style="color:#1f6feb; font-weight:bold;">${displayNet}</span></div>
-            <div class="modal-item"><span>عدد صناديق الأقفاص:</span> <span>${displayBoxes}</span></div>
+            ${weightHTML}
             <div class="modal-item"><span>رقم الطلبية المفتوحة:</span> <span>${r.orderNumber}</span></div>
             <div class="modal-item"><span>المكان المرسل إليه:</span> <span>${r.destination}</span></div>
             <div class="modal-item"><span>موقع البراد الداخلي:</span> <span>${r.fridgeLocation}</span></div>
@@ -877,16 +899,15 @@
             const rowClass = isTransfer ? "row-order-transfer" : "row-weight-only";
             const typeLabel = isTransfer ? "📦 ترحيل ساعة" : "⚖️ وزنة خط";
 
-            // تحديد شكل العرض في الجدول الرئيسي بناءً على وجود وزن فعلي من عدمه
             const tableGrossDisplay = (r.gross && r.gross !== "-") ? r.gross + ' كغ' : '-';
-            const tableNetDisplay = (r.net && r.net !== "-") ? r.net + ' كغ' : '(تقرير مرحّل)';
+            const tableNetDisplay = isTransfer ? `صافي الطلب: ${r.net} كغ` : `${r.net} كغ`;
 
             const row = `<tr class="${rowClass}">
                 <td>${r.time}</td>
                 <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${typeLabel}</td>
                 <td>${r.item}</td>
-                <td class="highlight-weight">${isTransfer ? '-' : tableGrossDisplay}</td>
-                <td class="net-weight">${isTransfer ? '(تقرير مرحّل)' : tableNetDisplay}</td>
+                <td class="highlight-weight">${tableGrossDisplay}</td>
+                <td class="net-weight" style="color: ${isTransfer ? '#e65100' : '#1f6feb'}">${tableNetDisplay}</td>
                 <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">عرض التفاصيل 👁️</button></td>
                 <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
             </tr>`;
@@ -969,7 +990,7 @@
 
     function exportStaffExcel() {
         const filtered = records.filter(r => r.recordType === "وزنة_فردية");
-        if(filtered.length === 0) { alert("لا توجد بيانات وزنات عمال لتصديرها"); return; }
+        if(filtered.length === 0) { alert("لا توجد بيانات وزنات ععمال لتصديرها"); return; }
         
         let sumNet = 0;
         const staffData = filtered.map(r => {
@@ -977,7 +998,10 @@
             return {
                 "اسم المسؤول": r.manager,
                 "اسم العامل": r.worker,
-                "صافي الوزنة (كغ)": parseFloat(r.net),
+                "الصنف": r.item,
+                "عدد الصناديق": r.boxes,
+                "الوزن القائم (كغ)": parseFloat(r.gross),
+                "صافي الوزنة النظيف (كغ)": parseFloat(r.net),
                 "الوقت": r.time,
                 "التاريخ": r.date
             };
@@ -985,8 +1009,8 @@
 
         staffData.push({
             "اسم المسؤول": "الإجمالي النظيف الفعلي الشامل",
-            "اسم العامل": "",
-            "صافي الوزنة (كغ)": sumNet,
+            "اسم العامل": "", "الصنف": "", "عدد الصناديق": "", "الوزن القائم (كغ)": "",
+            "صافي الوزنة النظيف (كغ)": sumNet,
             "الوقت": "", "التاريخ": ""
         });
 
@@ -1005,6 +1029,7 @@
                 "رقم الطلبية المرحّلة": r.orderNumber,
                 "المكان المرسل إليه": r.destination,
                 "الصنف": r.item,
+                "إجمالي صافي وزن الطلبية (كغ)": parseFloat(r.net), // تصدير أوزان الطلبيات بشكل سليم
                 "موقع البراد الداخلي": r.fridgeLocation,
                 "درجة الحرارة (C°)": r.temperature,
                 "عدد الفروج داخل الطلبية": r.chickenCount,
@@ -1021,7 +1046,7 @@
     }
 
     function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد:");
+        const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
             localStorage.removeItem('hawaTechAppData');
             records = [];
