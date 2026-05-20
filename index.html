@@ -680,7 +680,7 @@
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         
-        const manager = document.getElementById('managerName').value || "غير محدد";
+        const manager = document.getElementById('managerName').value || "غير مححدد";
         const worker = document.getElementById('workerName').value || "عام";
         const email = document.getElementById('emailOpt').value || "لا يوجد";
         
@@ -723,11 +723,7 @@
         if (!item) { alert("يرجى اختيار الصنف للطلب المرحل أولاً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
 
-        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
-        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
-        const totalTare = boxes * tarePerBox;
-        const net = gross - totalTare;
-
+        // يتم حفظ البيانات الوصفية فقط للترحيل ولا يتم سحب أوزان حية تتدخل في العمليات الحسابية
         const manager = document.getElementById('managerName').value || "غير محدد";
         const chickenCount = document.getElementById('chickenCountOpt').value || "-";
         const destination = document.getElementById('destinationOpt').value || "-";
@@ -743,12 +739,12 @@
             manager: manager,
             worker: "-",
             email: document.getElementById('emailOpt').value || "لا يوجد",
-            boxes: boxes,
-            gross: gross.toFixed(2),
+            boxes: 0,
+            gross: "0.00",
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
-            net: net.toFixed(2),
+            net: "0.00",
             chickenCount: chickenCount,
             orderNumber: orderNumber,
             destination: destination,
@@ -763,6 +759,7 @@
         records.push(orderRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
 
+        // تصفير حقول الوزن فوراً لضمان عدم حدوث أي تداخل
         document.getElementById('grossInput').value = "";
         document.getElementById('boxCount').value = "";
         document.getElementById('chickenCountOpt').value = "";
@@ -777,7 +774,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل بيانات نهاية الساعة للطلبية (${orderNumber}) بنجاح، دون إضافتها مجدداً للعداد التراكمي للنهار 📦.`);
+        alert(`تم ترحيل بيانات نهاية الساعة للطلبية (${orderNumber}) بنجاح، ومستبعدة تماماً من كافة العدادات الحسابية 📦.`);
     }
 
     function deleteRecord(index) {
@@ -851,12 +848,12 @@
 
             if (!matchSearch && searchQuery !== "") return;
 
-            // 🌟 الفلترة الدقيقة: يتم حساب العدادات الكلية فقط للوزنات الفردية
+            // 🌟 شرط صارم ومطلق: العدادات لا تقرأ إلا وزنة_فردية فقط لا غير
             if (r.recordType === "وزنة_فردية") {
-                totalNet += parseFloat(r.net);
-                totalGross += parseFloat(r.gross);
-                chartDataNet[r.item] = (chartDataNet[r.item] || 0) + parseFloat(r.net);
-                chartDataGross[r.item] = (chartDataGross[r.item] || 0) + parseFloat(r.gross);
+                totalNet += parseFloat(r.net) || 0;
+                totalGross += parseFloat(r.gross) || 0;
+                chartDataNet[r.item] = (chartDataNet[r.item] || 0) + (parseFloat(r.net) || 0);
+                chartDataGross[r.item] = (chartDataGross[r.item] || 0) + (parseFloat(r.gross) || 0);
             }
 
             const isTransfer = r.recordType === "ترحيل_براد";
@@ -867,15 +864,15 @@
                 <td>${r.time}</td>
                 <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${typeLabel}</td>
                 <td>${r.item}</td>
-                <td class="highlight-weight">${r.gross} كغ</td>
-                <td class="net-weight">${r.net} كغ ${isTransfer ? '(مرحّل)':''}</td>
+                <td class="highlight-weight">${isTransfer ? '-' : r.gross + ' كغ'}</td>
+                <td class="net-weight">${isTransfer ? '(تقرير مرحّل)' : r.net + ' كغ'}</td>
                 <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">عرض التفاصيل 👁️</button></td>
                 <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
             </tr>`;
             tbody.innerHTML += row;
         });
 
-        // 🌟 العداد الوهمي الممتد المحدث: يلتزم الآن بقيم (totalGross و totalNet) الصافية فقط لوزنات الخط
+        // 🌟 العداد الوهمي الممتد المحدث: يلتزم الآن بقيم (totalGross و totalNet) الصافية لوزنات الخط فقط
         if(records.length > 0) {
             const footerRow = `<tr class="row-virtual-footer">
                 <td>لايف</td>
@@ -883,7 +880,7 @@
                 <td>وزنات الخط فقط</td>
                 <td>${totalGross.toFixed(2)} كغ</td>
                 <td>${totalNet.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#555;">(مراقب صافي خط الإنتاج الفعلي - يتجاهل الترحيل)</td>
+                <td colspan="2" style="font-size:11px; color:#555;">(مراقب صافي خط الإنتاج الفعلي - معزول تماماً عن الترحيل)</td>
             </tr>`;
             tfoot.innerHTML = footerRow;
         }
@@ -988,8 +985,6 @@
                 "رقم الطلبية المرحّلة": r.orderNumber,
                 "المكان المرسل إليه": r.destination,
                 "الصنف": r.item,
-                "الوزن الصافي الموثق (كغ)": parseFloat(r.net),
-                "عدد الأقفاص": parseFloat(r.boxes) || 0,
                 "موقع البراد الداخلي": r.fridgeLocation,
                 "درجة الحرارة (C°)": r.temperature,
                 "عدد الفروج داخل الطلبية": r.chickenCount,
