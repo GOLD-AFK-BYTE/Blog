@@ -271,9 +271,10 @@
             min-width: 650px;
         }
         th, td {
-            padding: 8px 6px;
+            padding: 10px 6px;
             border: 1px solid var(--border-color);
             text-align: center;
+            white-space: nowrap; /* منع اختلاط أو تداخل الكلمات */
         }
         th {
             background-color: var(--input-bg);
@@ -288,6 +289,14 @@
         }
         .row-weight-only { background-color: transparent; }
         .row-order-transfer { background-color: rgba(230,81,0,0.06); }
+        
+        /* تصميم الصف الافتراضي الوهمي لمرافقة العداد */
+        .row-virtual-summary {
+            background-color: rgba(0, 51, 102, 0.08) !important;
+            font-weight: bold;
+            color: #003366;
+            border-top: 2px solid #003366;
+        }
 
         td.highlight-weight {
             color: #238636;
@@ -560,6 +569,8 @@
             </thead>
             <tbody id="tableBody">
             </tbody>
+            <tfoot id="tableFoot">
+            </tfoot>
         </table>
     </div>
 
@@ -587,10 +598,8 @@
     let myChart = null;
     const tarePerBox = 1.40;
 
-    // 🌟 دالة للحصول على آخر وزن قائم مسجل في المنظومة لطرحه تلقائياً
     function getLastGrossWeight() {
         if (records.length === 0) return 0;
-        // نأخذ آخر وزنة مسجلة حقيقية لمعرفة أين توقف العداد التراكمي للميزان
         return parseFloat(records[records.length - 1].gross) || 0;
     }
 
@@ -623,14 +632,11 @@
     }
     setInterval(updateDateTime, 1000);
 
-    // 🌟 تحديث الحسبة لايف أثناء الكتابة (تطرح الوزن السابق تلقائياً)
     function updateLiveWeight() {
         const currentGrossInput = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         
         const previousGross = getLastGrossWeight();
-        
-        // إذا كان مدخل الميزان الحالي أكبر من السابق، نقوم بعملية الطرح التلقائي، وإلا نعتبره وزناً جديداً بالكامل
         const actualGrossDifference = currentGrossInput >= previousGross ? (currentGrossInput - previousGross) : currentGrossInput;
         
         const totalTare = boxes * tarePerBox;
@@ -679,7 +685,6 @@
         }
     }
 
-    // زر حفظ الأوزان لخط العمال (الآلة الحاسبة الداخلية تعمل هنا)
     function saveCurrentRecord() {
         const item = document.getElementById('itemSelect').value;
         const currentGrossInput = parseFloat(document.getElementById('grossInput').value) || 0;
@@ -689,8 +694,6 @@
         if (currentGrossInput === 0) { alert("يرجى إدخال رقم الميزان الحالي لحفظ السجل"); return; }
 
         const previousGross = getLastGrossWeight();
-        
-        // 🌟 الحسبة الذكية: طرح التراكمي السابق من الحالي لمعرفة الصافي الحقيقي الحالي للمنتج
         const actualGrossDifference = currentGrossInput >= previousGross ? (currentGrossInput - previousGross) : currentGrossInput;
         const totalTare = boxes * tarePerBox;
         const net = actualGrossDifference - totalTare;
@@ -705,11 +708,11 @@
             worker: worker,
             email: email,
             boxes: boxes,
-            gross: currentGrossInput.toFixed(2), // نحفظ رقم شاشة الميزان الحالي ليعتمد عليه السجل القادم
+            gross: currentGrossInput.toFixed(2),
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
-            net: net.toFixed(2), // الصافي النظيف الفعلي بعد طرح الأقفاص والوزنة السابقة
+            net: net.toFixed(2),
             previousGrossSaved: previousGross.toFixed(2),
             chickenCount: "-", orderNumber: "-", destination: "-", fridgeLocation: "-", temperature: "-", minW: "-", maxW: "-", freezeStart: "-", freezeEnd: "-"
         };
@@ -826,7 +829,6 @@
         document.getElementById('detailsModal').style.display = "none";
     }
 
-    // (باقي الدوال القياسية كما هي دون تغيير للحفاظ على البنية الأصلية)
     function addItem() {
         const name = document.getElementById('newItemInput').value.trim();
         if(name) {
@@ -845,10 +847,12 @@
 
     function updateUI() {
         const tbody = document.getElementById('tableBody');
+        const tfoot = document.getElementById('tableFoot');
         tbody.innerHTML = "";
+        tfoot.innerHTML = "";
+        
         let totalNet = 0;
         let chartDataNet = {};
-        let chartDataGross = {};
         
         const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
@@ -861,7 +865,6 @@
             if (r.recordType === "وزنة_فردية") {
                 totalNet += parseFloat(r.net);
                 chartDataNet[r.item] = (chartDataNet[r.item] || 0) + parseFloat(r.net);
-                chartDataGross[r.item] = (chartDataGross[r.item] || 0) + parseFloat(r.gross);
             }
 
             const isTransfer = r.recordType === "ترحيل_براد";
@@ -880,6 +883,19 @@
             tbody.innerHTML += row;
         });
 
+        // 🌟 بناء الخلية الافتراضية الوهمية في أسفل الجدول لمرافقتك دون دخول ملف الإكسل
+        if (records.length > 0) {
+            const footerRow = `<tr class="row-virtual-summary">
+                <td>متحرك لايف</td>
+                <td>📊 عداد تراكمي وهمي</td>
+                <td>كل الأصناف الفعّالة</td>
+                <td>-</td>
+                <td style="color:#003366; font-size:13px;">${totalNet.toFixed(2)} كغ</td>
+                <td colspan="2" style="font-size:10px; color:#555;">(مرافقة بصرية فقط - لا تدخل في الإكسل)</td>
+            </tr>`;
+            tfoot.innerHTML = footerRow;
+        }
+
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
 
         const computedStyle = getComputedStyle(document.body);
@@ -887,6 +903,7 @@
         const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
         const textColor = computedStyle.getPropertyValue('--text-color').trim();
 
+        // 🌟 تعديل الرسم البياني ليظهر كامل تفاصيل الوزنة بشكل واضح جداً عند وضع الإصبع دون اختلاط
         if (Object.keys(chartDataNet).length > 0) {
             document.getElementById('chartDiv').style.display = "block";
             const ctx = document.getElementById('miniChart').getContext('2d');
@@ -897,7 +914,7 @@
                 data: {
                     labels: Object.keys(chartDataNet),
                     datasets: [{
-                        label: 'صافي الإنتاج الفعلي (كغ)',
+                        label: 'صافي الوزن الإجمالي النظيف (كغ)',
                         data: Object.values(chartDataNet),
                         backgroundColor: barColor,
                         borderWidth: 0
@@ -905,6 +922,21 @@
                 },
                 options: { 
                     responsive: true, 
+                    plugins: {
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: '#002244',
+                            titleFont: { size: 14, weight: 'bold', family: 'Segoe UI' },
+                            bodyFont: { size: 13, family: 'Segoe UI' },
+                            padding: 12,
+                            rtl: true, // دعم الكتابة من اليمين لليسار لمنع اختلاط الكلمات
+                            callbacks: {
+                                label: function(context) {
+                                    return ` كامل الوزن الصافي: ${context.parsed.y.toFixed(2)} كغ`;
+                                }
+                            }
+                        }
+                    },
                     scales: { 
                         y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
                         x: { grid: { display: false }, ticks: { color: textColor } }
