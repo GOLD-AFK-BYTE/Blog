@@ -274,7 +274,7 @@
             padding: 10px 6px;
             border: 1px solid var(--border-color);
             text-align: center;
-            white-space: nowrap; /* منع اختلاط أو تداخل الكلمات */
+            white-space: nowrap; /* منع اختلاط وتداخل الجمل الطويلة */
         }
         th {
             background-color: var(--input-bg);
@@ -290,12 +290,12 @@
         .row-weight-only { background-color: transparent; }
         .row-order-transfer { background-color: rgba(230,81,0,0.06); }
         
-        /* تصميم الصف الافتراضي الوهمي لمرافقة العداد */
-        .row-virtual-summary {
-            background-color: rgba(0, 51, 102, 0.08) !important;
+        /* تنسيق مميز للسطر الوهمي للمرافقة */
+        .row-virtual-footer {
+            background-color: rgba(31, 111, 235, 0.08) !important;
             font-weight: bold;
-            color: #003366;
-            border-top: 2px solid #003366;
+            color: #0d57d2;
+            border-top: 2px solid #1f6feb;
         }
 
         td.highlight-weight {
@@ -475,16 +475,16 @@
         <input type="text" id="managerName" placeholder="اسم المسؤول">
         <input type="text" id="workerName" placeholder="اسم العامل">
         <input type="text" id="emailOpt" placeholder="الإيميل (اختياري)">
-        <input type="number" id="boxCount" placeholder="عدد الأقفاص الحالية" oninput="updateLiveWeight()">
+        <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="updateLiveWeight()">
     </div>
 
     <div class="weight-display" id="weightDisplayBox">0.00</div>
     
     <div style="margin-bottom: 15px;">
-        <input type="number" id="grossInput" step="0.01" placeholder="أدخل رقم شاشة الميزان التراكمي (كغ)" oninput="updateLiveWeight()">
+        <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن القائم الحالي (كغ)" oninput="updateLiveWeight()">
     </div>
 
-    <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن الفعلي الحالي ✅</button>
+    <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن فقط ✅</button>
 
     <div class="ai-panel" id="aiPanel">
         🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow لمراقبة خط الأوزان الحالية.
@@ -561,8 +561,8 @@
                     <th>الوقت</th>
                     <th>نوع العملية</th>
                     <th>الصنف</th>
-                    <th>رقم الشاشة للتاريخ</th>
-                    <th>صافي وزنة الساعة</th>
+                    <th>الوزنة كاملة</th>
+                    <th>صافي الوزنة</th>
                     <th>التفاصيل الكاملة</th>
                     <th>إجراء</th>
                 </tr>
@@ -579,7 +579,7 @@
         <button class="btn-excel-custom bg-orders" onclick="exportOrdersExcel()">📊 2. تحميل ملف إكسل التقارير المترحلة للبراد</button>
     </div>
 
-    <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد الكامل</button>
+    <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد</button>
 
     <div class="scale-link">📍 ربط الميزان الإلكتروني</div>
 </div>
@@ -597,11 +597,6 @@
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
     let myChart = null;
     const tarePerBox = 1.40;
-
-    function getLastGrossWeight() {
-        if (records.length === 0) return 0;
-        return parseFloat(records[records.length - 1].gross) || 0;
-    }
 
     function toggleTheme() {
         const body = document.body;
@@ -633,17 +628,13 @@
     setInterval(updateDateTime, 1000);
 
     function updateLiveWeight() {
-        const currentGrossInput = parseFloat(document.getElementById('grossInput').value) || 0;
+        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
-        
-        const previousGross = getLastGrossWeight();
-        const actualGrossDifference = currentGrossInput >= previousGross ? (currentGrossInput - previousGross) : currentGrossInput;
-        
         const totalTare = boxes * tarePerBox;
-        const net = actualGrossDifference - totalTare;
+        const net = gross - totalTare;
         
         const displayBox = document.getElementById('weightDisplayBox');
-        displayBox.innerText = currentGrossInput > 0 ? net.toFixed(2) : "0.00";
+        displayBox.innerText = gross > 0 ? net.toFixed(2) : "0.00";
 
         displayBox.classList.add('pulse');
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
@@ -687,20 +678,18 @@
 
     function saveCurrentRecord() {
         const item = document.getElementById('itemSelect').value;
-        const currentGrossInput = parseFloat(document.getElementById('grossInput').value) || 0;
+        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         
-        if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
-        if (currentGrossInput === 0) { alert("يرجى إدخال رقم الميزان الحالي لحفظ السجل"); return; }
-
-        const previousGross = getLastGrossWeight();
-        const actualGrossDifference = currentGrossInput >= previousGross ? (currentGrossInput - previousGross) : currentGrossInput;
-        const totalTare = boxes * tarePerBox;
-        const net = actualGrossDifference - totalTare;
-
         const manager = document.getElementById('managerName').value || "غير محدد";
         const worker = document.getElementById('workerName').value || "عام";
         const email = document.getElementById('emailOpt').value || "لا يوجد";
+        
+        const totalTare = boxes * tarePerBox;
+        const net = gross - totalTare;
+
+        if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
+        if (gross === 0) { alert("يرجى إدخال الوزن الحالي لحفظ السجل"); return; }
 
         const newRecord = {
             recordType: "وزنة_فردية",
@@ -708,13 +697,13 @@
             worker: worker,
             email: email,
             boxes: boxes,
-            gross: currentGrossInput.toFixed(2),
+            gross: gross.toFixed(2), 
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
-            net: net.toFixed(2),
-            previousGrossSaved: previousGross.toFixed(2),
-            chickenCount: "-", orderNumber: "-", destination: "-", fridgeLocation: "-", temperature: "-", minW: "-", maxW: "-", freezeStart: "-", freezeEnd: "-"
+            net: net.toFixed(2),     
+            minW: "-", maxW: "-", freezeStart: "-", freezeEnd: "-",
+            chickenCount: "-", orderNumber: "-", destination: "-", fridgeLocation: "-", temperature: "-"
         };
 
         records.push(newRecord);
@@ -725,23 +714,20 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم الحساب الذكي وطرح الوزن السابق تلقائياً! صافي هذه الساعة: ${net.toFixed(2)} كغ ✅`);
+        alert("تم حفظ وزنة العامل وإضافتها للإجمالي التراكمي ✅");
     }
 
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
         const orderNumber = document.getElementById('orderNumberOpt').value;
-        const currentGrossInput = parseFloat(document.getElementById('grossInput').value) || 0;
         
         if (!item) { alert("يرجى اختيار الصنف للطلب المرحل أولاً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
-        if (currentGrossInput === 0) { alert("يرجى إدخال رقم الميزان لتوثيق كمية الترحيل"); return; }
 
-        const previousGross = getLastGrossWeight();
-        const actualGrossDifference = currentGrossInput >= previousGross ? (currentGrossInput - previousGross) : currentGrossInput;
+        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const totalTare = boxes * tarePerBox;
-        const net = actualGrossDifference - totalTare;
+        const net = gross - totalTare;
 
         const manager = document.getElementById('managerName').value || "غير محدد";
         const chickenCount = document.getElementById('chickenCountOpt').value || "-";
@@ -759,12 +745,11 @@
             worker: "-",
             email: document.getElementById('emailOpt').value || "لا يوجد",
             boxes: boxes,
-            gross: currentGrossInput.toFixed(2),
+            gross: gross.toFixed(2),
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
             net: net.toFixed(2),
-            previousGrossSaved: previousGross.toFixed(2),
             chickenCount: chickenCount,
             orderNumber: orderNumber,
             destination: destination,
@@ -793,7 +778,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل الطلبية الحالية بالصافي التلقائي المستنتج (${net.toFixed(2)} كغ) بنجاح 📦.`);
+        alert(`تم ترحيل بيانات نهاية الساعة للطلبية (${orderNumber}) بنجاح، دون إضافتها مجدداً للعداد التراكمي للنهار 📦.`);
     }
 
     function deleteRecord(index) {
@@ -810,17 +795,20 @@
         modalBody.innerHTML = `
             <div class="modal-item"><span>نوع السجل:</span> <span style="font-weight:bold; color:${r.recordType === 'ترحيل_براد' ? '#e65100':'#1f6feb'};">${r.recordType === "ترحيل_براد" ? "📦 ترحيل ساعة للبراد" : "⚖️ وزنة خط إنتاج"}</span></div>
             <div class="modal-item"><span>التاريخ والوقت:</span> <span>${r.date} | ${r.time}</span></div>
-            <div class="modal-item"><span>رقم شاشة الميزان الحالي:</span> <span>${r.gross} كغ</span></div>
-            <div class="modal-item"><span>رقم شاشة الميزان السابق المطرود:</span> <span>${r.previousGrossSaved || "0.00"} كغ</span></div>
-            <div class="modal-item"><span>صافي وزنة الساعة الفعلي:</span> <span style="color:#238636; font-weight:bold;">${r.net} كغ</span></div>
-            <div class="modal-item"><span>الصنف المستهدف:</span> <span>${r.item}</span></div>
             <div class="modal-item"><span>اسم المسؤول (المشرف):</span> <span>${r.manager}</span></div>
             <div class="modal-item"><span>اسم العامل على الخط:</span> <span>${r.worker}</span></div>
-            <div class="modal-item"><span>عدد صناديق الأقفاص الحالية:</span> <span>${r.boxes} أقفاص</span></div>
+            <div class="modal-item"><span>الصنف المستهدف:</span> <span>${r.item}</span></div>
+            <div class="modal-item"><span>الوزنة كاملة (القائم):</span> <span>${r.gross} كغ</span></div>
+            <div class="modal-item"><span>صافي الوزن الحالي:</span> <span style="color:#1f6feb; font-weight:bold;">${r.net} كغ</span></div>
+            <div class="modal-item"><span>عدد صناديق الأقفاص:</span> <span>${r.boxes} أقفاص</span></div>
             <div class="modal-item"><span>رقم الطلبية المفتوحة:</span> <span>${r.orderNumber}</span></div>
             <div class="modal-item"><span>المكان المرسل إليه:</span> <span>${r.destination}</span></div>
             <div class="modal-item"><span>موقع البراد الداخلي:</span> <span>${r.fridgeLocation}</span></div>
             <div class="modal-item"><span>درجة حرارة الشحنة:</span> <span style="color:#da3637; font-weight:bold;">${r.temperature} C°</span></div>
+            <div class="modal-item"><span>عدد الفروج بالطلب:</span> <span>${r.chickenCount}</span></div>
+            <div class="modal-item"><span>نطاق غرام الفروج المسموح:</span> <span>${r.minW}غ - ${r.maxW}غ</span></div>
+            <div class="modal-item"><span>تاريخ إدخال الفريزر:</span> <span>${r.freezeStart}</span></div>
+            <div class="modal-item"><span>نهاية تاريخ الصلاحية:</span> <span>${r.freezeEnd}</span></div>
         `;
         document.getElementById('detailsModal').style.display = "flex";
     }
@@ -852,7 +840,9 @@
         tfoot.innerHTML = "";
         
         let totalNet = 0;
+        let totalGross = 0;
         let chartDataNet = {};
+        let chartDataGross = {};
         
         const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
@@ -864,7 +854,9 @@
 
             if (r.recordType === "وزنة_فردية") {
                 totalNet += parseFloat(r.net);
+                totalGross += parseFloat(r.gross);
                 chartDataNet[r.item] = (chartDataNet[r.item] || 0) + parseFloat(r.net);
+                chartDataGross[r.item] = (chartDataGross[r.item] || 0) + parseFloat(r.gross);
             }
 
             const isTransfer = r.recordType === "ترحيل_براد";
@@ -875,23 +867,23 @@
                 <td>${r.time}</td>
                 <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${typeLabel}</td>
                 <td>${r.item}</td>
-                <td style="color:#666;">${r.gross} كغ</td>
-                <td class="net-weight">${r.net} كغ</td>
+                <td class="highlight-weight">${r.gross} كغ</td>
+                <td class="net-weight">${r.net} كغ ${isTransfer ? '(مرحّل)':''}</td>
                 <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">عرض التفاصيل 👁️</button></td>
                 <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
             </tr>`;
             tbody.innerHTML += row;
         });
 
-        // 🌟 بناء الخلية الافتراضية الوهمية في أسفل الجدول لمرافقتك دون دخول ملف الإكسل
-        if (records.length > 0) {
-            const footerRow = `<tr class="row-virtual-summary">
-                <td>متحرك لايف</td>
-                <td>📊 عداد تراكمي وهمي</td>
-                <td>كل الأصناف الفعّالة</td>
-                <td>-</td>
-                <td style="color:#003366; font-size:13px;">${totalNet.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:10px; color:#555;">(مرافقة بصرية فقط - لا تدخل في الإكسل)</td>
+        // 🌟 دمج سطر المرافقة الافتراضي الوهمي المحدث لايف في الجدول البصري فقط
+        if(records.length > 0) {
+            const footerRow = `<tr class="row-virtual-footer">
+                <td>لايف</td>
+                <td>📊 عداد وهمي ممتد</td>
+                <td>كل الأصناف</td>
+                <td>${totalGross.toFixed(2)} كغ</td>
+                <td>${totalNet.toFixed(2)} كغ</td>
+                <td colspan="2" style="font-size:11px; color:#555;">(مرافقة حية للإنتاج - لا تظهر في الإكسل)</td>
             </tr>`;
             tfoot.innerHTML = footerRow;
         }
@@ -903,7 +895,7 @@
         const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
         const textColor = computedStyle.getPropertyValue('--text-color').trim();
 
-        // 🌟 تعديل الرسم البياني ليظهر كامل تفاصيل الوزنة بشكل واضح جداً عند وضع الإصبع دون اختلاط
+        // 🌟 إظهار كامل تفاصيل الأوزان عند وضع الإصبع على الرسم البياني ودعم الـ RTL لمنع الخلط
         if (Object.keys(chartDataNet).length > 0) {
             document.getElementById('chartDiv').style.display = "block";
             const ctx = document.getElementById('miniChart').getContext('2d');
@@ -914,10 +906,11 @@
                 data: {
                     labels: Object.keys(chartDataNet),
                     datasets: [{
-                        label: 'صافي الوزن الإجمالي النظيف (كغ)',
+                        label: 'صافي الوزن النظيف (كغ)',
                         data: Object.values(chartDataNet),
                         backgroundColor: barColor,
-                        borderWidth: 0
+                        borderWidth: 0,
+                        grossValues: Object.values(chartDataGross)
                     }]
                 },
                 options: { 
@@ -925,14 +918,22 @@
                     plugins: {
                         tooltip: {
                             enabled: true,
-                            backgroundColor: '#002244',
+                            backgroundColor: '#001122',
                             titleFont: { size: 14, weight: 'bold', family: 'Segoe UI' },
                             bodyFont: { size: 13, family: 'Segoe UI' },
                             padding: 12,
-                            rtl: true, // دعم الكتابة من اليمين لليسار لمنع اختلاط الكلمات
+                            rtl: true, // محاذاة النص العربي لمنع اختلاط الأحرف والكلمات
                             callbacks: {
                                 label: function(context) {
-                                    return ` كامل الوزن الصافي: ${context.parsed.y.toFixed(2)} كغ`;
+                                    const index = context.dataIndex;
+                                    const netW = context.parsed.y.toFixed(2);
+                                    const grossW = context.dataset.grossValues[index].toFixed(2);
+                                    const boxesWeight = (parseFloat(grossW) - parseFloat(netW)).toFixed(2);
+                                    return [
+                                        ` • صافي الإنتاج النظيف: ${netW} كغ`,
+                                        ` • إجمالي الوزن القائم: ${grossW} كغ`,
+                                        ` • مخصوم أقفاص (تار): ${boxesWeight} كغ`
+                                    ];
                                 }
                             }
                         }
@@ -960,17 +961,17 @@
             return {
                 "اسم المسؤول": r.manager,
                 "اسم العامل": r.worker,
-                "رقم الميزان الحالي": parseFloat(r.gross),
-                "الميزان السابق المطرود": parseFloat(r.previousGrossSaved || 0),
-                "صافي وزنة الساعة الفعلي (كغ)": parseFloat(r.net),
+                "صافي الوزنة (كغ)": parseFloat(r.net),
                 "الوقت": r.time,
                 "التاريخ": r.date
             };
         });
 
         staffData.push({
-            "اسم المسؤول": "الإجمالي النظيف المستنتج", "اسم العامل": "", "رقم الميزان الحالي": "", "الميزان السابق المطرود": "",
-            "صافي وزنة الساعة الفعلي (كغ)": sumNet, "الوقت": "", "التاريخ": ""
+            "اسم المسؤول": "الإجمالي النظيف الفعلي",
+            "اسم العامل": "",
+            "صافي الوزنة (كغ)": sumNet,
+            "الوقت": "", "التاريخ": ""
         });
 
         const ws = XLSX.utils.json_to_sheet(staffData);
@@ -988,7 +989,7 @@
                 "رقم الطلبية المرحّلة": r.orderNumber,
                 "المكان المرسل إليه": r.destination,
                 "الصنف": r.item,
-                "الوزن الصافي الموثق تلقائياً (كغ)": parseFloat(r.net),
+                "الوزن الصافي الموثق (كغ)": parseFloat(r.net),
                 "عدد الأقفاص": parseFloat(r.boxes) || 0,
                 "موقع البراد الداخلي": r.fridgeLocation,
                 "درجة الحرارة (C°)": r.temperature,
@@ -1006,12 +1007,12 @@
     }
 
     function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد وبدء نهار جديد:");
+        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
             localStorage.removeItem('hawaTechAppData');
             records = [];
             updateUI();
-            alert("تم تصفير المنظومة بالكامل والعداد جاهز من الصفر");
+            alert("تم تصفير المنظومة بنجاح");
         } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
     }
 
