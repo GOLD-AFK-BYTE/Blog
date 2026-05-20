@@ -546,7 +546,8 @@
         إجمالي صافي الفترة الحالية (ما بعد آخر ترحيل): <span id="totalNetDisplay">0.00</span> كغ
     </div>
 
-    <div class="chart-container" id="chartDiv" style="display:none;">
+    <!-- 📊 إطار الرسم البياني مثبت دائماً الآن لمنع الاختفاء المفاجئ للواجهة -->
+    <div class="chart-container" id="chartDiv">
         <canvas id="miniChart" style="max-height: 220px;"></canvas>
     </div>
 
@@ -657,6 +658,24 @@
         return total;
     }
 
+    // دالة جديدة لحساب الوزن الكلي القائم لهذه الفترة
+    function getCurrentPeriodGrossTotal() {
+        let lastTransferIndex = -1;
+        for (let i = records.length - 1; i >= 0; i--) {
+            if (records[i].recordType === "ترحيل_براد") {
+                lastTransferIndex = i;
+                break;
+            }
+        }
+        let total = 0;
+        records.forEach((r, index) => {
+            if (r.recordType === "وزنة_فردية" && index > lastTransferIndex) {
+                total += parseFloat(r.gross) || 0;
+            }
+        });
+        return total;
+    }
+
     async function runAIPrediction() {
         const panel = document.getElementById('aiPanel');
         const filteredWeights = records.filter(r => r.recordType === "وزنة_فردية");
@@ -751,7 +770,9 @@
         const freezeStart = document.getElementById('freezeStartOpt').value || "-";
         const freezeEnd = document.getElementById('freezeEndOpt').value || "-";
 
+        // حساب مجموع الأوزان الحالية قبل الترحيل
         const totalNetCalculated = getCurrentPeriodNetTotal();
+        const totalGrossCalculated = getCurrentPeriodGrossTotal();
 
         const orderRecord = {
             recordType: "ترحيل_براد",
@@ -759,7 +780,7 @@
             worker: "-",
             email: document.getElementById('emailOpt').value || "لا يوجد",
             boxes: "-",
-            gross: "-",
+            gross: totalGrossCalculated.toFixed(2), // 🔥 تم توثيق وحفظ الوزن الكلي للبراد هنا بدقة
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
@@ -792,7 +813,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل الطلبية رقم (${orderNumber}) بوزن صافي إجمالي قدره ${totalNetCalculated.toFixed(2)} كغ بنجاح وتصفير عداد الرحلة الحالية ✅.`);
+        alert(`تم ترحيل الطلبية رقم (${orderNumber}) بوزن صافي قدره ${totalNetCalculated.toFixed(2)} كغ ووزن كلي قدره ${totalGrossCalculated.toFixed(2)} كغ بنجاح وتصفير العداد ✅.`);
     }
 
     function deleteRecord(index) {
@@ -816,7 +837,8 @@
             `;
         } else {
             weightHTML = `
-                <div class="modal-item"><span>إجمالي وزن الطلبية المرحل:</span> <span style="font-weight:bold; color:#e65100; font-size:15px;">${r.net} كغ</span></div>
+                <div class="modal-item"><span>الوزن الكلي للطلبية المرحّلة:</span> <span style="font-weight:bold; color:#238636;">${r.gross} كغ</span></div>
+                <div class="modal-item"><span>صافي وزن الطلبية المرحّل:</span> <span style="font-weight:bold; color:#e65100; font-size:15px;">${r.net} كغ</span></div>
             `;
         }
 
@@ -926,78 +948,80 @@
 
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
 
-        // 📊 إعداد الرسم البياني المنسق مع الأوزان التفاعلية عند الضغط والتمرير
+        // 📊 بناء وإعادة رسم المخطط البياني (مستقر دائماً ولا يختفي)
         const computedStyle = getComputedStyle(document.body);
         const barColor = computedStyle.getPropertyValue('--chart-bar').trim();
         const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
         const textColor = computedStyle.getPropertyValue('--text-color').trim();
 
-        if (Object.keys(chartDataNet).length > 0) {
-            document.getElementById('chartDiv').style.display = "block";
-            const ctx = document.getElementById('miniChart').getContext('2d');
-            if(myChart) myChart.destroy();
-            
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(chartDataNet),
-                    datasets: [{
-                        label: 'صافي إنتاج الصنف (كغ)',
-                        data: Object.values(chartDataNet),
-                        backgroundColor: barColor,
-                        borderRadius: 6,
-                        borderWidth: 0,
-                        grossValues: Object.values(chartDataGross)
-                    }]
-                },
-                options: { 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: { font: { family: 'Segoe UI', size: 12 }, color: textColor }
-                        },
-                        tooltip: {
-                            enabled: true,
-                            backgroundColor: 'rgba(0, 17, 34, 0.95)',
-                            titleColor: '#58a6ff',
-                            titleFont: { size: 14, weight: 'bold', family: 'Segoe UI' },
-                            bodyFont: { size: 13, family: 'Segoe UI' },
-                            bodyColor: '#ffffff',
-                            padding: 12,
-                            cornerRadius: 8,
-                            rtl: true,
-                            callbacks: {
-                                label: function(context) {
-                                    const index = context.dataIndex;
-                                    const netW = context.parsed.y.toFixed(2);
-                                    const grossW = context.dataset.grossValues[index].toFixed(2);
-                                    const tareW = (parseFloat(grossW) - parseFloat(netW)).toFixed(2);
-                                    return [
-                                        ` • صافي الوزن: ${netW} كغ`,
-                                        ` • الوزن القائم الشامل: ${grossW} كغ`,
-                                        ` • مخصوم الأقفاص (تار): ${tareW} كغ`
-                                    ];
+        const ctx = document.getElementById('miniChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        
+        const currentLabels = Object.keys(chartDataNet);
+        const currentValuesNet = Object.values(chartDataNet);
+        const currentValuesGross = Object.values(chartDataGross);
+
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: currentLabels.length > 0 ? currentLabels : ["لا يوجد أوزان حالية"],
+                datasets: [{
+                    label: 'صافي إنتاج الصنف الحالي (كغ)',
+                    data: currentValuesNet.length > 0 ? currentValuesNet : [0],
+                    backgroundColor: barColor,
+                    borderRadius: 6,
+                    borderWidth: 0,
+                    grossValues: currentValuesGross.length > 0 ? currentValuesGross : [0]
+                }]
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { font: { family: 'Segoe UI', size: 12 }, color: textColor }
+                    },
+                    tooltip: {
+                        enabled: currentLabels.length > 0, // تفعيل النوافذ المنبثقة عند الضغط فقط في حال وجود بيانات
+                        backgroundColor: 'rgba(0, 17, 34, 0.95)',
+                        titleColor: '#58a6ff',
+                        titleFont: { size: 14, weight: 'bold', family: 'Segoe UI' },
+                        bodyFont: { size: 13, family: 'Segoe UI' },
+                        bodyColor: '#ffffff',
+                        padding: 12,
+                        cornerRadius: 8,
+                        rtl: true,
+                        callbacks: {
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const netW = context.parsed.y.toFixed(2);
+                                if (!context.dataset.grossValues || !context.dataset.grossValues[index]) {
+                                    return ` • صافي الوزن: ${netW} كغ`;
                                 }
+                                const grossW = context.dataset.grossValues[index].toFixed(2);
+                                const tareW = (parseFloat(grossW) - parseFloat(netW)).toFixed(2);
+                                return [
+                                    ` • صافي الوزن النظيف: ${netW} كغ`,
+                                    ` • الوزن القائم الشامل: ${grossW} كغ`,
+                                    ` • مخصوم الأقفاص (تار): ${tareW} كغ`
+                                ];
                             }
                         }
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: gridColor }, 
+                        ticks: { color: textColor, font: { family: 'Segoe UI' } } 
                     },
-                    scales: { 
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { color: gridColor }, 
-                            ticks: { color: textColor, font: { family: 'Segoe UI' } } 
-                        },
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { color: textColor, font: { family: 'Segoe UI', weight: 'bold' } } 
-                        }
+                    x: { 
+                        grid: { display: false }, 
+                        ticks: { color: textColor, font: { family: 'Segoe UI', weight: 'bold' } } 
                     }
                 }
-            });
-        } else {
-            document.getElementById('chartDiv').style.display = "none";
-        }
+            }
+        });
 
         runAIPrediction();
     }
@@ -1038,12 +1062,14 @@
         const filtered = records.filter(r => r.recordType === "ترحيل_براد");
         if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
         
+        // 🔥 تم دمج وحفظ الوزنة كاملة (الوزن الكلي) مع الوزن الصافي للبراد هنا كما طلبت
         const ordersData = filtered.map(r => {
             return {
                 "رقم الطلبية المرحّلة": r.orderNumber,
                 "المكان المرسل إليه": r.destination,
                 "الصنف": r.item,
-                "إجمالي صافي وزن الطلبية (كغ)": parseFloat(r.net), 
+                "الوزنة كاملة للطلبية (كغ)": (r.gross && r.gross !== "-") ? parseFloat(r.gross) : "غير محدد", 
+                "الوزن الصافي للطلبية (كغ)": parseFloat(r.net), 
                 "موقع البراد الداخلي": r.fridgeLocation,
                 "درجة الحرارة (C°)": r.temperature,
                 "عدد الفروج داخل الطلبية": r.chickenCount,
