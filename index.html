@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Excel Optimized Edition)</title>
+    <title>Hawa-Tech App Pro (Advanced Dashboard Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -361,7 +361,6 @@
             padding: 15px;
         }
 
-        /* تنسيقات النافذة المنبثقة لعرض التفاصيل الكاملة Expanded Live View */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -690,7 +689,6 @@
         records.push(newRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
-        // تصفير الخانات والإبقاء على حقل اسم المسؤول كخيار تذكر مرن قابل للتعديل
         document.getElementById('workerName').value = "";
         document.getElementById('emailOpt').value = "";
         document.getElementById('boxCount').value = "";
@@ -767,7 +765,8 @@
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
         let totalNet = 0;
-        let chartData = {};
+        let chartDataNet = {};
+        let chartDataGross = {};
         
         const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
@@ -778,7 +777,8 @@
             if (!matchSearch && searchQuery !== "") return;
 
             totalNet += parseFloat(r.net);
-            chartData[r.item] = (chartData[r.item] || 0) + parseFloat(r.net);
+            chartDataNet[r.item] = (chartDataNet[r.item] || 0) + parseFloat(r.net);
+            chartDataGross[r.item] = (chartDataGross[r.item] || 0) + parseFloat(r.gross);
             
             const row = `<tr>
                 <td>${r.time}</td>
@@ -804,15 +804,18 @@
             document.getElementById('chartDiv').style.display = "block";
             const ctx = document.getElementById('miniChart').getContext('2d');
             if(myChart) myChart.destroy();
+            
+            // تحديث الرسم البياني ليعرض الأوزان كاملة والصافية عند وضع الإصبع باللمس
             myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(chartData),
+                    labels: Object.keys(chartDataNet),
                     datasets: [{
-                        label: 'إجمالي الأوزان لكل صنف (كغ)',
-                        data: Object.values(chartData),
+                        label: 'صافي الأوزان الكلية (كغ)',
+                        data: Object.values(chartDataNet),
                         backgroundColor: barColor,
-                        borderWidth: 0
+                        borderWidth: 0,
+                        grossData: Object.values(chartDataGross) // تمرير بيانات القائم للـ Tooltip
                     }]
                 },
                 options: { 
@@ -821,7 +824,23 @@
                         y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
                         x: { grid: { display: false }, ticks: { color: textColor, maxRotation: 45, minRotation: 45, autoSkip: false } }
                     },
-                    plugins: { legend: { labels: { color: textColor } } }
+                    plugins: { 
+                        legend: { labels: { color: textColor } },
+                        tooltip: {
+                            rtl: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    const netVal = context.parsed.y.toFixed(2);
+                                    const grossVal = context.dataset.grossData[index].toFixed(2);
+                                    return [
+                                        `إجمالي الوزن الصافي: ${netVal} كغ`,
+                                        `إجمالي الوزنة كاملة: ${grossVal} كغ`
+                                    ];
+                                }
+                            }
+                        }
+                    }
                 }
             });
         } else {
@@ -834,49 +853,81 @@
     function exportStaffExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
         
-        const staffData = records.map(r => ({
-            "اسم المسؤول": r.manager,
-            "اسم العامل": r.worker,
-            "صافي الوزنة (كغ)": r.net,
-            "الوقت": r.time
-        }));
+        let sumNet = 0;
+        const staffData = records.map(r => {
+            sumNet += parseFloat(r.net);
+            return {
+                "اسم المسؤول": r.manager,
+                "اسم العامل": r.worker,
+                "صافي الوزنة (كغ)": parseFloat(r.net),
+                "الوقت": r.time
+            };
+        });
+
+        // إضافة سطر التجميع التلقائي في نهاية ملف الإكسل
+        staffData.push({
+            "اسم المسؤول": "الإجمالي الكلي",
+            "اسم العامل": "",
+            "صافي الوزنة (كغ)": sumNet,
+            "الوقت": ""
+        });
 
         const ws = XLSX.utils.json_to_sheet(staffData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "كشف الموظفين والأوزان الصافية");
+        XLSX.utils.book_append_sheet(wb, ws, "كشف الموظفين");
         XLSX.writeFile(wb, `HawaTech_Staff_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
     function exportOrdersExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
         
-        // تم إضافة حقل "صافي الوزنة (كغ)" هنا ليكون متواجداً بداخل إكسل الطلبيات بناء على طلبك
-        const ordersData = records.map(r => ({
-            "رقم الطلبية": r.orderNumber,
-            "المكان المرسل إليه": r.destination,
-            "صافي الوزنة (كغ)": r.net,
-            "الصنف": r.item,
-            "عدد الأقفاص": r.boxes,
-            "الوزنة كاملة - القائم (كغ)": r.gross,  
-            "موقع البراد": r.fridgeLocation,
-            "درجة الحرارة (C°)": r.temperature,
-            "عدد الفروج داخل الطلبية": r.chickenCount,
-            "البريد الإلكتروني": r.email,
-            "الوقت": r.time,
-            "معيار وزن الفروج الأدنى (غ)": r.minW,
-            "معيار وزن الفروج الأعلى (غ)": r.maxW,
-            "تاريخ دخول الفريزر": r.freezeStart,
-            "تاريخ انتهاء الصلاحية": r.freezeEnd
-        }));
+        let sumNet = 0;
+        let sumGross = 0;
+        let sumBoxes = 0;
+
+        const ordersData = records.map(r => {
+            sumNet += parseFloat(r.net);
+            sumGross += parseFloat(r.gross);
+            sumBoxes += parseFloat(r.boxes) || 0;
+            
+            return {
+                "رقم الطلبية": r.orderNumber,
+                "المكان المرسل إليه": r.destination,
+                "صافي الوزنة (كغ)": parseFloat(r.net),
+                "الصنف": r.item,
+                "عدد الأقفاص": parseFloat(r.boxes) || 0,
+                "الوزنة كاملة - القائم (كغ)": parseFloat(r.gross),  
+                "موقع البراد": r.fridgeLocation,
+                "درجة الحرارة (C°)": r.temperature,
+                "عدد الفروج داخل الطلبية": r.chickenCount,
+                "البريد الإلكتروني": r.email,
+                "الوقت": r.time,
+                "معيار وزن الفروج الأدنى (غ)": r.minW,
+                "معيار وزن الفروج الأعلى (غ)": r.maxW,
+                "تاريخ دخول الفريزر": r.freezeStart,
+                "تاريخ انتهاء الصلاحية": r.freezeEnd
+            };
+        });
+
+        // إضافة سطر التجميع التلقائي في نهاية جدول الطلبيات لتسهيل الحساب المالي والإداري
+        ordersData.push({
+            "رقم الطلبية": "الإجمالي الكلي",
+            "المكان المرسل إليه": "",
+            "صافي الوزنة (كغ)": sumNet,
+            "الصنف": "",
+            "عدد الأقفاص": sumBoxes,
+            "الوزنة كاملة - القائم (كغ)": sumGross,
+            "موقع البراد": "", "درجة الحرارة (C°)": "", "عدد الفروج داخل الطلبية": "", "البريد الإلكتروني": "", "الوقت": "", "معيار وزن الفروج الأدنى (غ)": "", "معيار وزن الفروج الأعلى (غ)": "", "تاريخ دخول الفريزر": "", "تاريخ انتهاء الصلاحية": ""
+        });
 
         const ws = XLSX.utils.json_to_sheet(ordersData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "سجل تفاصيل الطلبيات والأصناف");
+        XLSX.utils.book_append_sheet(wb, ws, "تفاصيل الطلبيات");
         XLSX.writeFile(wb, `HawaTech_Orders_Details_${new Date().toLocaleDateString()}.xlsx`);
     }
 
     function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد:");
+        const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
             localStorage.removeItem('hawaTechAppData');
             records = [];
