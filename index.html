@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Ultimate Search Edition)</title>
+    <title>Hawa-Tech App Pro (Expanded Live Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -282,9 +282,21 @@
             font-size: 15px;
             transition: transform 0.1s;
         }
-        .btn-row-delete:hover {
-            transform: scale(1.25);
+        .btn-row-delete:hover { transform: scale(1.25); }
+        
+        /* أزرار مخصصة للنافذة المنبثقة وجدول الإجراءات */
+        .btn-details-view {
+            background-color: #1f6feb;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
         }
+        .btn-details-view:hover { opacity: 0.9; }
+
         .excel-buttons-zone {
             display: flex;
             flex-direction: column;
@@ -302,9 +314,7 @@
             cursor: pointer;
             transition: opacity 0.2s;
         }
-        .btn-excel-custom:hover {
-            opacity: 0.9;
-        }
+        .btn-excel-custom:hover { opacity: 0.9; }
         .bg-staff { background-color: #0288d1; }
         .bg-orders { background-color: #2e7d32; }
         
@@ -350,6 +360,72 @@
             border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 15px;
+        }
+
+        /* تنسيقات النافذة المنبثقة لعرض التفاصيل الكاملة Expanded Live View */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .modal-content {
+            background-color: var(--bg-container);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 460px;
+            border-radius: 16px;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            animation: modalFadeIn 0.3s ease;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-header {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--header-color);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            text-align: center;
+        }
+        .modal-body-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            font-size: 13.5px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .modal-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed var(--border-color);
+            padding: 5px 0;
+        }
+        .modal-item span:first-child { font-weight: bold; color: var(--header-color); }
+        .btn-modal-close {
+            width: 100%;
+            background-color: #da3637;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 15px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -421,14 +497,15 @@
     </div>
 
     <div class="optional-section" style="border: 1px solid #1f6feb; background-color: rgba(31,111,235,0.03); margin-bottom: 15px;">
-        <div class="section-subtitle" style="color: #1f6feb;">📦 معلومات اختيارية للطلبية:</div>
+        <div class="section-subtitle" style="color: #1f6feb;">📦 معلومات اختيارية للطلبية وحفظ الحرارة:</div>
         <div class="inputs-grid-three" style="margin-bottom: 8px;">
             <input type="number" id="chickenCountOpt" placeholder="عدد الفروج">
             <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية">
             <input type="text" id="destinationOpt" placeholder="المرسل إليه">
         </div>
-        <div>
+        <div class="inputs-grid">
             <input type="text" id="fridgeLocationOpt" placeholder="موقع البراد (اختياري)">
+            <input type="text" id="temperatureOpt" placeholder="درجة الحرارة (C°)">
         </div>
     </div>
 
@@ -456,7 +533,7 @@
                     <th>الصنف</th>
                     <th>الوزنة كاملة</th>
                     <th>صافي الوزنة</th>
-                    <th>رقم الطلبية</th>
+                    <th>التفاصيل الكاملة</th>
                     <th>إجراء</th>
                 </tr>
             </thead>
@@ -473,6 +550,15 @@
     <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد</button>
 
     <div class="scale-link">📍 ربط الميزان الإلكتروني</div>
+</div>
+
+<div class="modal-overlay" id="detailsModal">
+    <div class="modal-content">
+        <div class="modal-header">👁️ تفاصيل الوزنة الموسعة (Live View)</div>
+        <div class="modal-body-grid" id="modalBody">
+            </div>
+        <button class="btn-modal-close" onclick="closeModal()">إغلاق النافذة</button>
+    </div>
 </div>
 
 <script>
@@ -569,6 +655,7 @@
         const orderNumber = document.getElementById('orderNumberOpt').value || "-";
         const destination = document.getElementById('destinationOpt').value || "-";
         const fridgeLocation = document.getElementById('fridgeLocationOpt').value || "-";
+        const temperature = document.getElementById('temperatureOpt').value || "-";
 
         const minW = document.getElementById('minWeightOpt').value ? parseInt(document.getElementById('minWeightOpt').value) : "-";
         const maxW = document.getElementById('maxWeightOpt').value ? parseInt(document.getElementById('maxWeightOpt').value) : "-";
@@ -587,6 +674,7 @@
             boxes: boxes,
             gross: gross.toFixed(2), 
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
+            date: new Date().toLocaleDateString('ar-EG'),
             item: item,
             net: net.toFixed(2),     
             minW: minW,
@@ -596,17 +684,29 @@
             chickenCount: chickenCount,
             orderNumber: orderNumber,
             destination: destination,
-            fridgeLocation: fridgeLocation
+            fridgeLocation: fridgeLocation,
+            temperature: temperature
         };
 
         records.push(newRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
+        // تصفير كافة الحقول طبقاً للشروط عدا خانة "اسم المسؤول"
+        document.getElementById('workerName').value = "";
+        document.getElementById('emailOpt').value = "";
+        document.getElementById('boxCount').value = "";
         document.getElementById('grossInput').value = "";
+        document.getElementById('itemSelect').value = "";
         document.getElementById('chickenCountOpt').value = "";
         document.getElementById('orderNumberOpt').value = "";
         document.getElementById('destinationOpt').value = "";
         document.getElementById('fridgeLocationOpt').value = "";
+        document.getElementById('temperatureOpt').value = "";
+        document.getElementById('minWeightOpt').value = "";
+        document.getElementById('maxWeightOpt').value = "";
+        document.getElementById('freezeStartOpt').value = "";
+        document.getElementById('freezeEndOpt').value = "";
+        
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
@@ -618,6 +718,35 @@
             localStorage.setItem('hawaTechAppData', JSON.stringify(records));
             updateUI();
         }
+    }
+
+    // وظيفة الـ Expanded Live View لعرض التفاصيل الكاملة داخل الصفحة
+    function showExpandedLiveView(index) {
+        const r = records[index];
+        const modalBody = document.getElementById('modalBody');
+        modalBody.innerHTML = `
+            <div class="modal-item"><span>التاريخ والوقت:</span> <span>${r.date} | ${r.time}</span></div>
+            <div class="modal-item"><span>اسم المسؤول (المشرف):</span> <span>${r.manager}</span></div>
+            <div class="modal-item"><span>اسم العامل على الخط:</span> <span>${r.worker}</span></div>
+            <div class="modal-item"><span>الصنف المستهدف:</span> <span>${r.item}</span></div>
+            <div class="modal-item"><span>الوزنة كاملة (القائم):</span> <span>${r.gross} كغ</span></div>
+            <div class="modal-item"><span>صافي الوزنة التراكمي:</span> <span>${r.net} كغ</span></div>
+            <div class="modal-item"><span>عدد صناديق الأقفاص:</span> <span>${r.boxes} أقفاص</span></div>
+            <div class="modal-item"><span>رقم الطلبية المفتوحة:</span> <span>${r.orderNumber}</span></div>
+            <div class="modal-item"><span>المكان المرسل إليه:</span> <span>${r.destination}</span></div>
+            <div class="modal-item"><span>موقع البراد الداخلي:</span> <span>${r.fridgeLocation}</span></div>
+            <div class="modal-item"><span>درجة حرارة الشحنة:</span> <span style="color:#da3637; font-weight:bold;">${r.temperature} C°</span></div>
+            <div class="modal-item"><span>عدد الفروج بالطلب:</span> <span>${r.chickenCount}</span></div>
+            <div class="modal-item"><span>نطاق غرام الفروج المسموح:</span> <span>${r.minW}غ - ${r.maxW}غ</span></div>
+            <div class="modal-item"><span>تاريخ إدخال الفريزر:</span> <span>${r.freezeStart}</span></div>
+            <div class="modal-item"><span>نهاية تاريخ الصلاحية:</span> <span>${r.freezeEnd}</span></div>
+            <div class="modal-item"><span>البريد الإلكتروني للإشعار:</span> <span>${r.email}</span></div>
+        `;
+        document.getElementById('detailsModal').style.display = "flex";
+    }
+
+    function closeModal() {
+        document.getElementById('detailsModal').style.display = "none";
     }
 
     function addItem() {
@@ -642,11 +771,9 @@
         let totalNet = 0;
         let chartData = {};
         
-        // جلب نص البحث
         const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
         records.forEach((r, index) => {
-            // ميزة البحث المطلق: تحويل الكائن بأكمله لنص للبحث في كل الخانات والبيانات بدون استثناء
             const allObjectValuesStr = Object.values(r).join(" ").toLowerCase();
             const matchSearch = allObjectValuesStr.includes(searchQuery);
 
@@ -662,7 +789,7 @@
                 <td>${r.item}</td>
                 <td class="highlight-weight">${r.gross} كغ</td>
                 <td class="net-weight">${r.net} كغ</td>
-                <td>${r.orderNumber}</td>
+                <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">عرض التفاصيل 👁️</button></td>
                 <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
             </tr>`;
             tbody.innerHTML += row;
@@ -725,10 +852,12 @@
     function exportOrdersExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها"); return; }
         
+        // إضافة درجة الحرارة إلى ملف إكسل الخاص ببيانات الطلبيات بناء على طلبك
         const ordersData = records.map(r => ({
             "رقم الطلبية": r.orderNumber,
             "المكان المرسل إليه": r.destination,
             "موقع البراد": r.fridgeLocation,
+            "درجة الحرارة (C°)": r.temperature,
             "عدد الفروج داخل الطلبية": r.chickenCount,
             "الصنف": r.item,
             "عدد الأقفاص": r.boxes,
