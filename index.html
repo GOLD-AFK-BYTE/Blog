@@ -274,7 +274,7 @@
             padding: 10px 6px;
             border: 1px solid var(--border-color);
             text-align: center;
-            white-space: nowrap; /* منع اختلاط وتداخل الجمل الطويلة */
+            white-space: nowrap;
         }
         th {
             background-color: var(--input-bg);
@@ -290,7 +290,6 @@
         .row-weight-only { background-color: transparent; }
         .row-order-transfer { background-color: rgba(230,81,0,0.06); }
         
-        /* تنسيق مميز للسطر الوهمي للمرافقة */
         .row-virtual-footer {
             background-color: rgba(31, 111, 235, 0.08) !important;
             font-weight: bold;
@@ -570,7 +569,7 @@
             <tbody id="tableBody">
             </tbody>
             <tfoot id="tableFoot">
-            </tfoot>
+            </tbody>
         </table>
     </div>
 
@@ -852,6 +851,7 @@
 
             if (!matchSearch && searchQuery !== "") return;
 
+            // 🌟 الفلترة الدقيقة: يتم حساب العدادات الكلية فقط للوزنات الفردية
             if (r.recordType === "وزنة_فردية") {
                 totalNet += parseFloat(r.net);
                 totalGross += parseFloat(r.gross);
@@ -875,15 +875,15 @@
             tbody.innerHTML += row;
         });
 
-        // 🌟 دمج سطر المرافقة الافتراضي الوهمي المحدث لايف في الجدول البصري فقط
+        // 🌟 العداد الوهمي الممتد المحدث: يلتزم الآن بقيم (totalGross و totalNet) الصافية فقط لوزنات الخط
         if(records.length > 0) {
             const footerRow = `<tr class="row-virtual-footer">
                 <td>لايف</td>
                 <td>📊 عداد وهمي ممتد</td>
-                <td>كل الأصناف</td>
+                <td>وزنات الخط فقط</td>
                 <td>${totalGross.toFixed(2)} كغ</td>
                 <td>${totalNet.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#555;">(مرافقة حية للإنتاج - لا تظهر في الإكسل)</td>
+                <td colspan="2" style="font-size:11px; color:#555;">(مراقب صافي خط الإنتاج الفعلي - يتجاهل الترحيل)</td>
             </tr>`;
             tfoot.innerHTML = footerRow;
         }
@@ -895,7 +895,6 @@
         const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
         const textColor = computedStyle.getPropertyValue('--text-color').trim();
 
-        // 🌟 إظهار كامل تفاصيل الأوزان عند وضع الإصبع على الرسم البياني ودعم الـ RTL لمنع الخلط
         if (Object.keys(chartDataNet).length > 0) {
             document.getElementById('chartDiv').style.display = "block";
             const ctx = document.getElementById('miniChart').getContext('2d');
@@ -922,7 +921,7 @@
                             titleFont: { size: 14, weight: 'bold', family: 'Segoe UI' },
                             bodyFont: { size: 13, family: 'Segoe UI' },
                             padding: 12,
-                            rtl: true, // محاذاة النص العربي لمنع اختلاط الأحرف والكلمات
+                            rtl: true,
                             callbacks: {
                                 label: function(context) {
                                     const index = context.dataIndex;
