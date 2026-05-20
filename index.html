@@ -640,7 +640,6 @@
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
-    // 🔥 تعديل ذكي: حساب صافي الوزن للصنف المختار تحديداً لمنع التداخل والخلط بين الأصناف
     function getCurrentPeriodNetTotal(selectedItem) {
         if (!selectedItem) return 0;
         let lastTransferIndex = -1;
@@ -659,7 +658,6 @@
         return total;
     }
 
-    // 🔥 تعديل ذكي: حساب إجمالي الوزن القائم للصنف المختار تحديداً لمنع الخلط
     function getCurrentPeriodGrossTotal(selectedItem) {
         if (!selectedItem) return 0;
         let lastTransferIndex = -1;
@@ -755,6 +753,7 @@
         alert(`تم حفظ وزنة صنف (${item}) وعاملها بنجاح ✅`);
     }
 
+    // 🔥 التطوير الجديد: مرونة مطلقة بالترحيل المباشر أو التراكمي لمنع الأخطاء نهائياً
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
         const orderNumber = document.getElementById('orderNumberOpt').value;
@@ -762,14 +761,23 @@
         if (!item) { alert("يرجى اختيار الصنف للطلب المرحل أولاً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
 
-        // حساب مجموع الأوزان للصنف المختار فقط في هذه الفترة
-        const totalNetCalculated = getCurrentPeriodNetTotal(item);
-        const totalGrossCalculated = getCurrentPeriodGrossTotal(item);
+        // 1. فحص التراكمي أولاً
+        let totalNetCalculated = getCurrentPeriodNetTotal(item);
+        let totalGrossCalculated = getCurrentPeriodGrossTotal(item);
 
-        // 🔥 حماية تامة: منع ترحيل أصفار إذا لم توجد وزنات فعلية للصنف المختار
+        // 2. إذا لم يكن هناك أوزان تراكمية مسجلة، نأخذ الرقم الفوري المكتوب بالمربعات حالياً كمستند مباشر
         if (totalNetCalculated === 0) {
-            alert(`⚠️ عذراً! لا توجد وزنات مسجلة لصنف (${item}) في هذه الفترة لترحيلها، لا يمكن ترحيل أصفار.`);
-            return;
+            const liveGross = parseFloat(document.getElementById('grossInput').value) || 0;
+            const liveNet = parseFloat(document.getElementById('weightDisplayBox').innerText) || 0;
+            
+            if (liveGross > 0 && liveNet > 0) {
+                totalGrossCalculated = liveGross;
+                totalNetCalculated = liveNet;
+            } else {
+                // منع الترحيل إذا كان كل شيء صفر فعلاً
+                alert(`⚠️ عذراً! لا توجد وزنات تراكمية مخزنة، ولا توجد أوزان فورية مكتوبة في خانة الوزن الحالي لترحيلها.`);
+                return;
+            }
         }
 
         const manager = document.getElementById('managerName').value || "غير محدد";
@@ -807,6 +815,7 @@
         records.push(orderRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
 
+        // تصفير الخانات
         document.getElementById('grossInput').value = "";
         document.getElementById('boxCount').value = "";
         document.getElementById('chickenCountOpt').value = "";
@@ -821,7 +830,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل طلبيّة صنف (${item}) رقم (${orderNumber}) بنجاح وتصفير العداد الخاص به ✅.`);
+        alert(`تم ترحيل طلبيّة صنف (${item}) رقم (${orderNumber}) بنجاح إلى ملف البراد ✅.`);
     }
 
     function deleteRecord(index) {
@@ -903,20 +912,17 @@
         
         const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
-        // عرض إجمالي الصافي المحدث للصنف المختار حالياً بالواجهة لمنع التشتت
         if (selectedItem) {
             displayNetForSelected = getCurrentPeriodNetTotal(selectedItem);
         }
         document.getElementById('totalNetDisplay').innerText = displayNetForSelected.toFixed(2);
 
-        // بناء جداول المخرجات والفلترة للرسم البياني
         records.forEach((r, index) => {
             const allObjectValuesStr = Object.values(r).join(" ").toLowerCase();
             const matchSearch = allObjectValuesStr.includes(searchQuery);
 
             if (!matchSearch && searchQuery !== "") return;
 
-            // تحديد آخر نقطة ترحيل لكل صنف على حدة لعدم تصفير الأصناف الأخرى بشكل عشوائي
             let lastTransferIndexForThisItem = -1;
             for (let i = index - 1; i >= 0; i--) {
                 if (records[i].recordType === "ترحيل_براد" && records[i].item === r.item) {
@@ -962,7 +968,6 @@
             tfoot.innerHTML = footerRow;
         }
 
-        // رسم وثبات المخطط البياني
         const computedStyle = getComputedStyle(document.body);
         const barColor = computedStyle.getPropertyValue('--chart-bar').trim();
         const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
