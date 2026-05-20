@@ -388,8 +388,9 @@
             margin-bottom: 18px;
             background: var(--bg-container);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
+            border-radius: 14px;
             padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         .modal-overlay {
@@ -546,7 +547,7 @@
     </div>
 
     <div class="chart-container" id="chartDiv" style="display:none;">
-        <canvas id="miniChart" style="max-height: 190px;"></canvas>
+        <canvas id="miniChart" style="max-height: 220px;"></canvas>
     </div>
 
     <div class="search-box-container">
@@ -639,7 +640,6 @@
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
-    // حساب العداد الحالي الفعلي (مجموع الأوزان بعد آخر ترحيل للبراد)
     function getCurrentPeriodNetTotal() {
         let lastTransferIndex = -1;
         for (let i = records.length - 1; i >= 0; i--) {
@@ -751,7 +751,6 @@
         const freezeStart = document.getElementById('freezeStartOpt').value || "-";
         const freezeEnd = document.getElementById('freezeEndOpt').value || "-";
 
-        // 🔥 تعديل جوهري: الترحيل الآن يلتقط إجمالي صافي الوزن التراكمي لهذه الفترة قبل تصفيره ويحفظه في السجل
         const totalNetCalculated = getCurrentPeriodNetTotal();
 
         const orderRecord = {
@@ -764,7 +763,7 @@
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
-            net: totalNetCalculated.toFixed(2), // حفظ صافي وزن الطلبية بالكامل
+            net: totalNetCalculated.toFixed(2), 
             chickenCount: chickenCount,
             orderNumber: orderNumber,
             destination: destination,
@@ -808,7 +807,6 @@
         const r = records[index];
         const modalBody = document.getElementById('modalBody');
         
-        // 🌟 عرض الأوزان بشكل واضح حسب نوع العملية لضمان عدم ظهور حقول فارغة أو مبهمة
         let weightHTML = '';
         if(r.recordType === "وزنة_فردية") {
             weightHTML = `
@@ -928,6 +926,7 @@
 
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
 
+        // 📊 إعداد الرسم البياني المنسق مع الأوزان التفاعلية عند الضغط والتمرير
         const computedStyle = getComputedStyle(document.body);
         const barColor = computedStyle.getPropertyValue('--chart-bar').trim();
         const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
@@ -943,41 +942,56 @@
                 data: {
                     labels: Object.keys(chartDataNet),
                     datasets: [{
-                        label: 'صافي إنتاج الفترة الحالية (كغ)',
+                        label: 'صافي إنتاج الصنف (كغ)',
                         data: Object.values(chartDataNet),
                         backgroundColor: barColor,
+                        borderRadius: 6,
                         borderWidth: 0,
                         grossValues: Object.values(chartDataGross)
                     }]
                 },
                 options: { 
-                    responsive: true, 
+                    responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
+                        legend: {
+                            labels: { font: { family: 'Segoe UI', size: 12 }, color: textColor }
+                        },
                         tooltip: {
                             enabled: true,
-                            backgroundColor: '#001122',
+                            backgroundColor: 'rgba(0, 17, 34, 0.95)',
+                            titleColor: '#58a6ff',
                             titleFont: { size: 14, weight: 'bold', family: 'Segoe UI' },
                             bodyFont: { size: 13, family: 'Segoe UI' },
+                            bodyColor: '#ffffff',
                             padding: 12,
+                            cornerRadius: 8,
                             rtl: true,
                             callbacks: {
                                 label: function(context) {
                                     const index = context.dataIndex;
                                     const netW = context.parsed.y.toFixed(2);
                                     const grossW = context.dataset.grossValues[index].toFixed(2);
-                                    const boxesWeight = (parseFloat(grossW) - parseFloat(netW)).toFixed(2);
+                                    const tareW = (parseFloat(grossW) - parseFloat(netW)).toFixed(2);
                                     return [
-                                        ` • صافي الإنتاج الحالي: ${netW} كغ`,
-                                        ` • إجمالي الوزن القائم: ${grossW} كغ`,
-                                        ` • مخصوم أقفاص (تار): ${boxesWeight} كغ`
+                                        ` • صافي الوزن: ${netW} كغ`,
+                                        ` • الوزن القائم الشامل: ${grossW} كغ`,
+                                        ` • مخصوم الأقفاص (تار): ${tareW} كغ`
                                     ];
                                 }
                             }
                         }
                     },
                     scales: { 
-                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
-                        x: { grid: { display: false }, ticks: { color: textColor } }
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: gridColor }, 
+                            ticks: { color: textColor, font: { family: 'Segoe UI' } } 
+                        },
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { color: textColor, font: { family: 'Segoe UI', weight: 'bold' } } 
+                        }
                     }
                 }
             });
@@ -990,7 +1004,7 @@
 
     function exportStaffExcel() {
         const filtered = records.filter(r => r.recordType === "وزنة_فردية");
-        if(filtered.length === 0) { alert("لا توجد بيانات وزنات ععمال لتصديرها"); return; }
+        if(filtered.length === 0) { alert("لا توجد بيانات وزنات عمال لتصديرها"); return; }
         
         let sumNet = 0;
         const staffData = filtered.map(r => {
@@ -1029,7 +1043,7 @@
                 "رقم الطلبية المرحّلة": r.orderNumber,
                 "المكان المرسل إليه": r.destination,
                 "الصنف": r.item,
-                "إجمالي صافي وزن الطلبية (كغ)": parseFloat(r.net), // تصدير أوزان الطلبيات بشكل سليم
+                "إجمالي صافي وزن الطلبية (كغ)": parseFloat(r.net), 
                 "موقع البراد الداخلي": r.fridgeLocation,
                 "درجة الحرارة (C°)": r.temperature,
                 "عدد الفروج داخل الطلبية": r.chickenCount,
