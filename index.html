@@ -478,6 +478,11 @@
         <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="updateLiveWeight()">
     </div>
 
+    <!-- خانة وزن الطبلية الاختيارية الجديدة مدمجة تماماً دون المساس بالترتيب -->
+    <div style="margin-bottom: 12px;">
+        <input type="number" id="palletWeightOpt" step="0.01" placeholder="وزن الطبلية (اختياري - كغ)" oninput="updateLiveWeight()">
+    </div>
+
     <div class="weight-display" id="weightDisplayBox">0.00</div>
     
     <div style="margin-bottom: 15px;">
@@ -627,14 +632,17 @@
     }
     setInterval(updateDateTime, 1000);
 
+    // تحديث دالة الحساب لتشمل الطبلية يدويًا وبشكل اختياري ومباشر
     function updateLiveWeight() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
-        const totalTare = boxes * tarePerBox;
+        const palletWeight = parseFloat(document.getElementById('palletWeightOpt').value) || 0;
+        
+        const totalTare = (boxes * tarePerBox) + palletWeight;
         const net = gross - totalTare;
         
         const displayBox = document.getElementById('weightDisplayBox');
-        displayBox.innerText = gross > 0 ? net.toFixed(2) : "0.00";
+        displayBox.innerText = gross > 0 ? (net > 0 ? net.toFixed(2) : "0.00") : "0.00";
 
         displayBox.classList.add('pulse');
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
@@ -716,12 +724,13 @@
         const item = document.getElementById('itemSelect').value;
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
+        const palletWeight = parseFloat(document.getElementById('palletWeightOpt').value) || 0;
         
         const manager = document.getElementById('managerName').value || "غير محدد";
         const worker = document.getElementById('workerName').value || "عام";
         const email = document.getElementById('emailOpt').value || "لا يوجد";
         
-        const totalTare = boxes * tarePerBox;
+        const totalTare = (boxes * tarePerBox) + palletWeight;
         const net = gross - totalTare;
 
         if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
@@ -733,6 +742,7 @@
             worker: worker,
             email: email,
             boxes: boxes,
+            palletWeight: palletWeight.toFixed(2),
             gross: gross.toFixed(2), 
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
@@ -746,6 +756,7 @@
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
         document.getElementById('boxCount').value = "";
+        document.getElementById('palletWeightOpt').value = "";
         document.getElementById('grossInput').value = "";
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
@@ -753,7 +764,6 @@
         alert(`تم حفظ وزنة صنف (${item}) وعاملها بنجاح ✅`);
     }
 
-    // 🔥 التطوير الجديد: مرونة مطلقة بالترحيل المباشر أو التراكمي لمنع الأخطاء نهائياً
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
         const orderNumber = document.getElementById('orderNumberOpt').value;
@@ -761,11 +771,9 @@
         if (!item) { alert("يرجى اختيار الصنف للطلب المرحل أولاً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
 
-        // 1. فحص التراكمي أولاً
         let totalNetCalculated = getCurrentPeriodNetTotal(item);
         let totalGrossCalculated = getCurrentPeriodGrossTotal(item);
 
-        // 2. إذا لم يكن هناك أوزان تراكمية مسجلة، نأخذ الرقم الفوري المكتوب بالمربعات حالياً كمستند مباشر
         if (totalNetCalculated === 0) {
             const liveGross = parseFloat(document.getElementById('grossInput').value) || 0;
             const liveNet = parseFloat(document.getElementById('weightDisplayBox').innerText) || 0;
@@ -774,7 +782,6 @@
                 totalGrossCalculated = liveGross;
                 totalNetCalculated = liveNet;
             } else {
-                // منع الترحيل إذا كان كل شيء صفر فعلاً
                 alert(`⚠️ عذراً! لا توجد وزنات تراكمية مخزنة، ولا توجد أوزان فورية مكتوبة في خانة الوزن الحالي لترحيلها.`);
                 return;
             }
@@ -796,6 +803,7 @@
             worker: "-",
             email: document.getElementById('emailOpt').value || "لا يوجد",
             boxes: "-",
+            palletWeight: "-",
             gross: totalGrossCalculated.toFixed(2), 
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
@@ -815,9 +823,9 @@
         records.push(orderRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
 
-        // تصفير الخانات
         document.getElementById('grossInput').value = "";
         document.getElementById('boxCount').value = "";
+        document.getElementById('palletWeightOpt').value = "";
         document.getElementById('chickenCountOpt').value = "";
         document.getElementById('orderNumberOpt').value = "";
         document.getElementById('destinationOpt').value = "";
@@ -850,6 +858,7 @@
             weightHTML = `
                 <div class="modal-item"><span>الوزن القائم (الإجمالي):</span> <span style="font-weight:bold; color:#238636;">${r.gross} كغ</span></div>
                 <div class="modal-item"><span>عدد الصناديق / الأقفاص:</span> <span>${r.boxes} أقفاص</span></div>
+                <div class="modal-item"><span>وزن الطبلية المخصوم:</span> <span>${r.palletWeight || "0.00"} كغ</span></div>
                 <div class="modal-item"><span>صافي الوزن الفعلي:</span> <span style="color:#1f6feb; font-weight:bold;">${r.net} كغ</span></div>
             `;
         } else {
@@ -1022,7 +1031,7 @@
                                 return [
                                     ` • صافي الوزن النظيف: ${netW} كغ`,
                                     ` • الوزن القائم الشامل: ${grossW} كغ`,
-                                    ` • مخصوم الأقفاص (تار): ${tareW} كغ`
+                                    ` • مخصوم الأقفاص والطبلية: ${tareW} كغ`
                                 ];
                             }
                         }
@@ -1057,6 +1066,7 @@
                 "اسم العامل": r.worker,
                 "الصنف": r.item,
                 "عدد الصناديق": r.boxes,
+                "وزن الطبلية المخصوم (كغ)": r.palletWeight ? parseFloat(r.palletWeight) : 0,
                 "الوزن القائم (كغ)": parseFloat(r.gross),
                 "صافي الوزنة النظيف (كغ)": parseFloat(r.net),
                 "الوقت": r.time,
@@ -1066,7 +1076,7 @@
 
         staffData.push({
             "اسم المسؤول": "الإجمالي النظيف الفعلي الشامل",
-            "اسم العامل": "", "الصنف": "", "عدد الصناديق": "", "الوزن القائم (كغ)": "",
+            "اسم العامل": "", "الصنف": "", "عدد الصناديق": "", "وزن الطبلية المخصوم (كغ)": "", "الوزن القائم (كغ)": "",
             "صافي الوزنة النظيف (كغ)": sumNet,
             "الوقت": "", "التاريخ": ""
         });
