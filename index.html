@@ -105,6 +105,54 @@
             margin-bottom: 15px;
             border: 1px solid #1b4d22;
         }
+        
+        /* تصميم العداد التناقصي الذكي الجديد */
+        .countdown-zone {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #1e88e5;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 15px;
+            color: #0d47a1;
+        }
+        .dark-version .countdown-zone {
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
+            border: 2px solid #415a77;
+            color: #e0e1dd;
+        }
+        .countdown-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        .btn-lock {
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-lock.locked {
+            background-color: #da3637;
+        }
+        .countdown-live-text {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 8px;
+            background: rgba(255,255,255,0.5);
+            padding: 6px;
+            border-radius: 6px;
+        }
+        .dark-version .countdown-live-text {
+            background: rgba(0,0,0,0.3);
+        }
+
         .inputs-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -471,6 +519,18 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
+    <!-- قسم العداد التناقصي الاسترشادي الجديد والقابل للقفل -->
+    <div class="countdown-zone">
+        <div style="font-size: 13px; font-weight: bold;">⚖️ شاشة تتبع كمية الطبلية المسحوبة من البراد:</div>
+        <div class="countdown-row">
+            <input type="number" id="fridgeStockInput" placeholder="أدخل الوزن المسحوب (مثال: 1000)" oninput="calculateLiveCountdown()">
+            <button id="lockBtn" class="btn-lock" onclick="toggleStockLock()">🔓 فتح</button>
+        </div>
+        <div class="countdown-live-text" id="countdownResultText">
+            الوزن المتبقي لايف في الطبلية الحالية: <span style="font-size: 18px; color: #d32f2f;">0.00</span> كغ
+        </div>
+    </div>
+
     <div class="inputs-grid">
         <input type="text" id="managerName" placeholder="اسم المسؤول">
         <input type="text" id="workerName" placeholder="اسم العامل">
@@ -494,7 +554,7 @@
             <select id="itemSelect" onchange="autoFillParentOnSelect()">
                 <option value="">-- اختر الصنف الحالي --</option>
             </select>
-            <input type="text" id="parentItemInput" placeholder="اكتب هنا الصنف الأساسي (الأصل) يدوياً">
+            <input type="text" id="parentItemInput" oninput="updateUI()" placeholder="اكتب هنا الصنف الأساسي (الأصل) يدوياً">
         </div>
         <div style="display: flex; gap: 6px; margin-top: 10px;">
             <input type="text" id="newItemInput" placeholder="إضافة اسم صنف جديد للقائمة...">
@@ -596,8 +656,8 @@
 
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
+    let isStockLocked = false; // حالة قفل خانة البراد الافتراضية
     
-    // هنا قمنا بحفظ الخيارات الافتراضية المرنة (سحب الخام / المرتجع) وتطبيقها لتعمل على الفخاد والكل تلقائياً دون أي مساس ببنية الحسابات
     let defaultItems = [
         "سحب طبلية خام للتشغيل",
         "إرجاع كمية فائضة للبراد",
@@ -616,6 +676,41 @@
     const tarePerBox = 1.40;
 
     let lastUsedParentMap = JSON.parse(localStorage.getItem('hawaTechLastUsedParentMap')) || {};
+
+    // تفعيل خاصية القفل والفتح لحماية الخانة من العبث
+    function toggleStockLock() {
+        const input = document.getElementById('fridgeStockInput');
+        const btn = document.getElementById('lockBtn');
+        
+        isStockLocked = !isStockLocked;
+        
+        if(isStockLocked) {
+            input.disabled = true;
+            btn.innerText = "🔒 مقفل";
+            btn.classList.add('locked');
+        } else {
+            input.disabled = false;
+            btn.innerText = "🔓 فتح";
+            btn.classList.remove('locked');
+        }
+    }
+
+    // حساب الوزن المتبقي التناقصي لايف للشاشة المساعدة
+    function calculateLiveCountdown() {
+        const originalStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
+        const parentInputVal = document.getElementById('parentItemInput').value.trim();
+        
+        if (!parentInputVal || originalStock === 0) {
+            document.getElementById('countdownResultText').innerHTML = `الوزن المتبقي لايف في الطبلية الحالية: <span style="font-size: 18px; color: #d32f2f;">0.00</span> كغ`;
+            return;
+        }
+
+        // حساب المسجل حالياً في الوردية تحت نفس اسم الأصل المكتوب
+        const currentRegisteredNet = getCurrentPeriodNetTotal(parentInputVal);
+        const remaining = originalStock - currentRegisteredNet;
+
+        document.getElementById('countdownResultText').innerHTML = `الوزن المتبقي في الـ (${parentInputVal}) حالياً: <span style="font-size: 20px; color: #2e7d32; font-weight: bold;">${remaining.toFixed(2)}</span> كغ`;
+    }
 
     function toggleTheme() {
         const body = document.body;
@@ -770,7 +865,7 @@
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const palletWeight = parseFloat(document.getElementById('palletWeightOpt').value) || 0;
         
-        const manager = document.getElementById('managerName').value || "غير محدد";
+        const manager = document.getElementById('managerName').value || "غير مححدد";
         const worker = document.getElementById('workerName').value || "عام";
         const email = document.getElementById('emailOpt').value || "لا يوجد";
         
@@ -1123,6 +1218,7 @@
             }
         });
 
+        calculateLiveCountdown(); // استدعاء دالة التحديث التناقصي لايف للشاشة
         runAIPrediction();
     }
 
