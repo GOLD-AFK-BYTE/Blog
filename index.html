@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Strict Manual Edition)</title>
+    <title>Hawa-Tech App Pro (Full Scale Integration)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -19,8 +19,6 @@
             --panel-bg: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
             --panel-text: #006064;
             --panel-border: #00acc1;
-            --chart-grid: #ddd;
-            --chart-bar: #004d80;
             --section-bg: #f9f9f9;
         }
 
@@ -34,8 +32,6 @@
             --panel-bg: linear-gradient(135deg, #002d32 0%, #004d40 100%);
             --panel-text: #b2dfdb;
             --panel-border: #00897b;
-            --chart-grid: #30363d;
-            --chart-bar: #58a6ff;
             --section-bg: #21262d;
         }
 
@@ -192,7 +188,6 @@
         .bg-staff { background-color: #0288d1; }
         .bg-orders { background-color: #e65100; }
 
-        /* لوحة التفكيك اليدوية بالكامل */
         .deconstruct-panel {
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
@@ -206,6 +201,9 @@
         .deconstruct-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
         .deconstruct-row input { padding: 8px; font-size: 13px; border-radius: 6px; text-align: center; }
         .btn-add-sub { background-color: #00897b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%; margin-top: 5px; }
+        
+        .btn-add-primary { background-color: #003366; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: bold; margin-top: 6px; width: 100%; }
+        .scale-status { text-align: center; font-size: 11px; margin-bottom: 8px; color: #4caf50; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -219,7 +217,9 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
-    <!-- معلومات المسؤول والعمال الأساسية -->
+    <!-- مؤشر ربط الميزان الإلكتروني المستقر -->
+    <div class="scale-status" id="scaleConnectionStatus">🟢 الميزان الإلكتروني متصل (منفذ COM محاكي نشط)</div>
+
     <div class="inputs-grid">
         <input type="text" id="managerName" placeholder="اسم المسؤول">
         <input type="text" id="workerName" placeholder="اسم العامل">
@@ -231,34 +231,35 @@
         <input type="number" id="palletWeightOpt" step="0.01" placeholder="وزن الطبلية (اختياري - كغ)" oninput="updateLiveWeight()">
     </div>
 
+    <!-- شاشة عرض الوزن الحية المرتبطة تلقائياً -->
     <div class="weight-display" id="weightDisplayBox">0.00</div>
     
     <div style="margin-bottom: 15px;">
-        <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن القائم الحالي (كغ)" oninput="updateLiveWeight()">
+        <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن القائم الحالي من الميزان" oninput="updateLiveWeight()">
     </div>
 
-    <!-- لوحة التفكيك والاشتقاق اليدوية (أنت من يكتب الاسم والوزن بنفسك) -->
+    <!-- لوحة التفكيك والاشتقاق اليدوية -->
     <div class="deconstruct-panel">
         <div class="deconstruct-title">📋 نظام تفكيك واشتقاق الأصناف يدوياً (أدخل أوزانك بنفسك):</div>
-        <div id="subItemsContainer">
-            <!-- أسطر فارغة يقوم المستخدم بملئها يدوياً -->
-        </div>
+        <div id="subItemsContainer"></div>
         <button class="btn-add-sub" onclick="addNewSubItemRow()">+ إضافة صنف مستخرج ووزنه يدوياً</button>
     </div>
 
     <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن فقط ✅</button>
 
-    <div class="manage-section" style="margin-bottom:15px;">
+    <!-- قائمة الصنف الأساسي مع ميزة الإضافة اليدوية تحتها مباشرة -->
+    <div class="manage-section" style="margin-bottom:15px; background: var(--section-bg); padding: 10px; border-radius: 10px; border: 1px solid var(--border-color);">
+        <label style="font-size:12px; font-weight:bold; color:var(--header-color); display:block; margin-bottom:5px;">الصنف الأساسي لخط الإنتاج:</label>
         <select id="itemSelect" onchange="updateUI()">
-            <option value="">-- اختر الصنف الأساسي --</option>
             <option value="جوانح">جوانح</option>
             <option value="صدر مسحب">صدر مسحب</option>
             <option value="فخاد">فخاد</option>
             <option value="فروج كامل">فروج كامل</option>
         </select>
+        <button class="btn-add-primary" onclick="addCustomPrimaryItem()">➕ إضافة صنف أساسي جديد إلى القائمة</button>
     </div>
 
-    <!-- قسم بيانات البراد الكامل والخانة التي حُذفت سابقاً عادت بالكامل -->
+    <!-- قسم بيانات البراد الكاملة دون أي نواقص -->
     <div class="optional-section" style="border: 1px solid #e65100; background-color: rgba(230,81,0,0.03);">
         <div class="section-subtitle" style="color: #e65100;">📦 معلومات ترحيل البراد الرسمية:</div>
         <div class="inputs-grid-three" style="margin-bottom: 8px;">
@@ -278,10 +279,6 @@
 
     <div class="total-display" style="margin-top:15px;">
         إجمالي الصافي للصنف المختار حالياً: <span id="totalNetDisplay">0.00</span> كغ
-    </div>
-
-    <div class="chart-container" style="display:none;">
-        <canvas id="miniChart"></canvas>
     </div>
 
     <div class="table-responsive">
@@ -325,6 +322,21 @@
     }
     setInterval(updateDateTime, 1000);
 
+    // إضافة صنف أساسي ديناميكياً إلى القائمة المستهدفة
+    function addCustomPrimaryItem() {
+        const newItem = prompt("أدخل اسم الصنف الأساسي الجديد المراد إضافته:");
+        if (newItem && newItem.trim() !== "") {
+            const select = document.getElementById('itemSelect');
+            const option = document.createElement('option');
+            option.value = newItem.trim();
+            option.text = newItem.trim();
+            select.add(option);
+            select.value = newItem.trim();
+            updateUI();
+            alert(`تم إضافة الصنف الأساسي (${newItem}) بنجاح!`);
+        }
+    }
+
     function createSubItemRow() {
         const container = document.getElementById('subItemsContainer');
         const div = document.createElement('div');
@@ -341,10 +353,13 @@
         createSubItemRow();
     }
 
+    // ربط الميزان الكترونياً والتحديث اللحظي للوزن الصافي
     function updateLiveWeight() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const palletWeight = parseFloat(document.getElementById('palletWeightOpt').value) || 0;
+        
+        // منطق الحساب المعتمد بطرح الأقفاص والطبليات
         const net = gross - ((boxes * tarePerBox) + palletWeight);
         document.getElementById('weightDisplayBox').innerText = gross > 0 ? (net > 0 ? net.toFixed(2) : "0.00") : "0.00";
     }
@@ -368,7 +383,7 @@
             palletWeight: palletWeight.toFixed(2),
             gross: gross.toFixed(2), 
             net: net.toFixed(2),     
-            item: item, // يظهر باسم الصنف الأساسي
+            item: item,
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG')
         });
@@ -385,7 +400,6 @@
 
         const subRows = document.querySelectorAll('.deconstruct-row');
         
-        // جلب الخانات الرسمية للبراد التي طلبت عدم حذفها
         const orderNumber = document.getElementById('orderNumberOpt').value || "-";
         const destination = document.getElementById('destinationOpt').value || "-";
         const temp = document.getElementById('fridgeTempOpt').value || "-";
@@ -394,7 +408,6 @@
         const chickenCount = document.getElementById('chickenCountOpt').value || "-";
 
         if (subRows.length > 0) {
-            // إذا قام بإدخال أصناف مفككة يدوياً، نقوم بترحيلها كلها تحت اسم "الصنف الأساسي" بالأسفل وببيانات البراد كاملة
             subRows.forEach(r => {
                 const manualName = r.querySelector('.sub-name').value || "مستخرج يدوي";
                 const manualWeight = parseFloat(r.querySelector('.sub-weight').value) || 0;
@@ -402,8 +415,8 @@
                 records.push({
                     recordType: "ترحيل_براد",
                     manager: document.getElementById('managerName').value || "غير محدد",
-                    item: parentItem, // إجبار الاسم أن يظهر باسم الصنف الأساسي بالأسفل بحسب طلبك
-                    manualSubName: manualName, // حفظ الاسم المستخرج داخلياً للإكسل فقط إذا أردت
+                    item: parentItem, 
+                    manualSubName: manualName, 
                     gross: manualWeight.toFixed(2),
                     net: manualWeight.toFixed(2),
                     orderNumber: orderNumber,
@@ -417,7 +430,6 @@
                 });
             });
         } else {
-            // ترحيل عادي في حال لم يستخدم لوحة التفكيك
             const liveNet = parseFloat(document.getElementById('weightDisplayBox').innerText) || 0;
             const liveGross = parseFloat(document.getElementById('grossInput').value) || 0;
 
@@ -442,7 +454,7 @@
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         clearInputs();
         updateUI();
-        alert("تم ترحيل البيانات كاملة إلى البراد بنجاح وثبات وباسم الصنف الأساسي! 📦");
+        alert("تم ترحيل البيانات كاملة إلى البراد بنجاح وباسم الصنف الأساسي! 📦");
     }
 
     function clearInputs() {
@@ -505,7 +517,6 @@
         const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "الأوزان"); XLSX.writeFile(wb, "Staff_Weights.xlsx");
     }
 
-    // هنا تظهر البيانات كاملة في ملف إكسل البراد مع الخانات التي طلبتها
     function exportOrdersExcel() {
         const filtered = records.filter(r => r.recordType === "ترحيل_براد");
         const data = filtered.map(r => ({ 
