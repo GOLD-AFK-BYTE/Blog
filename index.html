@@ -471,15 +471,16 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
+    <!-- تم نقل رقم الطلبية هنا لتكون أساسية في كل عملية وزن -->
     <div class="inputs-grid">
+        <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية الحالي (مهم لربط الوزنات)" oninput="updateUI()">
         <input type="text" id="managerName" placeholder="اسم المسؤول">
         <input type="text" id="workerName" placeholder="اسم العامل">
         <input type="text" id="emailOpt" placeholder="الإيميل (اختياري)">
-        <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="updateLiveWeight()">
     </div>
 
-    <!-- خانة وزن الطبلية الاختيارية الجديدة مدمجة تماماً دون المساس بالترتيب -->
-    <div style="margin-bottom: 12px;">
+    <div class="inputs-grid">
+        <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="updateLiveWeight()">
         <input type="number" id="palletWeightOpt" step="0.01" placeholder="وزن الطبلية (اختياري - كغ)" oninput="updateLiveWeight()">
     </div>
 
@@ -535,20 +536,19 @@
 
     <div class="optional-section" style="border: 1px solid #e65100; background-color: rgba(230,81,0,0.03); margin-bottom: 15px;">
         <div class="section-subtitle" style="color: #e65100;">📦 ترحيل بيانات نهاية الساعة (إلى البراد دون تكرار الحساب):</div>
-        <div class="inputs-grid-three" style="margin-bottom: 8px;">
+        <div class="inputs-grid" style="margin-bottom: 8px;">
             <input type="number" id="chickenCountOpt" placeholder="عدد الفروج">
-            <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية">
             <input type="text" id="destinationOpt" placeholder="المرسل إليه">
-        </div>
-        <div class="inputs-grid" style="margin-bottom: 10px;">
             <input type="text" id="fridgeLocationOpt" placeholder="موقع البراد">
+        </div>
+        <div style="margin-bottom: 10px;">
             <input type="text" id="temperatureOpt" placeholder="درجة الحرارة (C°)">
         </div>
         <button class="btn-transfer-hourly" onclick="transferOrderToFridge()">ترحيل الطلبية الحالية إلى البراد 📦</button>
     </div>
 
     <div class="total-display">
-        إجمالي الصافي للصنف المختار حالياً: <span id="totalNetDisplay">0.00</span> كغ
+        إجمالي صافي (الصنف + رقم الطلبية) المختار: <span id="totalNetDisplay">0.00</span> كغ
     </div>
 
     <div class="chart-container" id="chartDiv">
@@ -556,7 +556,7 @@
     </div>
 
     <div class="search-box-container">
-        <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث هنا عن أي شيء (اسم، صنف، وزن، صلاحية، تاريخ، رقم طلبية)..." oninput="updateUI()">
+        <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث هنا عن أي شيء (رقم طلبية، اسم، صنف، وزن، صلاحية)..." oninput="updateUI()">
     </div>
 
     <div class="table-responsive">
@@ -565,6 +565,7 @@
                 <tr>
                     <th>الوقت</th>
                     <th>نوع العملية</th>
+                    <th>الطلبية</th>
                     <th>الصنف</th>
                     <th>الوزنة كاملة</th>
                     <th>صافي الوزنة</th>
@@ -632,7 +633,6 @@
     }
     setInterval(updateDateTime, 1000);
 
-    // تحديث دالة الحساب لتشمل الطبلية يدويًا وبشكل اختياري ومباشر
     function updateLiveWeight() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
@@ -648,36 +648,37 @@
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
-    function getCurrentPeriodNetTotal(selectedItem) {
+    // تعديل الحساب الذكي ليعتمد على الصنف ورقم الطلبية معاً لمنع التداخل
+    function getCurrentPeriodNetTotal(selectedItem, currentOrder) {
         if (!selectedItem) return 0;
         let lastTransferIndex = -1;
         for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد" && records[i].item === selectedItem) {
+            if (records[i].recordType === "ترحيل_براد" && records[i].item === selectedItem && records[i].orderNumber === currentOrder) {
                 lastTransferIndex = i;
                 break;
             }
         }
         let total = 0;
         records.forEach((r, index) => {
-            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && index > lastTransferIndex) {
+            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && r.orderNumber === currentOrder && index > lastTransferIndex) {
                 total += parseFloat(r.net) || 0;
             }
         });
         return total;
     }
 
-    function getCurrentPeriodGrossTotal(selectedItem) {
+    function getCurrentPeriodGrossTotal(selectedItem, currentOrder) {
         if (!selectedItem) return 0;
         let lastTransferIndex = -1;
         for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد" && records[i].item === selectedItem) {
+            if (records[i].recordType === "ترحيل_براد" && records[i].item === selectedItem && records[i].orderNumber === currentOrder) {
                 lastTransferIndex = i;
                 break;
             }
         }
         let total = 0;
         records.forEach((r, index) => {
-            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && index > lastTransferIndex) {
+            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && r.orderNumber === currentOrder && index > lastTransferIndex) {
                 total += parseFloat(r.gross) || 0;
             }
         });
@@ -725,6 +726,7 @@
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const palletWeight = parseFloat(document.getElementById('palletWeightOpt').value) || 0;
+        const orderNumber = document.getElementById('orderNumberOpt').value.trim() || "غير محددة";
         
         const manager = document.getElementById('managerName').value || "غير محدد";
         const worker = document.getElementById('workerName').value || "عام";
@@ -748,8 +750,9 @@
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
             net: net.toFixed(2),     
+            orderNumber: orderNumber, // ربط الوزنة برقم الطلبية فورياً
             minW: "-", maxW: "-", freezeStart: "-", freezeEnd: "-",
-            chickenCount: "-", orderNumber: "-", destination: "-", fridgeLocation: "-", temperature: "-"
+            chickenCount: "-", destination: "-", fridgeLocation: "-", temperature: "-"
         };
 
         records.push(newRecord);
@@ -761,18 +764,18 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم حفظ وزنة صنف (${item}) وعاملها بنجاح ✅`);
+        alert(`تم حفظ وزنة صنف (${item}) للطلبية رقم (${orderNumber}) بنجاح ✅`);
     }
 
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
-        const orderNumber = document.getElementById('orderNumberOpt').value;
+        const orderNumber = document.getElementById('orderNumberOpt').value.trim();
         
         if (!item) { alert("يرجى اختيار الصنف للطلب المرحل أولاً"); return; }
-        if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
+        if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل وتجميع أوزانها"); return; }
 
-        let totalNetCalculated = getCurrentPeriodNetTotal(item);
-        let totalGrossCalculated = getCurrentPeriodGrossTotal(item);
+        let totalNetCalculated = getCurrentPeriodNetTotal(item, orderNumber);
+        let totalGrossCalculated = getCurrentPeriodGrossTotal(item, orderNumber);
 
         if (totalNetCalculated === 0) {
             const liveGross = parseFloat(document.getElementById('grossInput').value) || 0;
@@ -782,7 +785,7 @@
                 totalGrossCalculated = liveGross;
                 totalNetCalculated = liveNet;
             } else {
-                alert(`⚠️ عذراً! لا توجد وزنات تراكمية مخزنة، ولا توجد أوزان فورية مكتوبة في خانة الوزن الحالي لترحيلها.`);
+                alert(`⚠️ عذراً! لا توجد وزنات تراكمية مخزنة للطلبية رقم (${orderNumber})، ولا توجد أوزان فورية في الشاشة.`);
                 return;
             }
         }
@@ -827,7 +830,6 @@
         document.getElementById('boxCount').value = "";
         document.getElementById('palletWeightOpt').value = "";
         document.getElementById('chickenCountOpt').value = "";
-        document.getElementById('orderNumberOpt').value = "";
         document.getElementById('destinationOpt').value = "";
         document.getElementById('fridgeLocationOpt').value = "";
         document.getElementById('temperatureOpt').value = "";
@@ -838,7 +840,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل طلبيّة صنف (${item}) رقم (${orderNumber}) بنجاح إلى ملف البراد ✅.`);
+        alert(`تم ترحيل طلبيّة صنف (${item}) رقم (${orderNumber}) كاملة إلى البراد بنجاح ✅.`);
     }
 
     function deleteRecord(index) {
@@ -870,12 +872,12 @@
 
         modalBody.innerHTML = `
             <div class="modal-item"><span>نوع السجل:</span> <span style="font-weight:bold; color:${r.recordType === 'ترحيل_براد' ? '#e65100':'#1f6feb'};">${r.recordType === "ترحيل_براد" ? "📦 ترحيل ساعة للبراد" : "⚖️ وزنة خط إنتاج"}</span></div>
+            <div class="modal-item"><span>رقم الطلبية المرتبطة:</span> <span style="color:#d35400; font-weight:bold;">${r.orderNumber}</span></div>
             <div class="modal-item"><span>التاريخ والوقت:</span> <span>${r.date} | ${r.time}</span></div>
             <div class="modal-item"><span>اسم المسؤول (المشرف):</span> <span>${r.manager}</span></div>
             <div class="modal-item"><span>اسم العامل على الخط:</span> <span>${r.worker}</span></div>
             <div class="modal-item"><span>الصنف المستهدف:</span> <span>${r.item}</span></div>
             ${weightHTML}
-            <div class="modal-item"><span>رقم الطلبية المفتوحة:</span> <span>${r.orderNumber}</span></div>
             <div class="modal-item"><span>المكان المرسل إليه:</span> <span>${r.destination}</span></div>
             <div class="modal-item"><span>موقع البراد الداخلي:</span> <span>${r.fridgeLocation}</span></div>
             <div class="modal-item"><span>درجة حرارة الشحنة:</span> <span style="color:#da3637; font-weight:bold;">${r.temperature} C°</span></div>
@@ -914,6 +916,7 @@
         tfoot.innerHTML = "";
         
         const selectedItem = document.getElementById('itemSelect').value;
+        const currentOrder = document.getElementById('orderNumberOpt').value.trim() || "غير محددة";
         
         let displayNetForSelected = 0;
         let chartDataNet = {};
@@ -922,7 +925,7 @@
         const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
         if (selectedItem) {
-            displayNetForSelected = getCurrentPeriodNetTotal(selectedItem);
+            displayNetForSelected = getCurrentPeriodNetTotal(selectedItem, currentOrder);
         }
         document.getElementById('totalNetDisplay').innerText = displayNetForSelected.toFixed(2);
 
@@ -934,15 +937,16 @@
 
             let lastTransferIndexForThisItem = -1;
             for (let i = index - 1; i >= 0; i--) {
-                if (records[i].recordType === "ترحيل_براد" && records[i].item === r.item) {
+                if (records[i].recordType === "ترحيل_براد" && records[i].item === r.item && records[i].orderNumber === r.orderNumber) {
                     lastTransferIndexForThisItem = i;
                     break;
                 }
             }
 
             if (r.recordType === "وزنة_فردية" && index > lastTransferIndexForThisItem) {
-                chartDataNet[r.item] = (chartDataNet[r.item] || 0) + (parseFloat(r.net) || 0);
-                chartDataGross[r.item] = (chartDataGross[r.item] || 0) + (parseFloat(r.gross) || 0);
+                const labelName = `${r.item} (طلب: ${r.orderNumber})`;
+                chartDataNet[labelName] = (chartDataNet[labelName] || 0) + (parseFloat(r.net) || 0);
+                chartDataGross[labelName] = (chartDataGross[labelName] || 0) + (parseFloat(r.gross) || 0);
             }
 
             const isTransfer = r.recordType === "ترحيل_براد";
@@ -955,6 +959,7 @@
             const row = `<tr class="${rowClass}">
                 <td>${r.time}</td>
                 <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${typeLabel}</td>
+                <td style="color:#d35400; font-weight:bold;">${r.orderNumber}</td>
                 <td>${r.item}</td>
                 <td class="highlight-weight">${tableGrossDisplay}</td>
                 <td class="net-weight" style="color: ${isTransfer ? '#e65100' : '#1f6feb'}">${tableNetDisplay}</td>
@@ -965,14 +970,15 @@
         });
 
         if(selectedItem && displayNetForSelected > 0) {
-            const currentGrossForSelected = getCurrentPeriodGrossTotal(selectedItem);
+            const currentGrossForSelected = getCurrentPeriodGrossTotal(selectedItem, currentOrder);
             const footerRow = `<tr class="row-virtual-footer">
                 <td>لايف</td>
-                <td>📊 عداد الحالي للمنتج</td>
+                <td>📊 عداد الطلبية الحالي</td>
+                <td>${currentOrder}</td>
                 <td>${selectedItem}</td>
                 <td>${currentGrossForSelected.toFixed(2)} كغ</td>
                 <td>${displayNetForSelected.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#555;">(مراقب إنتاج صنف ${selectedItem} الحالي)</td>
+                <td colspan="2" style="font-size:11px; color:#555;">(مراقب إنتاج صنف ${selectedItem} للطلبية ${currentOrder})</td>
             </tr>`;
             tfoot.innerHTML = footerRow;
         }
@@ -994,7 +1000,7 @@
             data: {
                 labels: currentLabels.length > 0 ? currentLabels : ["لا يوجد أوزان معلقة"],
                 datasets: [{
-                    label: 'صافي إنتاج الأصناف غير المترحّلة (كغ)',
+                    label: 'صافي إنتاج الأصناف حسب رقم الطلبية (كغ)',
                     data: currentValuesNet.length > 0 ? currentValuesNet : [0],
                     backgroundColor: barColor,
                     borderRadius: 6,
@@ -1062,6 +1068,7 @@
         const staffData = filtered.map(r => {
             sumNet += parseFloat(r.net);
             return {
+                "رقم الطلبية": r.orderNumber,
                 "اسم المسؤول": r.manager,
                 "اسم العامل": r.worker,
                 "الصنف": r.item,
@@ -1075,7 +1082,7 @@
         });
 
         staffData.push({
-            "اسم المسؤول": "الإجمالي النظيف الفعلي الشامل",
+            "رقم الطلبية": "الإجمالي الشامل", "اسم المسؤول": "",
             "اسم العامل": "", "الصنف": "", "عدد الصناديق": "", "وزن الطبلية المخصوم (كغ)": "", "الوزن القائم (كغ)": "",
             "صافي الوزنة النظيف (كغ)": sumNet,
             "الوقت": "", "التاريخ": ""
