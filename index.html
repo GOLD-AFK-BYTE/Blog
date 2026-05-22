@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Dynamic Deconstruction Edition)</title>
+    <title>Hawa-Tech App Pro (Strict Manual Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -58,12 +58,7 @@
             box-shadow: 0 12px 40px rgba(0,0,0,0.15);
             padding: 20px;
             box-sizing: border-box;
-            animation: fadeInApp 0.6s ease-out;
             position: relative;
-        }
-        @keyframes fadeInApp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
         }
         
         .theme-toggle-btn {
@@ -78,10 +73,7 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: bold;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .theme-toggle-btn:hover { transform: scale(1.05); }
 
         .header {
             text-align: center;
@@ -123,12 +115,6 @@
             font-size: 14px;
             background-color: var(--input-bg);
             color: var(--text-color);
-            transition: all 0.25s ease;
-        }
-        input:focus, select:focus {
-            border-color: #58a6ff;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(88,166,255,0.15);
         }
         
         .weight-display {
@@ -195,41 +181,18 @@
             margin-bottom: 18px;
         }
         
-        .manage-section {
-            border: 1px dashed var(--border-color);
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 18px;
-        }
-        .manage-title { font-size: 13px; color: var(--header-color); font-weight: bold; margin-bottom: 10px; }
-        .btn-action { padding: 10px 14px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
-        .btn-delete { background-color: #da3637; }
-        .btn-add { background-color: #238636; }
-        
         .table-responsive { width: 100%; overflow-x: auto; margin-bottom: 18px; border-radius: 8px; border: 1px solid var(--border-color); }
         table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 650px; }
         th, td { padding: 10px 6px; border: 1px solid var(--border-color); text-align: center; white-space: nowrap; }
         th { background-color: var(--input-bg); color: var(--header-color); }
-        tr { background-color: transparent; }
         .row-order-transfer { background-color: rgba(230,81,0,0.06); }
-        .row-virtual-footer { background-color: rgba(31, 111, 235, 0.08) !important; font-weight: bold; color: #0d57d2; border-top: 2px solid #1f6feb; }
         
-        .btn-row-delete { background: none; border: none; color: #f85149; cursor: pointer; font-size: 15px; }
-        .btn-details-view { background-color: #1f6feb; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-
         .excel-buttons-zone { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
         .btn-excel-custom { width: 100%; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; }
         .bg-staff { background-color: #0288d1; }
         .bg-orders { background-color: #e65100; }
-        
-        .btn-reset { width: 100%; background-color: #484f58; color: #f0f6fc; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; margin-bottom: 15px; }
-        
-        .ai-panel { background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border: 1px solid #8e44ad; border-radius: 10px; padding: 12px; margin-bottom: 15px; font-size: 12.5px; color: #4a148c; }
-        .dark-version .ai-panel { background: linear-gradient(135deg, #2c1a4d 0%, #1a0f30 100%); border: 1px solid #8957e5; color: #d3b6ff; }
-        
-        .chart-container { margin-bottom: 18px; background: var(--bg-container); border: 1px solid var(--border-color); border-radius: 14px; padding: 15px; }
 
-        /* تصميم لوحة التفكيك الديناميكية الجديدة */
+        /* لوحة التفكيك اليدوية بالكامل */
         .deconstruct-panel {
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
@@ -241,14 +204,8 @@
         }
         .deconstruct-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 4px; }
         .deconstruct-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
-        .deconstruct-row input { padding: 6px; font-size: 12px; border-radius: 6px; }
-        .btn-add-sub { background-color: #00897b; color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 15px; }
-        .modal-content { background-color: var(--bg-container); color: var(--text-color); border: 1px solid var(--border-color); width: 100%; max-width: 460px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .modal-item { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding: 5px 0; }
-        .modal-item span:first-child { font-weight: bold; color: var(--header-color); }
-        .btn-modal-close { width: 100%; background-color: #da3637; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        .deconstruct-row input { padding: 8px; font-size: 13px; border-radius: 6px; text-align: center; }
+        .btn-add-sub { background-color: #00897b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -262,6 +219,7 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
+    <!-- معلومات المسؤول والعمال الأساسية -->
     <div class="inputs-grid">
         <input type="text" id="managerName" placeholder="اسم المسؤول">
         <input type="text" id="workerName" placeholder="اسم العامل">
@@ -279,63 +237,51 @@
         <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن القائم الحالي (كغ)" oninput="updateLiveWeight()">
     </div>
 
-    <!-- لوحة التفكيك والاشتقاق الديناميكية لكل الأصناف -->
-    <div class="deconstruct-panel" id="deconstructPanel">
-        <div class="deconstruct-title">📋 نظام تفكيك واشتقاق الأصناف الفوري (مرن لكل المنتجات):</div>
+    <!-- لوحة التفكيك والاشتقاق اليدوية (أنت من يكتب الاسم والوزن بنفسك) -->
+    <div class="deconstruct-panel">
+        <div class="deconstruct-title">📋 نظام تفكيك واشتقاق الأصناف يدوياً (أدخل أوزانك بنفسك):</div>
         <div id="subItemsContainer">
-            <!-- سيتم توليد حقول الأصناف المستخرجة هنا تلقائياً أو يدوياً -->
+            <!-- أسطر فارغة يقوم المستخدم بملئها يدوياً -->
         </div>
-        <button class="btn-add-sub" onclick="addNewSubItemRow()">+ إضافة صنف مستخرج جديد</button>
+        <button class="btn-add-sub" onclick="addNewSubItemRow()">+ إضافة صنف مستخرج ووزنه يدوياً</button>
     </div>
 
     <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن فقط ✅</button>
 
-    <div class="ai-panel" id="aiPanel">
-        🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow لمراقبة خط الأوزان الحالية.
+    <div class="manage-section" style="margin-bottom:15px;">
+        <select id="itemSelect" onchange="updateUI()">
+            <option value="">-- اختر الصنف الأساسي --</option>
+            <option value="جوانح">جوانح</option>
+            <option value="صدر مسحب">صدر مسحب</option>
+            <option value="فخاد">فخاد</option>
+            <option value="فروج كامل">فروج كامل</option>
+        </select>
     </div>
 
-    <div class="manage-section">
-        <div class="manage-title">إدارة الأصناف الحالية:</div>
-        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-            <select id="itemSelect" onchange="handleItemChange()">
-                <option value="">-- اختر الصنف الأساسي --</option>
-                <option value="جوانح">جوانح</option>
-                <option value="صدر مسحب">صدر مسحب</option>
-                <option value="فخاد">فخاد</option>
-                <option value="فروج كامل">فروج كامل</option>
-            </select>
-            <button class="btn-action btn-delete" onclick="deleteItem()">حذف 🗑️</button>
-        </div>
-        <div style="display: flex; gap: 6px;">
-            <input type="text" id="newItemInput" placeholder="أضف صنفاً أساسياً جديداً...">
-            <button class="btn-action btn-add" onclick="addItem()">إضافة +</button>
-        </div>
-    </div>
-
-    <div class="optional-section">
-        <div class="section-subtitle">⚖️ معايير وزن الفروج المستهدف بالطلب (غرام):</div>
-        <div class="inputs-grid" style="margin-bottom: 10px;">
-            <input type="number" id="minWeightOpt" placeholder="الحد الأدنى للفروج (غ)">
-            <input type="number" id="maxWeightOpt" placeholder="الحد الأعلى للفروج (غ)">
-        </div>
-    </div>
-
-    <div class="optional-section" style="border: 1px solid #e65100; background-color: rgba(230,81,0,0.03); margin-bottom: 15px;">
-        <div class="section-subtitle" style="color: #e65100;">📦 ترحيل بيانات نهاية الساعة (إلى البراد بالصنف المستخرج):</div>
+    <!-- قسم بيانات البراد الكامل والخانة التي حُذفت سابقاً عادت بالكامل -->
+    <div class="optional-section" style="border: 1px solid #e65100; background-color: rgba(230,81,0,0.03);">
+        <div class="section-subtitle" style="color: #e65100;">📦 معلومات ترحيل البراد الرسمية:</div>
         <div class="inputs-grid-three" style="margin-bottom: 8px;">
             <input type="number" id="chickenCountOpt" placeholder="عدد الفروج">
             <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية">
-            <input type="text" id="destinationOpt" placeholder="المرسل إليه">
+            <input type="text" id="destinationOpt" placeholder="المرسل إليه / الموقع">
+        </div>
+        <div class="inputs-grid" style="margin-bottom: 8px;">
+            <input type="text" id="fridgeTempOpt" placeholder="درجة حرارة البراد (مثال: 4°C)">
+            <input type="text" id="fridgeLocationOpt" placeholder="موقع البراد / رقم المستودع">
+        </div>
+        <div style="margin-bottom: 8px;">
+            <input type="text" id="fridgeKeeperOpt" placeholder="اسم مسؤول المستودع المستلم">
         </div>
         <button class="btn-transfer-hourly" onclick="transferOrderToFridge()">ترحيل الطلبية الحالية إلى البراد 📦</button>
     </div>
 
-    <div class="total-display">
+    <div class="total-display" style="margin-top:15px;">
         إجمالي الصافي للصنف المختار حالياً: <span id="totalNetDisplay">0.00</span> كغ
     </div>
 
-    <div class="chart-container">
-        <canvas id="miniChart" style="max-height: 220px;"></canvas>
+    <div class="chart-container" style="display:none;">
+        <canvas id="miniChart"></canvas>
     </div>
 
     <div class="table-responsive">
@@ -344,15 +290,15 @@
                 <tr>
                     <th>الوقت</th>
                     <th>نوع العملية</th>
-                    <th>الصنف</th>
-                    <th>الوزنة كاملة</th>
-                    <th>صافي الوزنة</th>
-                    <th>التفاصيل الكاملة</th>
+                    <th>الصنف الأساسي</th>
+                    <th>الوزن القائم</th>
+                    <th>الوزن الصافي</th>
+                    <th>رقم الطلبية</th>
+                    <th>الموقع / الحرارة</th>
                     <th>إجراء</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
-            <tfoot id="tableFoot"></tbody>
         </table>
     </div>
 
@@ -361,51 +307,15 @@
         <button class="btn-excel-custom bg-orders" onclick="exportOrdersExcel()">📊 2. تحميل ملف إكسل التقارير المترحلة للبراد</button>
     </div>
 
-    <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد الكامل والبيانات</button>
-</div>
-
-<div class="modal-overlay" id="detailsModal">
-    <div class="modal-content">
-        <div class="modal-header">👁️ تفاصيل الوزنة الموسعة (Live View)</div>
-        <div class="modal-body-grid" id="modalBody"></div>
-        <button class="btn-modal-close" onclick="closeModal()">إغلاق النافذة</button>
-    </div>
 </div>
 
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
-    let myChart = null;
     const tarePerBox = 1.40;
-
-    // قاعدة بيانات مسبقة للأصناف التفكيكية الافتراضية
-    const defaultDeconstruction = {
-        "فخاد": [
-            { name: "مسحب فخاد", ratio: 25 },
-            { name: "كسر عظم", ratio: 25 },
-            { name: "مسحب ورك", ratio: 25 },
-            { name: "جلدة", ratio: 12.5 },
-            { name: "شاورما", ratio: 12.5 }
-        ],
-        "فروج كامل": [
-            { name: "صدر مسحب", ratio: 40 },
-            { name: "فخاد كاملة", ratio: 40 },
-            { name: "جوانح", ratio: 10 },
-            { name: "هيكل وقوانص", ratio: 10 }
-        ]
-    };
 
     function toggleTheme() {
         document.body.classList.toggle('dark-version');
         localStorage.setItem('hawaTechTheme', document.body.classList.contains('dark-version') ? 'dark' : 'light');
-        document.getElementById('themeBtn').innerText = document.body.classList.contains('dark-version') ? "☀️ فاتح" : "🌙 داكن";
-        updateUI(); 
-    }
-
-    function applySavedTheme() {
-        if(localStorage.getItem('hawaTechTheme') === 'dark') {
-            document.body.classList.add('dark-version');
-            document.getElementById('themeBtn').innerText = "☀️ فاتح";
-        }
     }
 
     function updateDateTime() {
@@ -415,63 +325,20 @@
     }
     setInterval(updateDateTime, 1000);
 
-    function handleItemChange() {
-        const selectedItem = document.getElementById('itemSelect').value;
-        const container = document.getElementById('subItemsContainer');
-        container.innerHTML = "";
-
-        if (!selectedItem) { updateUI(); return; }
-
-        // إذا كان الصنف المختار له بنية تفكيك جاهزة، يتم تحميلها فوراً
-        if (defaultDeconstruction[selectedItem]) {
-            defaultDeconstruction[selectedItem].forEach(sub => {
-                createSubItemRow(sub.name, sub.ratio);
-            });
-        } else {
-            // لأي صنف آخر جديد، نفتح حقلين فارغين للمستخدم ليكتب بحريته
-            createSubItemRow("", "");
-        }
-        calculateSubWeights();
-        updateUI();
-    }
-
-    function createSubItemRow(name, ratio) {
+    function createSubItemRow() {
         const container = document.getElementById('subItemsContainer');
         const div = document.createElement('div');
         div.className = "deconstruct-row";
         div.innerHTML = `
-            <input type="text" class="sub-name" placeholder="اسم الصنف المستخرج" value="${name}" style="flex: 2;">
-            <input type="number" class="sub-ratio" placeholder="النسبة %" value="${ratio}" style="flex: 1;" oninput="calculateSubWeights()">
-            <input type="text" class="sub-weight-calculated" placeholder="الوزن" style="flex: 1; background:#eee; color:#333;" readonly>
-            <button type="button" style="background:#da3637; color:white; border:none; border-radius:6px; cursor:pointer; padding:6px;" onclick="this.parentElement.remove(); calculateSubWeights();">❌</button>
+            <input type="text" class="sub-name" placeholder="اسم المستخرج يدوياً" style="flex: 2;">
+            <input type="number" class="sub-weight" step="0.01" placeholder="الوزن الصافي كغ" style="flex: 2;">
+            <button type="button" style="background:#da3637; color:white; border:none; border-radius:6px; cursor:pointer; padding:8px;" onclick="this.parentElement.remove();">❌</button>
         `;
         container.appendChild(div);
     }
 
     function addNewSubItemRow() {
-        createSubItemRow("", "");
-    }
-
-    function calculateSubWeights() {
-        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
-        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
-        const palletWeight = parseFloat(document.getElementById('palletWeightOpt').value) || 0;
-        const netTotal = gross - ((boxes * tarePerBox) + palletWeight);
-
-        const rows = document.querySelectorAll('.deconstruct-row');
-        let totalRatios = 0;
-        rows.forEach(r => { totalRatios += parseFloat(r.querySelector('.sub-ratio').value) || 0; });
-
-        rows.forEach(r => {
-            const ratio = parseFloat(r.querySelector('.sub-ratio').value) || 0;
-            const calculatedField = r.querySelector('.sub-weight-calculated');
-            if (netTotal > 0 && totalRatios > 0) {
-                const subWeight = netTotal * (ratio / totalRatios);
-                calculatedField.value = subWeight.toFixed(2) + " كغ";
-            } else {
-                calculatedField.value = "0.00 كغ";
-            }
-        });
+        createSubItemRow();
     }
 
     function updateLiveWeight() {
@@ -479,45 +346,7 @@
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const palletWeight = parseFloat(document.getElementById('palletWeightOpt').value) || 0;
         const net = gross - ((boxes * tarePerBox) + palletWeight);
-        
         document.getElementById('weightDisplayBox').innerText = gross > 0 ? (net > 0 ? net.toFixed(2) : "0.00") : "0.00";
-        calculateSubWeights();
-    }
-
-    function getCurrentPeriodNetTotal(selectedItem) {
-        if (!selectedItem) return 0;
-        let lastTransferIndex = -1;
-        for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد" && records[i].parentItem === selectedItem) {
-                lastTransferIndex = i;
-                break;
-            }
-        }
-        let total = 0;
-        records.forEach((r, index) => {
-            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && index > lastTransferIndex) {
-                total += parseFloat(r.net) || 0;
-            }
-        });
-        return total;
-    }
-
-    function getCurrentPeriodGrossTotal(selectedItem) {
-        if (!selectedItem) return 0;
-        let lastTransferIndex = -1;
-        for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد" && records[i].parentItem === selectedItem) {
-                lastTransferIndex = i;
-                break;
-            }
-        }
-        let total = 0;
-        records.forEach((r, index) => {
-            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && index > lastTransferIndex) {
-                total += parseFloat(r.gross) || 0;
-            }
-        });
-        return total;
     }
 
     function saveCurrentRecord() {
@@ -539,8 +368,7 @@
             palletWeight: palletWeight.toFixed(2),
             gross: gross.toFixed(2), 
             net: net.toFixed(2),     
-            item: item,
-            parentItem: item, // السجل الفردي يعود دائماً لنفسه كأصل
+            item: item, // يظهر باسم الصنف الأساسي
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG')
         });
@@ -551,74 +379,61 @@
         alert(`تم حفظ وزنة (${item}) بنجاح ✅`);
     }
 
-    // التحديث الجوهري لعملية الترحيل المرنة: تأخذ الأصناف الفرعية وتثبت الصنف الأساسي بداخلها!
     function transferOrderToFridge() {
         const parentItem = document.getElementById('itemSelect').value;
-        const orderNumber = document.getElementById('orderNumberOpt').value;
-        
         if (!parentItem) { alert("يرجى اختيار الصنف الأساسي للترحيل"); return; }
-        if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
-
-        let totalNet = getCurrentPeriodNetTotal(parentItem);
-        let totalGross = getCurrentPeriodGrossTotal(parentItem);
-
-        // إذا لم يكن هناك وزنات تراكمية، نأخذ الوزن المكتوب لايف في الميزان حالياً
-        if (totalNet === 0) {
-            const liveGross = parseFloat(document.getElementById('grossInput').value) || 0;
-            const liveNet = parseFloat(document.getElementById('weightDisplayBox').innerText) || 0;
-            if (liveGross > 0 && liveNet > 0) {
-                totalGross = liveGross;
-                totalNet = liveNet;
-            } else {
-                alert(`⚠️ لا يوجد وزنات مخزنة غير مرحلة لهذا الصنف.`);
-                return;
-            }
-        }
 
         const subRows = document.querySelectorAll('.deconstruct-row');
         
-        if (subRows.length > 0) {
-            let totalRatios = 0;
-            subRows.forEach(r => { totalRatios += parseFloat(r.querySelector('.sub-ratio').value) || 0; });
+        // جلب الخانات الرسمية للبراد التي طلبت عدم حذفها
+        const orderNumber = document.getElementById('orderNumberOpt').value || "-";
+        const destination = document.getElementById('destinationOpt').value || "-";
+        const temp = document.getElementById('fridgeTempOpt').value || "-";
+        const location = document.getElementById('fridgeLocationOpt').value || "-";
+        const keeper = document.getElementById('fridgeKeeperOpt').value || "-";
+        const chickenCount = document.getElementById('chickenCountOpt').value || "-";
 
+        if (subRows.length > 0) {
+            // إذا قام بإدخال أصناف مفككة يدوياً، نقوم بترحيلها كلها تحت اسم "الصنف الأساسي" بالأسفل وببيانات البراد كاملة
             subRows.forEach(r => {
-                const subName = r.querySelector('.sub-name').value.trim() || `${parentItem}-مشتق`;
-                const ratio = parseFloat(r.querySelector('.sub-ratio').value) || 0;
-                
-                const factor = totalRatios > 0 ? (ratio / totalRatios) : (1 / subRows.length);
-                const childNet = totalNet * factor;
-                const childGross = totalGross * factor;
+                const manualName = r.querySelector('.sub-name').value || "مستخرج يدوي";
+                const manualWeight = parseFloat(r.querySelector('.sub-weight').value) || 0;
 
                 records.push({
                     recordType: "ترحيل_براد",
-                    manager: document.getElementById('managerName').value || "غير مححدد",
-                    worker: "-",
-                    email: document.getElementById('emailOpt').value || "لا يوجد",
-                    boxes: "-", palletWeight: "-",
-                    gross: childGross.toFixed(2), 
-                    net: childNet.toFixed(2), 
-                    item: subName,        // ترحل باسم الصنف المستخرج النظيف للبراد والإكسل
-                    parentItem: parentItem, // تعود وتتصل بالصنف الأساسي لمنع التضارب وحساب العدادات
-                    chickenCount: document.getElementById('chickenCountOpt').value || "-",
+                    manager: document.getElementById('managerName').value || "غير محدد",
+                    item: parentItem, // إجبار الاسم أن يظهر باسم الصنف الأساسي بالأسفل بحسب طلبك
+                    manualSubName: manualName, // حفظ الاسم المستخرج داخلياً للإكسل فقط إذا أردت
+                    gross: manualWeight.toFixed(2),
+                    net: manualWeight.toFixed(2),
                     orderNumber: orderNumber,
-                    destination: document.getElementById('destinationOpt').value || "-",
+                    destination: destination,
+                    fridgeTemp: temp,
+                    fridgeLocation: location,
+                    fridgeKeeper: keeper,
+                    chickenCount: chickenCount,
                     time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
                     date: new Date().toLocaleDateString('ar-EG')
                 });
             });
         } else {
-            // ترحيل مباشر بدون تفكيك إذا كانت اللوحة فارغة
+            // ترحيل عادي في حال لم يستخدم لوحة التفكيك
+            const liveNet = parseFloat(document.getElementById('weightDisplayBox').innerText) || 0;
+            const liveGross = parseFloat(document.getElementById('grossInput').value) || 0;
+
             records.push({
                 recordType: "ترحيل_براد",
                 manager: document.getElementById('managerName').value || "غير محدد",
-                worker: "-", email: "لا يوجد", boxes: "-", palletWeight: "-",
-                gross: totalGross.toFixed(2),
-                net: totalNet.toFixed(2),
                 item: parentItem,
-                parentItem: parentItem,
-                chickenCount: document.getElementById('chickenCountOpt').value || "-",
+                manualSubName: "-",
+                gross: liveGross.toFixed(2),
+                net: liveNet.toFixed(2),
                 orderNumber: orderNumber,
-                destination: document.getElementById('destinationOpt').value || "-",
+                destination: destination,
+                fridgeTemp: temp,
+                fridgeLocation: location,
+                fridgeKeeper: keeper,
+                chickenCount: chickenCount,
                 time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
                 date: new Date().toLocaleDateString('ar-EG')
             });
@@ -627,7 +442,7 @@
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         clearInputs();
         updateUI();
-        alert(`تم تفكيك وترحيل صنف (${parentItem}) بالكامل إلى الأصناف المستخرجة منه بنجاح تفرعي كامل! 📦`);
+        alert("تم ترحيل البيانات كاملة إلى البراد بنجاح وثبات وباسم الصنف الأساسي! 📦");
     }
 
     function clearInputs() {
@@ -637,9 +452,11 @@
         document.getElementById('chickenCountOpt').value = "";
         document.getElementById('orderNumberOpt').value = "";
         document.getElementById('destinationOpt').value = "";
+        document.getElementById('fridgeTempOpt').value = "";
+        document.getElementById('fridgeLocationOpt').value = "";
+        document.getElementById('fridgeKeeperOpt').value = "";
         document.getElementById('weightDisplayBox').innerText = "0.00";
         document.getElementById('subItemsContainer').innerHTML = "";
-        document.getElementById('itemSelect').value = "";
     }
 
     function deleteRecord(index) {
@@ -650,124 +467,64 @@
         }
     }
 
-    function showExpandedLiveView(index) {
-        const r = records[index];
-        const modalBody = document.getElementById('modalBody');
-        modalBody.innerHTML = `
-            <div class="modal-item"><span>نوع العملية:</span> <span>${r.recordType === "ترحيل_براد" ? "📦 ترحيل للبراد" : "⚖️ وزنة خط"}</span></div>
-            <div class="modal-item"><span>الصنف الحالي:</span> <strong>${r.item}</strong></div>
-            <div class="modal-item"><span>الصنف الأساسي المرتبط:</span> <span>${r.parentItem || r.item}</span></div>
-            <div class="modal-item"><span>الوزن القائم الكلي:</span> <span>${r.gross} كغ</span></div>
-            <div class="modal-item"><span>الصافي النظيف المستلم:</span> <span style="color:#238636; font-weight:bold;">${r.net} كغ</span></div>
-            <div class="modal-item"><span>رقم الطلبية / الساعة:</span> <span>${r.orderNumber || "-"}</span></div>
-            <div class="modal-item"><span>المستلم / الوجهة:</span> <span>${r.destination || "-"}</span></div>
-            <div class="modal-item"><span>الوقت والتاريخ:</span> <span>${r.date} | ${r.time}</span></div>
-        `;
-        document.getElementById('detailsModal').style.display = "flex";
-    }
-
-    function closeModal() { document.getElementById('detailsModal').style.display = "none"; }
-
-    function addItem() {
-        const name = document.getElementById('newItemInput').value.trim();
-        if(name) {
-            const select = document.getElementById('itemSelect');
-            const opt = document.createElement('option');
-            opt.value = name; opt.innerText = name;
-            select.appendChild(opt);
-            document.getElementById('newItemInput').value = "";
-        }
-    }
-    function deleteItem() {
-        const select = document.getElementById('itemSelect');
-        if(select.selectedIndex > 0) { select.remove(select.selectedIndex); }
-    }
-
     function updateUI() {
         const tbody = document.getElementById('tableBody');
-        const tfoot = document.getElementById('tableFoot');
-        tbody.innerHTML = ""; tfoot.innerHTML = "";
+        tbody.innerHTML = "";
         
         const selectedItem = document.getElementById('itemSelect').value;
-        let displayNetForSelected = selectedItem ? getCurrentPeriodNetTotal(selectedItem) : 0;
-        document.getElementById('totalNetDisplay').innerText = displayNetForSelected.toFixed(2);
-
-        let chartDataNet = {};
-        let chartDataGross = {};
+        let totalNet = 0;
 
         records.forEach((r, index) => {
-            let lastTransferIndex = -1;
-            for (let i = index - 1; i >= 0; i--) {
-                if (records[i].recordType === "ترحيل_براد" && records[i].parentItem === r.parentItem) {
-                    lastTransferIndex = i;
-                    break;
-                }
-            }
-
-            // يتم تجميع الإحصائيات بناءً على الصنف الأساسي لمنع التشتت والاحتفاظ بذكاء العداد
-            if (r.recordType === "وزنة_فردية" && index > lastTransferIndex) {
-                chartDataNet[r.parentItem] = (chartDataNet[r.parentItem] || 0) + (parseFloat(r.net) || 0);
-                chartDataGross[r.parentItem] = (chartDataGross[r.parentItem] || 0) + (parseFloat(r.gross) || 0);
+            if (r.item === selectedItem) {
+                totalNet += parseFloat(r.net) || 0;
             }
 
             const isTransfer = r.recordType === "ترحيل_براد";
+            const locInfo = isTransfer ? `${r.fridgeLocation} / ${r.fridgeTemp}` : "-";
+
             tbody.innerHTML += `
                 <tr class="${isTransfer ? 'row-order-transfer' : ''}">
                     <td>${r.time}</td>
-                    <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${isTransfer ? '📦 ترحيل ساعة' : '⚖️ وزنة خط'}</td>
-                    <td><strong>${r.item}</strong></td>
+                    <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${isTransfer ? '📦 للبراد' : '⚖️ وزنة خط'}</td>
+                    <td><strong>${r.item}</strong></td> 
                     <td>${r.gross} كغ</td>
-                    <td style="font-weight:bold; color:${isTransfer ? '#e65100':'#1f6feb'}">${r.net} كغ</td>
-                    <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">تفاصيل 👁️</button></td>
-                    <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
+                    <td style="font-weight:bold;">${r.net} كغ</td>
+                    <td>${r.orderNumber || "-"}</td>
+                    <td>${locInfo}</td>
+                    <td><button style="background:none; border:none; color:red; cursor:pointer;" onclick="deleteRecord(${index})">❌</button></td>
                 </tr>
             `;
         });
 
-        if(selectedItem && displayNetForSelected > 0) {
-            tfoot.innerHTML = `
-                <tr class="row-virtual-footer">
-                    <td>لايف</td><td colspan="2">📊 مراقب العداد الحالي لصنف: ${selectedItem}</td>
-                    <td>${getCurrentPeriodGrossTotal(selectedItem).toFixed(2)} كغ</td>
-                    <td>${displayNetForSelected.toFixed(2)} كغ</td><td colspan="2"></td>
-                </tr>
-            `;
-        }
-
-        // رسم المخطط البياني للأصناف الأساسية
-        const ctx = document.getElementById('miniChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(chartDataNet).length > 0 ? Object.keys(chartDataNet) : ["لا توجد كميات معلقة"],
-                datasets: [{
-                    label: 'صافي الكميات الحالية قيد التشغيل (كغ)',
-                    data: Object.values(chartDataNet).length > 0 ? Object.values(chartDataNet) : [0],
-                    backgroundColor: getComputedStyle(document.body).getPropertyValue('--chart-bar').trim()
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
     }
 
     function exportStaffExcel() {
         const filtered = records.filter(r => r.recordType === "وزنة_فردية");
-        const data = filtered.map(r => ({ "المسؤول": r.manager, "العامل": r.worker, "الصنف الأساسي": r.parentItem, "الوزن القائم": parseFloat(r.gross), "الصافي": parseFloat(r.net), "التاريخ": r.date, "الوقت": r.time }));
+        const data = filtered.map(r => ({ "المسؤول": r.manager, "العامل": r.worker, "الصنف الأساسي": r.item, "الوزن القائم": parseFloat(r.gross), "الصافي": parseFloat(r.net), "التاريخ": r.date, "الوقت": r.time }));
         const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "الأوزان"); XLSX.writeFile(wb, "Staff_Weights.xlsx");
     }
 
+    // هنا تظهر البيانات كاملة في ملف إكسل البراد مع الخانات التي طلبتها
     function exportOrdersExcel() {
         const filtered = records.filter(r => r.recordType === "ترحيل_براد");
-        const data = filtered.map(r => ({ "رقم الطلبية": r.orderNumber, "الصنف المستخرج": r.item, "الصنف الأساسي": r.parentItem, "الصافي المبرّد": parseFloat(r.net), "الوجهة": r.destination, "التاريخ": r.date }));
-        const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "البراد"); XLSX.writeFile(wb, "Fridge_Transfers.xlsx");
+        const data = filtered.map(r => ({ 
+            "رقم الطلبية": r.orderNumber, 
+            "الصنف الأساسي": r.item, 
+            "اسم المشتق (المنزل يدوي)": r.manualSubName,
+            "الوزن الصافي المبرد": parseFloat(r.net), 
+            "عدد الفروج": r.chickenCount,
+            "المرسل إليه / الوجهة": r.destination, 
+            "موقع البراد": r.fridgeLocation,
+            "درجة الحرارة": r.fridgeTemp,
+            "مسؤول المستودع المستلم": r.fridgeKeeper,
+            "التاريخ": r.date,
+            "الوقت": r.time
+        }));
+        const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "البراد الكامل"); XLSX.writeFile(wb, "Fridge_Transfers.xlsx");
     }
 
-    function resetDataWithPassword() {
-        if (prompt("أدخل رمز التصفير:") === '1957') { localStorage.removeItem('hawaTechAppData'); records = []; updateUI(); alert("تم التصفير"); }
-    }
-
-    window.onload = function() { applySavedTheme(); updateDateTime(); updateUI(); };
+    window.onload = function() { updateDateTime(); updateUI(); };
 </script>
 </body>
 </html>
