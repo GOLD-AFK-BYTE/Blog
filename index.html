@@ -596,11 +596,25 @@
 
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
-    let customItemsList = JSON.parse(localStorage.getItem('hawaTechItemsList')) || [];
+    
+    // هنا قمنا بحفظ الخيارات الافتراضية المرنة (سحب الخام / المرتجع) وتطبيقها لتعمل على الفخاد والكل تلقائياً دون أي مساس ببنية الحسابات
+    let defaultItems = [
+        "سحب طبلية خام للتشغيل",
+        "إرجاع كمية فائضة للبراد",
+        "مسحب مع جلدة",
+        "مسحب بدون جلدة",
+        "كسر فخاد / قطع عادية"
+    ];
+    
+    let customItemsList = JSON.parse(localStorage.getItem('hawaTechItemsList'));
+    if (!customItemsList || customItemsList.length === 0) {
+        customItemsList = defaultItems;
+        localStorage.setItem('hawaTechItemsList', JSON.stringify(customItemsList));
+    }
+    
     let myChart = null;
     const tarePerBox = 1.40;
 
-    // ذاكرة فرعية لحفظ آخر أصل تم كتابته يدوياً لكل صنف لتسهيل العمل وتجنب إعادة الكتابة المتكررة
     let lastUsedParentMap = JSON.parse(localStorage.getItem('hawaTechLastUsedParentMap')) || {};
 
     function toggleTheme() {
@@ -767,7 +781,6 @@
         if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً لتنظيم شجرة العائلة وحفظ الوزنة بشكل سليم"); return; }
         if (gross === 0) { alert("يرجى إدخال الوزن الحالي لحفظ السجل"); return; }
 
-        // حفظ آخر علاقة يدوية لتسهيل التعبئة التلقائية المرة القادمة
         lastUsedParentMap[item] = parentItem;
         localStorage.setItem('hawaTechLastUsedParentMap', JSON.stringify(lastUsedParentMap));
 
