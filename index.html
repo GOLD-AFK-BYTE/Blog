@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Advanced Dashboard Edition)</title>
+    <title>Hawa-Tech App Pro (Dynamic Category Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -471,16 +471,14 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
-    <!-- تم نقل رقم الطلبية هنا لتكون أساسية في كل عملية وزن -->
     <div class="inputs-grid">
-        <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية الحالي (مهم لربط الوزنات)" oninput="updateUI()">
         <input type="text" id="managerName" placeholder="اسم المسؤول">
         <input type="text" id="workerName" placeholder="اسم العامل">
         <input type="text" id="emailOpt" placeholder="الإيميل (اختياري)">
+        <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="updateLiveWeight()">
     </div>
 
-    <div class="inputs-grid">
-        <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="updateLiveWeight()">
+    <div style="margin-bottom: 12px;">
         <input type="number" id="palletWeightOpt" step="0.01" placeholder="وزن الطبلية (اختياري - كغ)" oninput="updateLiveWeight()">
     </div>
 
@@ -490,28 +488,25 @@
         <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن القائم الحالي (كغ)" oninput="updateLiveWeight()">
     </div>
 
+    <div class="manage-section" style="border: 1px solid var(--border-color); padding: 14px; background-color: var(--section-bg);">
+        <div class="manage-title" style="font-size: 14px; color: #1f6feb;">📋 الصنف الحالي والأصل (إدخال يدوي حر):</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <select id="itemSelect" onchange="autoFillParentOnSelect()">
+                <option value="">-- اختر الصنف الحالي --</option>
+            </select>
+            <input type="text" id="parentItemInput" placeholder="اكتب هنا الصنف الأساسي (الأصل) يدوياً">
+        </div>
+        <div style="display: flex; gap: 6px; margin-top: 10px;">
+            <input type="text" id="newItemInput" placeholder="إضافة اسم صنف جديد للقائمة...">
+            <button class="btn-action btn-add" style="white-space: nowrap;" onclick="addItem()">إضافة +</button>
+            <button class="btn-action btn-delete" onclick="deleteItem()">حذف 🗑️</button>
+        </div>
+    </div>
+
     <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن فقط ✅</button>
 
     <div class="ai-panel" id="aiPanel">
-        🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow لمراقبة خط الأوزان الحالية.
-    </div>
-
-    <div class="manage-section">
-        <div class="manage-title">إدارة الأصناف الحالية:</div>
-        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-            <select id="itemSelect" onchange="updateUI()">
-                <option value="">-- اختر الصنف --</option>
-                <option value="جوانح">جوانح</option>
-                <option value="صدر مسحب">صدر مسحب</option>
-                <option value="فخاد">فخاد</option>
-                <option value="طاووق">طاووق</option>
-            </select>
-            <button class="btn-action btn-delete" onclick="deleteItem()">حذف 🗑️</button>
-        </div>
-        <div style="display: flex; gap: 6px;">
-            <input type="text" id="newItemInput" placeholder="أضف صنفاً جديداً...">
-            <button class="btn-action btn-add" onclick="addItem()">إضافة +</button>
-        </div>
+        🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة وبانتظار تسجيل الأوزان يدويّاً بالكامل.
     </div>
 
     <div class="optional-section">
@@ -536,19 +531,20 @@
 
     <div class="optional-section" style="border: 1px solid #e65100; background-color: rgba(230,81,0,0.03); margin-bottom: 15px;">
         <div class="section-subtitle" style="color: #e65100;">📦 ترحيل بيانات نهاية الساعة (إلى البراد دون تكرار الحساب):</div>
-        <div class="inputs-grid" style="margin-bottom: 8px;">
+        <div class="inputs-grid-three" style="margin-bottom: 8px;">
             <input type="number" id="chickenCountOpt" placeholder="عدد الفروج">
+            <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية">
             <input type="text" id="destinationOpt" placeholder="المرسل إليه">
-            <input type="text" id="fridgeLocationOpt" placeholder="موقع البراد">
         </div>
-        <div style="margin-bottom: 10px;">
+        <div class="inputs-grid" style="margin-bottom: 10px;">
+            <input type="text" id="fridgeLocationOpt" placeholder="موقع البراد">
             <input type="text" id="temperatureOpt" placeholder="درجة الحرارة (C°)">
         </div>
         <button class="btn-transfer-hourly" onclick="transferOrderToFridge()">ترحيل الطلبية الحالية إلى البراد 📦</button>
     </div>
 
     <div class="total-display">
-        إجمالي صافي (الصنف + رقم الطلبية) المختار: <span id="totalNetDisplay">0.00</span> كغ
+        إجمالي الصافي للمنتج والأصل المكتوب: <span id="totalNetDisplay">0.00</span> كغ
     </div>
 
     <div class="chart-container" id="chartDiv">
@@ -556,7 +552,7 @@
     </div>
 
     <div class="search-box-container">
-        <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث هنا عن أي شيء (رقم طلبية، اسم، صنف، وزن، صلاحية)..." oninput="updateUI()">
+        <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث هنا عن أي شيء (اسم، صنف، وزن، صلاحية، تاريخ، رقم طلبية)..." oninput="updateUI()">
     </div>
 
     <div class="table-responsive">
@@ -565,8 +561,7 @@
                 <tr>
                     <th>الوقت</th>
                     <th>نوع العملية</th>
-                    <th>الطلبية</th>
-                    <th>الصنف</th>
+                    <th>الصنف (الأصل اليدوي)</th>
                     <th>الوزنة كاملة</th>
                     <th>صافي الوزنة</th>
                     <th>التفاصيل الكاملة</th>
@@ -601,8 +596,12 @@
 
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
+    let customItemsList = JSON.parse(localStorage.getItem('hawaTechItemsList')) || [];
     let myChart = null;
     const tarePerBox = 1.40;
+
+    // ذاكرة فرعية لحفظ آخر أصل تم كتابته يدوياً لكل صنف لتسهيل العمل وتجنب إعادة الكتابة المتكررة
+    let lastUsedParentMap = JSON.parse(localStorage.getItem('hawaTechLastUsedParentMap')) || {};
 
     function toggleTheme() {
         const body = document.body;
@@ -633,6 +632,28 @@
     }
     setInterval(updateDateTime, 1000);
 
+    function populateItemsSelect() {
+        const select = document.getElementById('itemSelect');
+        select.innerHTML = '<option value="">-- اختر الصنف الحالي --</option>';
+        customItemsList.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item;
+            opt.innerText = item;
+            select.appendChild(opt);
+        });
+    }
+
+    function autoFillParentOnSelect() {
+        const selectedItem = document.getElementById('itemSelect').value;
+        const parentInput = document.getElementById('parentItemInput');
+        if (selectedItem && lastUsedParentMap[selectedItem]) {
+            parentInput.value = lastUsedParentMap[selectedItem];
+        } else {
+            parentInput.value = "";
+        }
+        updateUI();
+    }
+
     function updateLiveWeight() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
@@ -648,37 +669,44 @@
         setTimeout(() => displayBox.classList.remove('pulse'), 150);
     }
 
-    // تعديل الحساب الذكي ليعتمد على الصنف ورقم الطلبية معاً لمنع التداخل
-    function getCurrentPeriodNetTotal(selectedItem, currentOrder) {
-        if (!selectedItem) return 0;
+    function getCurrentPeriodNetTotal(targetParent) {
+        if (!targetParent) return 0;
+        const cleanParent = targetParent.trim().toLowerCase();
+        
         let lastTransferIndex = -1;
         for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد" && records[i].item === selectedItem && records[i].orderNumber === currentOrder) {
+            const rParent = (records[i].parentItem || "").trim().toLowerCase();
+            if (records[i].recordType === "ترحيل_براد" && rParent === cleanParent) {
                 lastTransferIndex = i;
                 break;
             }
         }
         let total = 0;
         records.forEach((r, index) => {
-            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && r.orderNumber === currentOrder && index > lastTransferIndex) {
+            const rParent = (r.parentItem || "").trim().toLowerCase();
+            if (r.recordType === "وزنة_فردية" && rParent === cleanParent && index > lastTransferIndex) {
                 total += parseFloat(r.net) || 0;
             }
         });
         return total;
     }
 
-    function getCurrentPeriodGrossTotal(selectedItem, currentOrder) {
-        if (!selectedItem) return 0;
+    function getCurrentPeriodGrossTotal(targetParent) {
+        if (!targetParent) return 0;
+        const cleanParent = targetParent.trim().toLowerCase();
+
         let lastTransferIndex = -1;
         for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد" && records[i].item === selectedItem && records[i].orderNumber === currentOrder) {
+            const rParent = (records[i].parentItem || "").trim().toLowerCase();
+            if (records[i].recordType === "ترحيل_براد" && rParent === cleanParent) {
                 lastTransferIndex = i;
                 break;
             }
         }
         let total = 0;
         records.forEach((r, index) => {
-            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && r.orderNumber === currentOrder && index > lastTransferIndex) {
+            const rParent = (r.parentItem || "").trim().toLowerCase();
+            if (r.recordType === "وزنة_فردية" && rParent === cleanParent && index > lastTransferIndex) {
                 total += parseFloat(r.gross) || 0;
             }
         });
@@ -690,7 +718,7 @@
         const filteredWeights = records.filter(r => r.recordType === "وزنة_فردية");
         
         if (filteredWeights.length < 3) {
-            panel.innerHTML = `🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow لمراقبة خط الأوزان الحالية.`;
+            panel.innerHTML = `🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة وبانتظار تسجيل الأوزان يدويّاً بالكامل.`;
             return;
         }
 
@@ -723,10 +751,10 @@
 
     function saveCurrentRecord() {
         const item = document.getElementById('itemSelect').value;
+        const parentItem = document.getElementById('parentItemInput').value.trim();
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
         const palletWeight = parseFloat(document.getElementById('palletWeightOpt').value) || 0;
-        const orderNumber = document.getElementById('orderNumberOpt').value.trim() || "غير محددة";
         
         const manager = document.getElementById('managerName').value || "غير محدد";
         const worker = document.getElementById('workerName').value || "عام";
@@ -735,8 +763,13 @@
         const totalTare = (boxes * tarePerBox) + palletWeight;
         const net = gross - totalTare;
 
-        if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
+        if (!item) { alert("يرجى اختيار اسم الصنف الحالي أولاً"); return; }
+        if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً لتنظيم شجرة العائلة وحفظ الوزنة بشكل سليم"); return; }
         if (gross === 0) { alert("يرجى إدخال الوزن الحالي لحفظ السجل"); return; }
+
+        // حفظ آخر علاقة يدوية لتسهيل التعبئة التلقائية المرة القادمة
+        lastUsedParentMap[item] = parentItem;
+        localStorage.setItem('hawaTechLastUsedParentMap', JSON.stringify(lastUsedParentMap));
 
         const newRecord = {
             recordType: "وزنة_فردية",
@@ -749,10 +782,10 @@
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
+            parentItem: parentItem, 
             net: net.toFixed(2),     
-            orderNumber: orderNumber, // ربط الوزنة برقم الطلبية فورياً
             minW: "-", maxW: "-", freezeStart: "-", freezeEnd: "-",
-            chickenCount: "-", destination: "-", fridgeLocation: "-", temperature: "-"
+            chickenCount: "-", orderNumber: "-", destination: "-", fridgeLocation: "-", temperature: "-"
         };
 
         records.push(newRecord);
@@ -764,18 +797,20 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم حفظ وزنة صنف (${item}) للطلبية رقم (${orderNumber}) بنجاح ✅`);
+        alert(`تم حفظ وزنة (${item}) التابع للأصل اليدوي (${parentItem}) بنجاح ✅`);
     }
 
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
-        const orderNumber = document.getElementById('orderNumberOpt').value.trim();
+        const parentItem = document.getElementById('parentItemInput').value.trim();
+        const orderNumber = document.getElementById('orderNumberOpt').value;
         
-        if (!item) { alert("يرجى اختيار الصنف للطلب المرحل أولاً"); return; }
-        if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل وتجميع أوزانها"); return; }
+        if (!item) { alert("يرجى اختيار الصنف للطلب أولاً"); return; }
+        if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً لتوثيق ترحيل الطلب الشامل"); return; }
+        if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
 
-        let totalNetCalculated = getCurrentPeriodNetTotal(item, orderNumber);
-        let totalGrossCalculated = getCurrentPeriodGrossTotal(item, orderNumber);
+        let totalNetCalculated = getCurrentPeriodNetTotal(parentItem);
+        let totalGrossCalculated = getCurrentPeriodGrossTotal(parentItem);
 
         if (totalNetCalculated === 0) {
             const liveGross = parseFloat(document.getElementById('grossInput').value) || 0;
@@ -785,7 +820,7 @@
                 totalGrossCalculated = liveGross;
                 totalNetCalculated = liveNet;
             } else {
-                alert(`⚠️ عذراً! لا توجد وزنات تراكمية مخزنة للطلبية رقم (${orderNumber})، ولا توجد أوزان فورية في الشاشة.`);
+                alert(`⚠️ عذراً! لا توجد وزنات تراكمية مسجلة تحت اسم الأصل اليدوي (${parentItem}) خلال هذه الساعة، يرجى كتابة الوزن الفوري في الخانة بالأعلى لترحيله مباشرة.`);
                 return;
             }
         }
@@ -811,6 +846,7 @@
             time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG'),
             item: item,
+            parentItem: parentItem, 
             net: totalNetCalculated.toFixed(2), 
             chickenCount: chickenCount,
             orderNumber: orderNumber,
@@ -830,6 +866,7 @@
         document.getElementById('boxCount').value = "";
         document.getElementById('palletWeightOpt').value = "";
         document.getElementById('chickenCountOpt').value = "";
+        document.getElementById('orderNumberOpt').value = "";
         document.getElementById('destinationOpt').value = "";
         document.getElementById('fridgeLocationOpt').value = "";
         document.getElementById('temperatureOpt').value = "";
@@ -840,7 +877,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل طلبيّة صنف (${item}) رقم (${orderNumber}) كاملة إلى البراد بنجاح ✅.`);
+        alert(`تم ترحيل طلبيّة صنف (${item}) التابع للأصل اليدوي (${parentItem}) برقم (${orderNumber}) بنجاح ✅.`);
     }
 
     function deleteRecord(index) {
@@ -872,12 +909,13 @@
 
         modalBody.innerHTML = `
             <div class="modal-item"><span>نوع السجل:</span> <span style="font-weight:bold; color:${r.recordType === 'ترحيل_براد' ? '#e65100':'#1f6feb'};">${r.recordType === "ترحيل_براد" ? "📦 ترحيل ساعة للبراد" : "⚖️ وزنة خط إنتاج"}</span></div>
-            <div class="modal-item"><span>رقم الطلبية المرتبطة:</span> <span style="color:#d35400; font-weight:bold;">${r.orderNumber}</span></div>
             <div class="modal-item"><span>التاريخ والوقت:</span> <span>${r.date} | ${r.time}</span></div>
             <div class="modal-item"><span>اسم المسؤول (المشرف):</span> <span>${r.manager}</span></div>
             <div class="modal-item"><span>اسم العامل على الخط:</span> <span>${r.worker}</span></div>
-            <div class="modal-item"><span>الصنف المستهدف:</span> <span>${r.item}</span></div>
+            <div class="modal-item"><span>اسم الصنف:</span> <span>${r.item}</span></div>
+            <div class="modal-item"><span>الصنف الأساسي اليدوي (الأصل):</span> <span style="color:#8e44ad; font-weight:bold;">${r.parentItem || "غير محدد"}</span></div>
             ${weightHTML}
+            <div class="modal-item"><span>رقم الطلبية المفتوحة:</span> <span>${r.orderNumber}</span></div>
             <div class="modal-item"><span>المكان المرسل إليه:</span> <span>${r.destination}</span></div>
             <div class="modal-item"><span>موقع البراد الداخلي:</span> <span>${r.fridgeLocation}</span></div>
             <div class="modal-item"><span>درجة حرارة الشحنة:</span> <span style="color:#da3637; font-weight:bold;">${r.temperature} C°</span></div>
@@ -896,17 +934,31 @@
     function addItem() {
         const name = document.getElementById('newItemInput').value.trim();
         if(name) {
-            const select = document.getElementById('itemSelect');
-            const opt = document.createElement('option');
-            opt.value = name; opt.innerText = name;
-            select.appendChild(opt);
+            if(!customItemsList.includes(name)) {
+                customItemsList.push(name);
+                localStorage.setItem('hawaTechItemsList', JSON.stringify(customItemsList));
+                populateItemsSelect();
+                document.getElementById('itemSelect').value = name;
+                autoFillParentOnSelect();
+            }
             document.getElementById('newItemInput').value = "";
         }
     }
 
     function deleteItem() {
         const select = document.getElementById('itemSelect');
-        if(select.selectedIndex > 0) { select.remove(select.selectedIndex); }
+        const val = select.value;
+        if(val) {
+            customItemsList = customItemsList.filter(i => i !== val);
+            localStorage.setItem('hawaTechItemsList', JSON.stringify(customItemsList));
+            if(lastUsedParentMap[val]) {
+                delete lastUsedParentMap[val];
+                localStorage.setItem('hawaTechLastUsedParentMap', JSON.stringify(lastUsedParentMap));
+            }
+            populateItemsSelect();
+            document.getElementById('parentItemInput').value = "";
+            updateUI();
+        }
     }
 
     function updateUI() {
@@ -915,8 +967,7 @@
         tbody.innerHTML = "";
         tfoot.innerHTML = "";
         
-        const selectedItem = document.getElementById('itemSelect').value;
-        const currentOrder = document.getElementById('orderNumberOpt').value.trim() || "غير محددة";
+        const parentInputVal = document.getElementById('parentItemInput').value.trim();
         
         let displayNetForSelected = 0;
         let chartDataNet = {};
@@ -924,8 +975,8 @@
         
         const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
 
-        if (selectedItem) {
-            displayNetForSelected = getCurrentPeriodNetTotal(selectedItem, currentOrder);
+        if (parentInputVal) {
+            displayNetForSelected = getCurrentPeriodNetTotal(parentInputVal);
         }
         document.getElementById('totalNetDisplay').innerText = displayNetForSelected.toFixed(2);
 
@@ -935,18 +986,22 @@
 
             if (!matchSearch && searchQuery !== "") return;
 
+            const currentRecordParent = r.parentItem || "غير محدد";
+            const cleanRecordParent = currentRecordParent.trim().toLowerCase();
+            const cleanTargetParent = parentInputVal.trim().toLowerCase();
+
             let lastTransferIndexForThisItem = -1;
             for (let i = index - 1; i >= 0; i--) {
-                if (records[i].recordType === "ترحيل_براد" && records[i].item === r.item && records[i].orderNumber === r.orderNumber) {
+                const checkParent = (records[i].parentItem || "غير محدد").trim().toLowerCase();
+                if (records[i].recordType === "ترحيل_براد" && checkParent === cleanRecordParent) {
                     lastTransferIndexForThisItem = i;
                     break;
                 }
             }
 
             if (r.recordType === "وزنة_فردية" && index > lastTransferIndexForThisItem) {
-                const labelName = `${r.item} (طلب: ${r.orderNumber})`;
-                chartDataNet[labelName] = (chartDataNet[labelName] || 0) + (parseFloat(r.net) || 0);
-                chartDataGross[labelName] = (chartDataGross[labelName] || 0) + (parseFloat(r.gross) || 0);
+                chartDataNet[currentRecordParent] = (chartDataNet[currentRecordParent] || 0) + (parseFloat(r.net) || 0);
+                chartDataGross[currentRecordParent] = (chartDataGross[currentRecordParent] || 0) + (parseFloat(r.gross) || 0);
             }
 
             const isTransfer = r.recordType === "ترحيل_براد";
@@ -959,8 +1014,7 @@
             const row = `<tr class="${rowClass}">
                 <td>${r.time}</td>
                 <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${typeLabel}</td>
-                <td style="color:#d35400; font-weight:bold;">${r.orderNumber}</td>
-                <td>${r.item}</td>
+                <td>${r.item} <span style="font-size:11px; color:#8e44ad; font-weight:bold;">← (${currentRecordParent})</span></td>
                 <td class="highlight-weight">${tableGrossDisplay}</td>
                 <td class="net-weight" style="color: ${isTransfer ? '#e65100' : '#1f6feb'}">${tableNetDisplay}</td>
                 <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">عرض التفاصيل 👁️</button></td>
@@ -969,16 +1023,15 @@
             tbody.innerHTML += row;
         });
 
-        if(selectedItem && displayNetForSelected > 0) {
-            const currentGrossForSelected = getCurrentPeriodGrossTotal(selectedItem, currentOrder);
+        if(parentInputVal && displayNetForSelected > 0) {
+            const currentGrossForSelected = getCurrentPeriodGrossTotal(parentInputVal);
             const footerRow = `<tr class="row-virtual-footer">
                 <td>لايف</td>
-                <td>📊 عداد الطلبية الحالي</td>
-                <td>${currentOrder}</td>
-                <td>${selectedItem}</td>
+                <td>📊 تجميع الأصول والفرعيات يدوياً</td>
+                <td>الأصل: ${parentInputVal}</td>
                 <td>${currentGrossForSelected.toFixed(2)} كغ</td>
                 <td>${displayNetForSelected.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#555;">(مراقب إنتاج صنف ${selectedItem} للطلبية ${currentOrder})</td>
+                <td colspan="2" style="font-size:11px; color:#4a148c;">(تجميع شامل لكافة الوزنات المرتبطة بهذا الأصل اليدوي)</td>
             </tr>`;
             tfoot.innerHTML = footerRow;
         }
@@ -998,9 +1051,9 @@
         myChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: currentLabels.length > 0 ? currentLabels : ["لا يوجد أوزان معلقة"],
+                labels: currentLabels.length > 0 ? currentLabels : ["لا يوجد أوزان معلقة حالياً"],
                 datasets: [{
-                    label: 'صافي إنتاج الأصناف حسب رقم الطلبية (كغ)',
+                    label: 'صافي الإنتاج الحالي للأصول المكتوبة (كغ)',
                     data: currentValuesNet.length > 0 ? currentValuesNet : [0],
                     backgroundColor: barColor,
                     borderRadius: 6,
@@ -1035,9 +1088,9 @@
                                 const grossW = context.dataset.grossValues[index].toFixed(2);
                                 const tareW = (parseFloat(grossW) - parseFloat(netW)).toFixed(2);
                                 return [
-                                    ` • صافي الوزن النظيف: ${netW} كغ`,
-                                    ` • الوزن القائم الشامل: ${grossW} كغ`,
-                                    ` • مخصوم الأقفاص والطبلية: ${tareW} كغ`
+                                    ` • صافي إنتاج هذا الأصل: ${netW} كغ`,
+                                    ` • الوزن الإجمالي شامل القفاص: ${grossW} كغ`,
+                                    ` • الخصم الإجمالي للطار طردياً: ${tareW} كغ`
                                 ];
                             }
                         }
@@ -1068,10 +1121,10 @@
         const staffData = filtered.map(r => {
             sumNet += parseFloat(r.net);
             return {
-                "رقم الطلبية": r.orderNumber,
                 "اسم المسؤول": r.manager,
                 "اسم العامل": r.worker,
-                "الصنف": r.item,
+                "الصنف المختار": r.item,
+                "الصنف الأساسي (الأصل اليدوي)": r.parentItem || "غير محدد",
                 "عدد الصناديق": r.boxes,
                 "وزن الطبلية المخصوم (كغ)": r.palletWeight ? parseFloat(r.palletWeight) : 0,
                 "الوزن القائم (كغ)": parseFloat(r.gross),
@@ -1082,16 +1135,16 @@
         });
 
         staffData.push({
-            "رقم الطلبية": "الإجمالي الشامل", "اسم المسؤول": "",
-            "اسم العامل": "", "الصنف": "", "عدد الصناديق": "", "وزن الطبلية المخصوم (كغ)": "", "الوزن القائم (كغ)": "",
+            "اسم المسؤول": "الإجمالي النظيف الفعلي الشامل",
+            "اسم العامل": "", "الصنف المختار": "", "الصنف الأساسي (الأصل اليدوي)": "", "عدد الصناديق": "", "وزن الطبلية المخصوم (كغ)": "", "الوزن القائم (كغ)": "",
             "صافي الوزنة النظيف (كغ)": sumNet,
             "الوقت": "", "التاريخ": ""
         });
 
         const ws = XLSX.utils.json_to_sheet(staffData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "كشف الموظفين والأوزان");
-        XLSX.writeFile(wb, `HawaTech_Staff_Weights_Report.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "كشف العمال والقطع المكتوبة");
+        XLSX.writeFile(wb, `HawaTech_Manual_Weights_Report.xlsx`);
     }
 
     function exportOrdersExcel() {
@@ -1102,7 +1155,8 @@
             return {
                 "رقم الطلبية المرحّلة": r.orderNumber,
                 "المكان المرسل إليه": r.destination,
-                "الصنف": r.item,
+                "الصنف الحالي": r.item,
+                "الصنف الأساسي (الأصل اليدوي)": r.parentItem || "غير محدد",
                 "الوزنة كاملة للطلبية (كغ)": (r.gross && r.gross !== "-") ? parseFloat(r.gross) : "غير محدد", 
                 "الوزن الصافي للطلبية (كغ)": parseFloat(r.net), 
                 "موقع البراد الداخلي": r.fridgeLocation,
@@ -1116,22 +1170,25 @@
 
         const ws = XLSX.utils.json_to_sheet(ordersData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "طلبيات البراد ساعة بساعة");
-        XLSX.writeFile(wb, `HawaTech_Fridge_Hourly_Transfers.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "طلبيات البراد يدوية الأصول");
+        XLSX.writeFile(wb, `HawaTech_Fridge_Manual_Transfers.xlsx`);
     }
 
     function resetDataWithPassword() {
         const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
             localStorage.removeItem('hawaTechAppData');
+            localStorage.removeItem('hawaTechLastUsedParentMap');
             records = [];
+            lastUsedParentMap = {};
             updateUI();
-            alert("تم تصفير المنظومة وقاعدة البيانات بنجاح");
+            alert("تم تصفير المنظومة وقاعدة البيانات اليدوية بنجاح");
         } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
     }
 
     window.onload = function() { 
         applySavedTheme();
+        populateItemsSelect();
         updateDateTime(); 
         updateUI(); 
     };
