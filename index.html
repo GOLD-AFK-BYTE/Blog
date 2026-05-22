@@ -3,46 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Advanced Dashboard Edition)</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Hawa-Tech Deconstruction Tracker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
     <style>
         :root {
-            --bg-body: #f4f4f4;
+            --bg-body: #f4f7f6;
             --bg-container: white;
             --border-color: #ddd;
             --text-color: #333;
-            --input-bg: #fafafa;
             --header-color: #003366;
-            --panel-bg: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
-            --panel-text: #4a148c;
-            --panel-border: #8e44ad;
-            --chart-grid: #ddd;
-            --chart-bar: #004d80;
-            --section-bg: #f9f9f9;
-            --deconstruct-bg: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
-            --deconstruct-text: #006064;
-            --deconstruct-border: #00acc1;
-        }
-
-        .dark-version {
-            --bg-body: #0d1117;
-            --bg-container: #161b22;
-            --border-color: #30363d;
-            --text-color: #c9d1d9;
-            --input-bg: #0d1117;
-            --header-color: #58a6ff;
-            --panel-bg: linear-gradient(135deg, #2c1a4d 0%, #1a0f30 100%);
-            --panel-text: #d3b6ff;
-            --panel-border: #8957e5;
-            --chart-grid: #30363d;
-            --chart-bar: #58a6ff;
-            --section-bg: #21262d;
-            --deconstruct-bg: linear-gradient(135deg, #002d32 0%, #004d40 100%);
-            --deconstruct-text: #b2dfdb;
-            --deconstruct-border: #00897b;
+            --main-blue: #1f6feb;
+            --accent-orange: #e65100;
         }
 
         body {
@@ -50,1164 +21,359 @@
             background-color: var(--bg-body);
             color: var(--text-color);
             margin: 0;
-            padding: 10px;
+            padding: 15px;
             display: flex;
             justify-content: center;
-            transition: all 0.3s ease;
         }
+
         .app-container {
             width: 100%;
-            max-width: 550px;
+            max-width: 600px;
             background-color: var(--bg-container);
             border: 1px solid var(--border-color);
             border-radius: 20px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             padding: 20px;
             box-sizing: border-box;
-            animation: fadeInApp 0.6s ease-out;
-            position: relative;
-        }
-        @keyframes fadeInApp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .theme-toggle-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: var(--input-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 6px 10px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .theme-toggle-btn:hover {
-            transform: scale(1.05);
         }
 
         .header {
             text-align: center;
             font-weight: bold;
             color: var(--header-color);
-            margin-bottom: 12px;
-            font-size: 22px;
-            letter-spacing: 0.5px;
-            transition: color 0.3s ease;
-        }
-        .top-bar {
-            background-color: #051907;
-            color: #4caf50;
-            padding: 8px 14px;
-            font-size: 11px;
-            display: flex;
-            justify-content: space-between;
-            border-radius: 8px;
             margin-bottom: 15px;
-            border: 1px solid #1b4d22;
+            font-size: 24px;
         }
+
+        /* قسم الطبلية الرئيسية بالبراد */
+        .pallet-section {
+            background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+            border: 2px solid #00897b;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #004d40;
+        }
+
+        .pallet-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
         .inputs-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
-        .inputs-grid-three {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 5px;
-        }
+
         input, select {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             box-sizing: border-box;
             text-align: center;
             font-size: 14px;
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            transition: all 0.25s ease;
-        }
-        input:focus, select:focus {
-            border-color: #58a6ff;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(88,166,255,0.15);
-        }
-        
-        .weight-display {
-            background: linear-gradient(135deg, #fffde7 0%, #fff59d 100%);
-            border: 2px solid #fbc02d;
-            border-radius: 12px;
-            text-align: center;
-            padding: 18px 0;
-            font-size: 46px;
-            font-weight: 800;
-            color: #002244;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(255,235,59,0.1);
-            transition: transform 0.15s ease-in-out;
-        }
-        .weight-display.pulse {
-            transform: scale(1.04);
+            background-color: #fafafa;
         }
 
-        .optional-section {
-            background-color: var(--section-bg);
+        .master-weight-display {
+            background-color: #004d40;
+            color: #fff59d;
+            text-align: center;
+            padding: 12px;
+            font-size: 28px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-top: 5px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* قسم تفكيك الأصناف والعمال تحت الطبلية */
+        .deconstruct-section {
+            background-color: #f9f9f9;
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 15px;
-        }
-        .section-subtitle {
-            font-size: 13px;
-            font-weight: bold;
-            color: var(--header-color);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
         }
 
-        .btn-main {
+        .section-title {
+            font-weight: bold;
+            color: var(--header-color);
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .deconstruct-row {
+            display: grid;
+            grid-template-columns: 1.5fr 1.5fr 1fr auto;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .btn-add-row {
+            background-color: #00897b;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        /* لوحة الحسبة الحية والذكية */
+        .live-calc-panel {
+            background-color: #fffde7;
+            border: 1px solid #fbc02d;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .calc-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #eceff1;
+        }
+        .calc-item:last-child { border-bottom: none; margin-bottom: 0; }
+
+        .btn-submit {
             width: 100%;
             background: linear-gradient(135deg, #1f6feb 0%, #0d57d2 100%);
             color: white;
             border: none;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 12px rgba(31,111,235,0.2);
-            transition: all 0.2s ease;
-        }
-        .btn-main:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(31,111,235,0.3);
-        }
-
-        .btn-transfer-hourly {
-            width: 100%;
-            background: linear-gradient(135deg, #e65100 0%, #bf360c 100%);
-            color: white;
-            border: none;
             padding: 14px;
-            font-size: 15px;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-bottom: 5px;
-            box-shadow: 0 4px 12px rgba(230,81,0,0.2);
-            transition: all 0.2s ease;
-        }
-        .btn-transfer-hourly:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(230,81,0,0.3);
-        }
-
-        .total-display {
-            background-color: rgba(35,134,54,0.1);
-            border: 1px solid rgba(35,134,54,0.2);
-            color: #238636;
-            text-align: center;
-            padding: 12px;
-            font-weight: bold;
             font-size: 16px;
-            border-radius: 8px;
-            margin-bottom: 18px;
-        }
-        .manage-section {
-            border: 1px dashed var(--border-color);
-            padding: 12px;
+            font-weight: bold;
             border-radius: 10px;
-            margin-bottom: 18px;
-            background-color: var(--bg-container);
-        }
-        .manage-title {
-            font-size: 13px;
-            color: var(--header-color);
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .btn-action {
-            padding: 10px 14px;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .btn-delete { background-color: #da3637; }
-        .btn-add { background-color: #238636; }
-        
-        .search-box-container {
-            margin-bottom: 10px;
-        }
-        .search-input {
-            width: 100%;
-            padding: 11px;
-            border: 2px solid var(--header-color);
-            border-radius: 8px;
-            font-size: 14px;
-            box-sizing: border-box;
-            background-color: var(--bg-container);
-            color: var(--text-color);
+            box-shadow: 0 4px 12px rgba(31,111,235,0.2);
         }
 
-        .table-responsive {
+        .btn-submit:hover { opacity: 0.9; }
+
+        .table-container {
             width: 100%;
             overflow-x: auto;
-            margin-bottom: 18px;
-            border-radius: 8px;
+            margin-top: 20px;
             border: 1px solid var(--border-color);
+            border-radius: 8px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
-            min-width: 650px;
+            min-width: 500px;
         }
+
         th, td {
-            padding: 10px 6px;
-            border: 1px solid var(--border-color);
-            text-align: center;
-            white-space: nowrap;
-        }
-        th {
-            background-color: var(--input-bg);
-            color: var(--header-color);
-        }
-        tr {
-            animation: tableRowSlide 0.35s ease-out forwards;
-        }
-        @keyframes tableRowSlide {
-            from { opacity: 0; transform: translateX(10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .row-weight-only { background-color: transparent; }
-        .row-order-transfer { background-color: rgba(230,81,0,0.06); }
-        
-        .row-virtual-footer {
-            background-color: rgba(31, 111, 235, 0.08) !important;
-            font-weight: bold;
-            color: #0d57d2;
-            border-top: 2px solid #1f6feb;
-        }
-
-        td.highlight-weight {
-            color: #238636;
-            font-weight: bold;
-        }
-        td.net-weight {
-            color: #1f6feb;
-            font-weight: bold;
-        }
-        .btn-row-delete {
-            background: none;
-            border: none;
-            color: #f85149;
-            cursor: pointer;
-            font-size: 15px;
-            transition: transform 0.1s;
-        }
-        .btn-row-delete:hover { transform: scale(1.25); }
-        
-        .btn-details-view {
-            background-color: #1f6feb;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: bold;
-        }
-        .btn-details-view:hover { opacity: 0.9; }
-
-        .excel-buttons-zone {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .btn-excel-custom {
-            width: 100%;
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .btn-excel-custom:hover { opacity: 0.9; }
-        .bg-staff { background-color: #0288d1; }
-        .bg-orders { background-color: #e65100; }
-        
-        .btn-reset {
-            width: 100%;
-            background-color: #484f58;
-            color: #f0f6fc;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            margin-bottom: 15px;
-        }
-        .scale-link {
-            text-align: center;
-            font-size: 11px;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 8px;
-            border-radius: 6px;
-            background-color: var(--input-bg);
-        }
-        
-        .ai-panel {
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 15px;
-            font-size: 12.5px;
-            color: var(--panel-text);
-            animation: aiGlow 3s ease-in-out infinite alternate;
-        }
-        @keyframes aiGlow {
-            from { box-shadow: 0 0 4px rgba(137,87,229,0.1); }
-            to { box-shadow: 0 0 12px rgba(137,87,229,0.25); }
-        }
-
-        /* تنسيقات لوحة التفكيك اليدوي الإضافية المستقرة */
-        .deconstruct-panel {
-            background: var(--deconstruct-bg);
-            border: 1px solid var(--deconstruct-border);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            color: var(--deconstruct-text);
-        }
-        .deconstruct-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 4px; }
-        .deconstruct-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
-        .deconstruct-row input { padding: 8px; font-size: 13px; border-radius: 6px; text-align: center; }
-        .btn-add-sub { background-color: #00897b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; width: 100%; margin-top: 5px; }
-
-        .chart-container {
-            margin-bottom: 18px;
-            background: var(--bg-container);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-        .modal-content {
-            background-color: var(--bg-container);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            width: 100%;
-            max-width: 460px;
-            border-radius: 16px;
-            padding: 20px;
-            box-sizing: border-box;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            position: relative;
-            animation: modalFadeIn 0.3s ease;
-        }
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .modal-header {
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--header-color);
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-            text-align: center;
-        }
-        .modal-body-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
-            font-size: 13.5px;
-            max-height: 350px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-        .modal-item {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px dashed var(--border-color);
-            padding: 5px 0;
-        }
-        .modal-item span:first-child { font-weight: bold; color: var(--header-color); }
-        .btn-modal-close {
-            width: 100%;
-            background-color: #da3637;
-            color: white;
-            border: none;
             padding: 10px;
-            border-radius: 8px;
-            font-weight: bold;
-            margin-top: 15px;
-            cursor: pointer;
+            border: 1px solid var(--border-color);
+            text-align: center;
         }
+
+        th { background-color: #f1f1f1; color: var(--header-color); }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <button class="theme-toggle-btn" id="themeBtn" onclick="toggleTheme()">🌙 داكن</button>
+    <div class="header">📋 منظومة تفكيك الطبلية الموحدة</div>
 
-    <div class="header">🐔 Hawa-Tech App Pro</div>
-    
-    <div class="top-bar">
-        <span id="liveDate">التاريخ: جارٍ التحميل...</span>
-        <span id="liveTime">الوقت: جارٍ التحميل...</span>
-    </div>
-
-    <div class="inputs-grid">
-        <input type="text" id="managerName" placeholder="اسم المسؤول">
-        <input type="text" id="workerName" placeholder="اسم العامل">
-        <input type="text" id="emailOpt" placeholder="الإيميل (اختياري)">
-        <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="updateLiveWeight()">
-    </div>
-
-    <div style="margin-bottom: 12px;">
-        <input type="number" id="palletWeightOpt" step="0.01" placeholder="وزن الطبلية (اختياري - كغ)" oninput="updateLiveWeight()">
-    </div>
-
-    <div class="weight-display" id="weightDisplayBox">0.00</div>
-    
-    <div style="margin-bottom: 15px;">
-        <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن القائم الحالي (كغ)" oninput="updateLiveWeight()">
-    </div>
-
-    <!-- نظام تفكيك واشتقاق الأصناف يدوياً المدمج بنجاح -->
-    <div class="deconstruct-panel">
-        <div class="deconstruct-title">📋 نظام تفكيك واشتقاق الأصناف يدوياً (أدخل أوزانك بنفسك):</div>
-        <div id="subItemsContainer"></div>
-        <button class="btn-add-sub" onclick="addNewSubItemRow()">+ إضافة صنف مستخرج ووزنه يدوياً</button>
-    </div>
-
-    <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن فقط ✅</button>
-
-    <div class="ai-panel" id="aiPanel">
-        🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow لمراقبة خط الأوزان الحالية.
-    </div>
-
-    <div class="manage-section">
-        <div class="manage-title">إدارة الأصناف الحالية:</div>
-        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
-            <select id="itemSelect" onchange="updateUI()">
-                <option value="">-- اختر الصنف --</option>
-                <option value="جوانح">جوانح</option>
-                <option value="صدر مسحب">صدر مسحب</option>
-                <option value="فخاد">فخاد</option>
-                <option value="طاووق">طاووق</option>
-            </select>
-            <button class="btn-action btn-delete" onclick="deleteItem()">حذف 🗑️</button>
+    <!-- 1️⃣ خانة الطبلية الكبيرة فوق الأصناف المفككة -->
+    <div class="pallet-section">
+        <div class="pallet-title">❄️ بيانات طبلية البراد الرئيسية:</div>
+        <div class="inputs-grid">
+            <input type="number" id="grossInput" placeholder="الوزن القائم الكلي (كغ)" oninput="calcPalletNet()">
+            <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="calcPalletNet()">
         </div>
-        <div style="display: flex; gap: 6px;">
-            <input type="text" id="newItemInput" placeholder="أضف صنفاً جديداً...">
-            <button class="btn-action btn-add" onclick="addItem()">إضافة +</button>
+        <div style="margin-bottom: 10px;">
+            <input type="number" id="palletWeight" placeholder="وزن لوح الطبلية الخشبي (كغ)" oninput="calcPalletNet()">
+        </div>
+        <div class="master-weight-display">
+            الوزن الصافي للطبلية: <span id="palletNetDisplay">0.00</span> كغ
         </div>
     </div>
 
-    <div class="optional-section">
-        <div class="section-subtitle">⚖️ معايير وزن الفروج المستهدف بالطلب (غرام):</div>
-        <div class="inputs-grid" style="margin-bottom: 10px;">
-            <input type="number" id="minWeightOpt" placeholder="الحد الأدنى للفروج (غ)">
-            <input type="number" id="maxWeightOpt" placeholder="الحد الأعلى للفروج (غ)">
+    <!-- 2️⃣ الأصناف المفككة والعمال تحت الطبلية -->
+    <div class="deconstruct-section">
+        <div class="section-title">🔪 الأصناف المستخرجة والعمال المسؤولين:</div>
+        <div id="rowsContainer">
+            <!-- سيتم توليد الأسطر هنا ديناميكياً -->
         </div>
+        <button class="btn-add-row" onclick="addDeconstructRow()">+ إضافة صنف مستخرج / عامل جديد</button>
+    </div>
 
-        <div class="section-subtitle">❄️ فترة حفظ وتجميد البضاعة بالفريزر:</div>
-        <div class="inputs-grid" style="margin-bottom: 0;">
-            <div>
-                <span style="font-size:10px; display:block; text-align:center;">تاريخ التجميد:</span>
-                <input type="date" id="freezeStartOpt">
-            </div>
-            <div>
-                <span style="font-size:10px; display:block; text-align:center;">نهاية الصلاحية:</span>
-                <input type="date" id="freezeEndOpt">
-            </div>
+    <!-- 3️⃣ لوحة المراقبة والحسبة الحية -->
+    <div class="live-calc-panel">
+        <div class="calc-item">
+            <span>🟢 مجموع اللحم الصافي الفعلي المستخرج:</span>
+            <span id="sumNetDisplay" style="font-weight:bold; color:#238636;">0.00 كغ</span>
+        </div>
+        <div class="calc-item">
+            <span>🔴 وزن العظم / الهدر والفاقد الحالي:</span>
+            <span id="wasteDisplay" style="font-weight:bold; color:#da3637;">0.00 كغ</span>
         </div>
     </div>
 
-    <div class="optional-section" style="border: 1px solid #e65100; background-color: rgba(230,81,0,0.03); margin-bottom: 15px;">
-        <div class="section-subtitle" style="color: #e65100;">📦 ترحيل بيانات نهاية الساعة (إلى البراد دون تكرار الحساب):</div>
-        <div class="inputs-grid-three" style="margin-bottom: 8px;">
-            <input type="number" id="chickenCountOpt" placeholder="عدد الفروج">
-            <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية">
-            <input type="text" id="destinationOpt" placeholder="المرسل إليه">
-        </div>
-        <div class="inputs-grid" style="margin-bottom: 10px;">
-            <input type="text" id="fridgeLocationOpt" placeholder="موقع البراد">
-            <input type="text" id="temperatureOpt" placeholder="درجة الحرارة (C°)">
-        </div>
-        <button class="btn-transfer-hourly" onclick="transferOrderToFridge()">ترحيل الطلبية الحالية إلى البراد 📦</button>
-    </div>
+    <button class="btn-submit" onclick="savePalletSession()">✅ حفظ وإغلاق ملف الطبلية بالكامل</button>
 
-    <div class="total-display">
-        إجمالي الصافي للصنف المختار حالياً: <span id="totalNetDisplay">0.00</span> كغ
-    </div>
-
-    <div class="chart-container" id="chartDiv">
-        <canvas id="miniChart" style="max-height: 220px;"></canvas>
-    </div>
-
-    <div class="search-box-container">
-        <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث هنا عن أي شيء (اسم، صنف، وزن، صلاحية، تاريخ، رقم طلبية)..." oninput="updateUI()">
-    </div>
-
-    <div class="table-responsive">
+    <!-- جدول تاريخ العمليات السابقة -->
+    <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>الوقت</th>
-                    <th>نوع العملية</th>
-                    <th>الصنف</th>
-                    <th>الوزنة كاملة</th>
-                    <th>صافي الوزنة</th>
-                    <th>التفاصيل الكاملة</th>
-                    <th>إجراء</th>
+                    <th>التاريخ/الوقت</th>
+                    <th>صافي الطبلية الأصلية</th>
+                    <th>مجموع المستخرج</th>
+                    <th>الهدر الناتِج</th>
+                    <th>عدد الأصناف</th>
                 </tr>
             </thead>
-            <tbody id="tableBody">
-            </tbody>
-            <tfoot id="tableFoot">
+            <tbody id="historyBody">
+                <!-- البيانات المخزنة سابقاً -->
             </tbody>
         </table>
-    </div>
-
-    <div class="excel-buttons-zone">
-        <button class="btn-excel-custom bg-staff" onclick="exportStaffExcel()">📊 1. تحميل ملف إكسل الخاص بالموظفين والأوزان</button>
-        <button class="btn-excel-custom bg-orders" onclick="exportOrdersExcel()">📊 2. تحميل ملف إكسل التقارير المترحلة للبراد</button>
-    </div>
-
-    <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد الكامل والبيانات</button>
-
-    <div class="scale-link">📍 ربط الميزان الإلكتروني</div>
-</div>
-
-<div class="modal-overlay" id="detailsModal">
-    <div class="modal-content">
-        <div class="modal-header">👁️ تفاصيل الوزنة الموسعة (Live View)</div>
-        <div class="modal-body-grid" id="modalBody">
-        </div>
-        <button class="btn-modal-close" onclick="closeModal()">إغلاق النافذة</button>
     </div>
 </div>
 
 <script>
-    let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
-    let myChart = null;
     const tarePerBox = 1.40;
+    let sessions = JSON.parse(localStorage.getItem('hawaTechSessions')) || [];
 
-    function toggleTheme() {
-        const body = document.body;
-        const btn = document.getElementById('themeBtn');
-        body.classList.toggle('dark-version');
-        if(body.classList.contains('dark-version')) {
-            btn.innerText = "☀️ فاتح";
-            localStorage.setItem('hawaTechTheme', 'dark');
-        } else {
-            btn.innerText = "🌙 داكن";
-            localStorage.setItem('hawaTechTheme', 'light');
-        }
-        updateUI(); 
+    // إضافة سطر جديد تلقائياً عند فتح البرنامج
+    window.onload = function() {
+        addDeconstructRow();
+        renderHistory();
+    };
+
+    function calcPalletNet() {
+        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
+        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
+        const palletW = parseFloat(document.getElementById('palletWeight').value) || 0;
+
+        const totalTare = (boxes * tarePerBox) + palletW;
+        let net = gross - totalTare;
+        if(net < 0) net = 0;
+
+        document.getElementById('palletNetDisplay').innerText = net.toFixed(2);
+        calculateLiveResult();
     }
 
-    function applySavedTheme() {
-        const savedTheme = localStorage.getItem('hawaTechTheme');
-        if(savedTheme === 'dark') {
-            document.body.classList.add('dark-version');
-            document.getElementById('themeBtn').innerText = "☀️ فاتح";
-        }
-    }
-
-    function updateDateTime() {
-        const now = new Date();
-        document.getElementById('liveDate').innerText = "التاريخ: " + now.toLocaleDateString('ar-EG');
-        document.getElementById('liveTime').innerText = "الوقت: " + now.toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'});
-    }
-    setInterval(updateDateTime, 1000);
-
-    // إضافة أسطر التفكيك والاشتقاق يدوياً
-    function addNewSubItemRow() {
-        const container = document.getElementById('subItemsContainer');
+    function addDeconstructRow() {
+        const container = document.getElementById('rowsContainer');
         const div = document.createElement('div');
         div.className = "deconstruct-row";
         div.innerHTML = `
-            <input type="text" class="sub-name" placeholder="اسم المستخرج يدوياً" style="flex: 2;">
-            <input type="number" class="sub-weight" step="0.01" placeholder="الوزن الصافي كغ" style="flex: 2;">
-            <button type="button" style="background:#da3637; color:white; border:none; border-radius:6px; cursor:pointer; padding:8px;" onclick="this.parentElement.remove();">❌</button>
+            <select class="item-select">
+                <option value="صدر مسحب">صدر مسحب</option>
+                <option value="فخاد">فخاد</option>
+                <option value="جوانح">جوانح</option>
+                <option value="طاووق">طاووق</option>
+                <option value="سودة">سودة</option>
+            </select>
+            <input type="text" class="worker-input" placeholder="اسم العامل">
+            <input type="number" class="weight-input" step="0.01" placeholder="الوزن (كغ)" oninput="calculateLiveResult()">
+            <button style="background:#da3637; color:white; border:none; border-radius:6px; padding:6px 10px; cursor:pointer;" onclick="this.parentElement.remove(); calculateLiveResult();">❌</button>
         `;
         container.appendChild(div);
     }
 
-    // تجميع مخرجات التفكيك اليدوي لحفظها بملف السجل
-    function getSubItemsData() {
-        const rows = document.querySelectorAll('.deconstruct-row');
-        let list = [];
-        rows.forEach(r => {
-            const name = r.querySelector('.sub-name').value.trim();
-            const weight = r.querySelector('.sub-weight').value.trim();
-            if(name || weight) {
-                list.push({ subName: name || "غير مسمى", subWeight: weight || "0.00" });
-            }
-        });
-        return list;
-    }
-
-    function updateLiveWeight() {
-        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
-        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
-        const palletWeight = parseFloat(document.getElementById('palletWeightOpt').value) || 0;
+    function calculateLiveResult() {
+        const palletNet = parseFloat(document.getElementById('palletNetDisplay').innerText) || 0;
         
-        const totalTare = (boxes * tarePerBox) + palletWeight;
-        const net = gross - totalTare;
-        
-        const displayBox = document.getElementById('weightDisplayBox');
-        displayBox.innerText = gross > 0 ? (net > 0 ? net.toFixed(2) : "0.00") : "0.00";
-
-        displayBox.classList.add('pulse');
-        setTimeout(() => displayBox.classList.remove('pulse'), 150);
-    }
-
-    function getCurrentPeriodNetTotal(selectedItem) {
-        if (!selectedItem) return 0;
-        let lastTransferIndex = -1;
-        for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد" && records[i].item === selectedItem) {
-                lastTransferIndex = i;
-                break;
-            }
-        }
-        let total = 0;
-        records.forEach((r, index) => {
-            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && index > lastTransferIndex) {
-                total += parseFloat(r.net) || 0;
-            }
+        // جمع كل أوزان الأصناف التي أدخلها العمال
+        const weightInputs = document.querySelectorAll('.weight-input');
+        let sumExtracted = 0;
+        weightInputs.forEach(input => {
+            sumExtracted += parseFloat(input.value) || 0;
         });
-        return total;
+
+        // حساب الهدر
+        let waste = palletNet - sumExtracted;
+        if(waste < 0 || palletNet === 0) waste = 0;
+
+        document.getElementById('sumNetDisplay').innerText = sumExtracted.toFixed(2) + " كغ";
+        document.getElementById('wasteDisplay').innerText = waste.toFixed(2) + " كغ";
     }
 
-    function getCurrentPeriodGrossTotal(selectedItem) {
-        if (!selectedItem) return 0;
-        let lastTransferIndex = -1;
-        for (let i = records.length - 1; i >= 0; i--) {
-            if (records[i].recordType === "ترحيل_براد" && records[i].item === selectedItem) {
-                lastTransferIndex = i;
-                break;
-            }
-        }
-        let total = 0;
-        records.forEach((r, index) => {
-            if (r.recordType === "وزنة_فردية" && r.item === selectedItem && index > lastTransferIndex) {
-                total += parseFloat(r.gross) || 0;
-            }
-        });
-        return total;
-    }
-
-    async function runAIPrediction() {
-        const panel = document.getElementById('aiPanel');
-        const filteredWeights = records.filter(r => r.recordType === "وزنة_فردية");
-        
-        if (filteredWeights.length < 3) {
-            panel.innerHTML = `🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow لمراقبة خط الأوزان الحالية.`;
+    function savePalletSession() {
+        const palletNet = parseFloat(document.getElementById('palletNetDisplay').innerText) || 0;
+        if(palletNet === 0) {
+            alert("يرجى إدخال وزن الطبلية البراد الرئيسية أولاً!");
             return;
         }
 
-        try {
-            const xsData = filteredWeights.map((_, index) => index + 1);
-            const ysData = filteredWeights.map(r => parseFloat(r.net));
+        const rows = document.querySelectorAll('.deconstruct-row');
+        let itemsList = [];
+        let sumExtracted = 0;
 
-            const xs = tf.tensor1d(xsData);
-            const ys = tf.tensor1d(ysData);
-
-            const model = tf.sequential();
-            model.add(tf.layers.dense({units: 1, inputShape: [1]}));
-            model.compile({loss: 'meanSquaredError', optimizer: 'sgd'});
-
-            await model.fit(xs, ys, {epochs: 10});
-
-            const nextIndex = filteredWeights.length + 1;
-            const prediction = model.predict(tf.tensor1d([nextIndex]));
-            const predictedValue = (await prediction.data())[0];
-
-            xs.dispose(); ys.dispose(); prediction.dispose(); model.dispose();
-
-            panel.innerHTML = `🔮 <strong>توقع Google TensorFlow للوزنة القادمة:</strong> يُتوقع أن تسجل حوالي <span style="font-weight:bold; color:#000000; font-size:14px;">${predictedValue.toFixed(2)} كغ</span>.`;
-        } catch (error) {
-            const lastWeights = filteredWeights.slice(-3).map(r => parseFloat(r.net));
-            const avg = (lastWeights[0] + lastWeights[1] + lastWeights[2]) / 3;
-            panel.innerHTML = `🔮 <strong>توقع الـ AI الاستباقي:</strong> يُتوقع أن تكون حوالي <span style="font-weight:bold; color:#000000; font-size:14px;">${avg.toFixed(2)} كغ</span>.`;
-        }
-    }
-
-    function saveCurrentRecord() {
-        const item = document.getElementById('itemSelect').value;
-        const gross = parseFloat(document.getElementById('grossInput').value) || 0;
-        const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
-        const palletWeight = parseFloat(document.getElementById('palletWeightOpt').value) || 0;
-        
-        const manager = document.getElementById('managerName').value || "غير محدد";
-        const worker = document.getElementById('workerName').value || "عام";
-        const email = document.getElementById('emailOpt').value || "لا يوجد";
-        
-        const totalTare = (boxes * tarePerBox) + palletWeight;
-        const net = gross - totalTare;
-
-        if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
-        if (gross === 0) { alert("يرجى إدخال الوزن الحالي لحفظ السجل"); return; }
-
-        // جلب مصفوفة التفكيك اليدوي إذا تم تعبئتها
-        const subItemsList = getSubItemsData();
-
-        const newRecord = {
-            recordType: "وزنة_فردية",
-            manager: manager,
-            worker: worker,
-            email: email,
-            boxes: boxes,
-            palletWeight: palletWeight.toFixed(2),
-            gross: gross.toFixed(2), 
-            time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
-            date: new Date().toLocaleDateString('ar-EG'),
-            item: item,
-            net: net.toFixed(2),     
-            minW: "-", maxW: "-", freezeStart: "-", freezeEnd: "-",
-            chickenCount: "-", orderNumber: "-", destination: "-", fridgeLocation: "-", temperature: "-",
-            subItems: subItemsList // حفظ مصفوفة الأصناف المشتقة
-        };
-
-        records.push(newRecord);
-        localStorage.setItem('hawaTechAppData', JSON.stringify(records));
-        
-        document.getElementById('boxCount').value = "";
-        document.getElementById('palletWeightOpt').value = "";
-        document.getElementById('grossInput').value = "";
-        document.getElementById('weightDisplayBox').innerText = "0.00";
-        document.getElementById('subItemsContainer').innerHTML = ""; // تفريغ واجهة التفكيك
-        
-        updateUI();
-        alert(`تم حفظ وزنة صنف (${item}) وعاملها بنجاح ✅`);
-    }
-
-    function transferOrderToFridge() {
-        const item = document.getElementById('itemSelect').value;
-        const orderNumber = document.getElementById('orderNumberOpt').value;
-        
-        if (!item) { alert("يرجى اختيار الصنف للطلب المرحل أولاً"); return; }
-        if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
-
-        let totalNetCalculated = getCurrentPeriodNetTotal(item);
-        let totalGrossCalculated = getCurrentPeriodGrossTotal(item);
-
-        if (totalNetCalculated === 0) {
-            const liveGross = parseFloat(document.getElementById('grossInput').value) || 0;
-            const liveNet = parseFloat(document.getElementById('weightDisplayBox').innerText) || 0;
+        rows.forEach(row => {
+            const item = row.querySelector('.item-select').value;
+            const worker = row.querySelector('.worker-input').value || "عام";
+            const weight = parseFloat(row.querySelector('.weight-input').value) || 0;
             
-            if (liveGross > 0 && liveNet > 0) {
-                totalGrossCalculated = liveGross;
-                totalNetCalculated = liveNet;
-            } else {
-                alert(`⚠️ عذراً! لا توجد وزنات تراكمية مخزنة، ولا توجد أوزان فورية مكتوبة في خانة الوزن الحالي لترحيلها.`);
-                return;
+            if(weight > 0) {
+                sumExtracted += weight;
+                itemsList.push({ item, worker, weight: weight.toFixed(2) });
             }
-        }
+        });
 
-        const manager = document.getElementById('managerName').value || "غير محدد";
-        const chickenCount = document.getElementById('chickenCountOpt').value || "-";
-        const destination = document.getElementById('destinationOpt').value || "-";
-        const fridgeLocation = document.getElementById('fridgeLocationOpt').value || "-";
-        const temperature = document.getElementById('temperatureOpt').value || "-";
-        const minW = document.getElementById('minWeightOpt').value || "-";
-        const maxW = document.getElementById('maxWeightOpt').value || "-";
-        const freezeStart = document.getElementById('freezeStartOpt').value || "-";
-        const freezeEnd = document.getElementById('freezeEndOpt').value || "-";
+        let waste = palletNet - sumExtracted;
+        if(waste < 0) waste = 0;
 
-        // دعم نظام التفكيك والاشتقاق أيضاً عند الترحيل الفوري للبراد إن وجد
-        const subItemsList = getSubItemsData();
-
-        const orderRecord = {
-            recordType: "ترحيل_براد",
-            manager: manager,
-            worker: "-",
-            email: document.getElementById('emailOpt').value || "لا يوجد",
-            boxes: "-",
-            palletWeight: "-",
-            gross: totalGrossCalculated.toFixed(2), 
-            time: new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'}),
+        const sessionRecord = {
             date: new Date().toLocaleDateString('ar-EG'),
-            item: item,
-            net: totalNetCalculated.toFixed(2), 
-            chickenCount: chickenCount,
-            orderNumber: orderNumber,
-            destination: destination,
-            fridgeLocation: fridgeLocation,
-            temperature: temperature,
-            minW: minW,
-            maxW: maxW,
-            freezeStart: freezeStart,
-            freezeEnd: freezeEnd,
-            subItems: subItemsList
+            time: new Date().toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}),
+            palletNet: palletNet.toFixed(2),
+            sumExtracted: sumExtracted.toFixed(2),
+            waste: waste.toFixed(2),
+            details: itemsList
         };
 
-        records.push(orderRecord);
-        localStorage.setItem('hawaTechAppData', JSON.stringify(records));
+        sessions.push(sessionRecord);
+        localStorage.setItem('hawaTechSessions', JSON.stringify(sessions));
 
+        // تصفير الخانات للعملية التالية
         document.getElementById('grossInput').value = "";
         document.getElementById('boxCount').value = "";
-        document.getElementById('palletWeightOpt').value = "";
-        document.getElementById('chickenCountOpt').value = "";
-        document.getElementById('orderNumberOpt').value = "";
-        document.getElementById('destinationOpt').value = "";
-        document.getElementById('fridgeLocationOpt').value = "";
-        document.getElementById('temperatureOpt').value = "";
-        document.getElementById('minWeightOpt').value = "";
-        document.getElementById('maxWeightOpt').value = "";
-        document.getElementById('freezeStartOpt').value = "";
-        document.getElementById('freezeEndOpt').value = "";
-        document.getElementById('weightDisplayBox').innerText = "0.00";
-        document.getElementById('subItemsContainer').innerHTML = ""; 
+        document.getElementById('palletWeight').value = "";
+        document.getElementById('palletNetDisplay').innerText = "0.00";
+        document.getElementById('rowsContainer').innerHTML = "";
         
-        updateUI();
-        alert(`تم ترحيل طلبيّة صنف (${item}) رقم (${orderNumber}) بنجاح إلى ملف البراد ✅.`);
+        addDeconstructRow();
+        calculateLiveResult();
+        renderHistory();
+
+        alert("تم حفظ ملف الطبلية بالكامل وربط الأصناف بالعمال بنجاح! 💾");
     }
 
-    function deleteRecord(index) {
-        if(confirm("هل أنت متأكد من حذف هذه الوزنة؟")) {
-            records.splice(index, 1);
-            localStorage.setItem('hawaTechAppData', JSON.stringify(records));
-            updateUI();
-        }
-    }
-
-    function showExpandedLiveView(index) {
-        const r = records[index];
-        const modalBody = document.getElementById('modalBody');
-        
-        let weightHTML = '';
-        if(r.recordType === "وزنة_فردية") {
-            weightHTML = `
-                <div class="modal-item"><span>الوزن القائم (الإجمالي):</span> <span style="font-weight:bold; color:#238636;">${r.gross} كغ</span></div>
-                <div class="modal-item"><span>عدد الصناديق / الأقفاص:</span> <span>${r.boxes} أقفاص</span></div>
-                <div class="modal-item"><span>وزن الطبلية المخصوم:</span> <span>${r.palletWeight || "0.00"} كغ</span></div>
-                <div class="modal-item"><span>صافي الوزن الفعلي:</span> <span style="color:#1f6feb; font-weight:bold;">${r.net} كغ</span></div>
-            `;
-        } else {
-            weightHTML = `
-                <div class="modal-item"><span>الوزن الكلي للطلبية المرحّلة:</span> <span style="font-weight:bold; color:#238636;">${r.gross} كغ</span></div>
-                <div class="modal-item"><span>صافي وزن الطلبية المرحّل:</span> <span style="font-weight:bold; color:#e65100; font-size:15px;">${r.net} كغ</span></div>
-            `;
-        }
-
-        // بناء وعرض تفاصيل الأصناف المشتقة المفككة يدوياً بداخل شاشة العرض الموسعة
-        let subItemsHTML = '';
-        if(r.subItems && r.subItems.length > 0) {
-            subItemsHTML = `<div style="margin-top: 10px; padding: 8px; background: rgba(0,172,193,0.1); border: 1px solid var(--deconstruct-border); border-radius: 8px;">
-                <div style="font-weight:bold; color:var(--header-color); text-align:center; margin-bottom:5px;">📋 الأصناف المشتقة والمفككة يدوياً:</div>`;
-            r.subItems.forEach(sub => {
-                subItemsHTML += `<div class="modal-item" style="border-bottom:1px dotted rgba(0,0,0,0.15);">
-                    <span style="color:#006064;">🔹 ${sub.subName}:</span>
-                    <span style="font-weight:bold; color:#006064;">${sub.subWeight} كغ</span>
-                </div>`;
-            });
-            subItemsHTML += `</div>`;
-        }
-
-        modalBody.innerHTML = `
-            <div class="modal-item"><span>نوع السجل:</span> <span style="font-weight:bold; color:${r.recordType === 'ترحيل_براد' ? '#e65100':'#1f6feb'};">${r.recordType === "ترحيل_براد" ? "📦 ترحيل ساعة للبراد" : "⚖️ وزنة خط إنتاج"}</span></div>
-            <div class="modal-item"><span>التاريخ والوقت:</span> <span>${r.date} | ${r.time}</span></div>
-            <div class="modal-item"><span>اسم المسؤول (المشرف):</span> <span>${r.manager}</span></div>
-            <div class="modal-item"><span>اسم العامل على الخط:</span> <span>${r.worker}</span></div>
-            <div class="modal-item"><span>الصنف المستهدف:</span> <span>${r.item}</span></div>
-            ${weightHTML}
-            ${subItemsHTML}
-            <div class="modal-item"><span>رقم الطلبية المفتوحة:</span> <span>${r.orderNumber}</span></div>
-            <div class="modal-item"><span>المكان المرسل إليه:</span> <span>${r.destination}</span></div>
-            <div class="modal-item"><span>موقع البراد الداخلي:</span> <span>${r.fridgeLocation}</span></div>
-            <div class="modal-item"><span>درجة حرارة الشحنة:</span> <span style="color:#da3637; font-weight:bold;">${r.temperature} C°</span></div>
-            <div class="modal-item"><span>عدد الفروج بالطلب:</span> <span>${r.chickenCount}</span></div>
-            <div class="modal-item"><span>نطاق غرام الفروج المسموح:</span> <span>${r.minW}غ - ${r.maxW}غ</span></div>
-            <div class="modal-item"><span>تاريخ إدخال الفريزر:</span> <span>${r.freezeStart}</span></div>
-            <div class="modal-item"><span>نهاية تاريخ الصلاحية:</span> <span>${r.freezeEnd}</span></div>
-        `;
-        document.getElementById('detailsModal').style.display = "flex";
-    }
-
-    function closeModal() {
-        document.getElementById('detailsModal').style.display = "none";
-    }
-
-    function addItem() {
-        const name = document.getElementById('newItemInput').value.trim();
-        if(name) {
-            const select = document.getElementById('itemSelect');
-            const opt = document.createElement('option');
-            opt.value = name; opt.innerText = name;
-            select.appendChild(opt);
-            document.getElementById('newItemInput').value = "";
-        }
-    }
-
-    function deleteItem() {
-        const select = document.getElementById('itemSelect');
-        if(select.selectedIndex > 0) { select.remove(select.selectedIndex); }
-    }
-
-    function updateUI() {
-        const tbody = document.getElementById('tableBody');
-        const tfoot = document.getElementById('tableFoot');
+    function renderHistory() {
+        const tbody = document.getElementById('historyBody');
         tbody.innerHTML = "";
-        tfoot.innerHTML = "";
-        
-        const selectedItem = document.getElementById('itemSelect').value;
-        
-        let displayNetForSelected = 0;
-        let chartDataNet = {};
-        let chartDataGross = {};
-        
-        const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
-
-        if (selectedItem) {
-            displayNetForSelected = getCurrentPeriodNetTotal(selectedItem);
-        }
-        document.getElementById('totalNetDisplay').innerText = displayNetForSelected.toFixed(2);
-
-        records.forEach((r, index) => {
-            const allObjectValuesStr = Object.values(r).join(" ").toLowerCase();
-            const matchSearch = allObjectValuesStr.includes(searchQuery);
-
-            if (!matchSearch && searchQuery !== "") return;
-
-            let lastTransferIndexForThisItem = -1;
-            for (let i = index - 1; i >= 0; i--) {
-                if (records[i].recordType === "ترحيل_براد" && records[i].item === r.item) {
-                    lastTransferIndexForThisItem = i;
-                    break;
-                }
-            }
-
-            if (r.recordType === "وزنة_فردية" && index > lastTransferIndexForThisItem) {
-                chartDataNet[r.item] = (chartDataNet[r.item] || 0) + (parseFloat(r.net) || 0);
-                chartDataGross[r.item] = (chartDataGross[r.item] || 0) + (parseFloat(r.gross) || 0);
-            }
-
-            const isTransfer = r.recordType === "ترحيل_براد";
-            const rowClass = isTransfer ? "row-order-transfer" : "row-weight-only";
-            const typeLabel = isTransfer ? "📦 ترحيل ساعة" : "⚖️ وزنة خط";
-
-            const tableGrossDisplay = (r.gross && r.gross !== "-") ? r.gross + ' كغ' : '-';
-            const tableNetDisplay = isTransfer ? `صافي الطلب: ${r.net} كغ` : `${r.net} كغ`;
-
-            const row = `<tr class="${rowClass}">
-                <td>${r.time}</td>
-                <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${typeLabel}</td>
-                <td>${r.item}</td>
-                <td class="highlight-weight">${tableGrossDisplay}</td>
-                <td class="net-weight" style="color: ${isTransfer ? '#e65100' : '#1f6feb'}">${tableNetDisplay}</td>
-                <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">عرض التفاصيل 👁️</button></td>
-                <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
+        sessions.forEach(s => {
+            tbody.innerHTML += `<tr>
+                <td>${s.date} ${s.time}</td>
+                <td style="font-weight:bold; color:#004d40;">${s.palletNet} كغ</td>
+                <td style="color:#238636; font-weight:bold;">${s.sumExtracted} كغ</td>
+                <td style="color:#da3637;">${s.waste} كغ</td>
+                <td>${s.details.length} أصناف</td>
             </tr>`;
-            tbody.innerHTML += row;
         });
-
-        if(selectedItem && displayNetForSelected > 0) {
-            const currentGrossForSelected = getCurrentPeriodGrossTotal(selectedItem);
-            const footerRow = `<tr class="row-virtual-footer">
-                <td>لايف</td>
-                <td>📊 عداد الحالي للمنتج</td>
-                <td>${selectedItem}</td>
-                <td>${currentGrossForSelected.toFixed(2)} كغ</td>
-                <td>${displayNetForSelected.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#555;">(مراقب إنتاج صنف ${selectedItem} الحالي)</td>
-            </tr>`;
-            tfoot.innerHTML = footerRow;
-        }
-
-        const computedStyle = getComputedStyle(document.body);
-        const barColor = computedStyle.getPropertyValue('--chart-bar').trim();
-        const gridColor = computedStyle.getPropertyValue('--chart-grid').trim();
-        const textColor = computedStyle.getPropertyValue('--text-color').trim();
-
-        const ctx = document.getElementById('miniChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        
-        const currentLabels = Object.keys(chartDataNet);
-        const currentValuesNet = Object.values(chartDataNet);
-        const currentValuesGross = Object.values(chartDataGross);
-
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: currentLabels.length > 0 ? currentLabels : ["لا يوجد أوزان معلقة"],
-                datasets: [{
-                    label: 'صافي إنتاج الأصناف غير المترحّلة (كغ)',
-                    data: currentValuesNet.length > 0 ? currentValuesNet : [0],
-                    backgroundColor: barColor,
-                    borderRadius: 6,
-                    borderWidth: 0,
-                    grossValues: currentValuesGross.length > 0 ? currentValuesGross : [0]
-                }]
-            },
-            options: { 
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { font: { family: 'Segoe UI', size: 12 }, color: textColor }
-                    },
-                    tooltip: {
-                        enabled: currentLabels.length > 0,
-                        backgroundColor: 'rgba(0, 17, 34, 0.95)',
-                        titleColor: '#58a6ff',
-                        titleFont: { size: 14, weight: 'bold', family: 'Segoe UI' },
-                        bodyFont: { size: 13, family: 'Segoe UI' },
-                        bodyColor: '#ffffff',
-                        padding: 12,
-                        cornerRadius: 8,
-                        rtl: true,
-                        callbacks: {
-                            label: function(context) {
-                                const index = context.dataIndex;
-                                const netW = context.parsed.y.toFixed(2);
-                                if (!context.dataset.grossValues || !context.dataset.grossValues[index]) {
-                                    return ` • صافي الوزن: ${netW} كغ`;
-                                }
-                                const grossW = context.dataset.grossValues[index].toFixed(2);
-                                const tareW = (parseFloat(grossW) - parseFloat(netW)).toFixed(2);
-                                return [
-                                    ` • صافي الوزن النظيف: ${netW} كغ`,
-                                    ` • الوزن القائم الشامل: ${grossW} كغ`,
-                                    ` • مخصوم الأقفاص والطبلية: ${tareW} كغ`
-                                ];
-                            }
-                        }
-                    }
-                },
-                scales: { 
-                    y: { 
-                        beginAtZero: true, 
-                        grid: { color: gridColor }, 
-                        ticks: { color: textColor, font: { family: 'Segoe UI' } } 
-                    },
-                    x: { 
-                        grid: { display: false }, 
-                        ticks: { color: textColor, font: { family: 'Segoe UI', weight: 'bold' } } 
-                    }
-                }
-            }
-        });
-
-        runAIPrediction();
     }
-
-    function exportStaffExcel() {
-        const filtered = records.filter(r => r.recordType === "وزنة_فردية");
-        if(filtered.length === 0) { alert("لا توجد بيانات وزنات عمال لتصديرها"); return; }
-        
-        let sumNet = 0;
-        const staffData = filtered.map(r => {
-            sumNet += parseFloat(r.net);
-            return {
-                "اسم المسؤول": r.manager,
-                "اسم العامل": r.worker,
-                "الصنف": r.item,
-                "عدد الصناديق": r.boxes,
-                "وزن الطبلية المخصوم (كغ)": r.palletWeight ? parseFloat(r.palletWeight) : 0,
-                "الوزن القائم (كغ)": parseFloat(r.gross),
-                "صافي الوزنة النظيف (كغ)": parseFloat(r.net),
-                "الوقت": r.time,
-                "التاريخ": r.date
-            };
-        });
-
-        staffData.push({
-            "اسم المسؤول": "الإجمالي النظيف الفعلي الشامل",
-            "اسم العامل": "", "الصنف": "", "عدد الصناديق": "", "وزن الطبلية المخصوم (كغ)": "", "الوزن القائم (كغ)": "",
-            "صافي الوزنة النظيف (كغ)": sumNet,
-            "الوقت": "", "التاريخ": ""
-        });
-
-        const ws = XLSX.utils.json_to_sheet(staffData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "كشف الموظفين والأوزان");
-        XLSX.writeFile(wb, `HawaTech_Staff_Weights_Report.xlsx`);
-    }
-
-    function exportOrdersExcel() {
-        const filtered = records.filter(r => r.recordType === "ترحيل_براد");
-        if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
-        
-        const ordersData = filtered.map(r => {
-            return {
-                "رقم الطلبية المرحّلة": r.orderNumber,
-                "المكان المرسل إليه": r.destination,
-                "الصنف": r.item,
-                "الوزنة كاملة للطلبية (كغ)": (r.gross && r.gross !== "-") ? parseFloat(r.gross) : "غير محدد", 
-                "الوزن الصافي للطلبية (كغ)": parseFloat(r.net), 
-                "موقع البراد الداخلي": r.fridgeLocation,
-                "درجة الحرارة (C°)": r.temperature,
-                "عدد الفروج داخل الطلبية": r.chickenCount,
-                "وقت الترحيل الرسمي": r.time,
-                "تاريخ التجميد": r.freezeStart,
-                "تاريخ انتهاء الصلاحية": r.freezeEnd
-            };
-        });
-
-        const ws = XLSX.utils.json_to_sheet(ordersData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "طلبيات البراد ساعة بساعة");
-        XLSX.writeFile(wb, `HawaTech_Fridge_Hourly_Transfers.xlsx`);
-    }
-
-    function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
-        if (pw === '1957') {
-            localStorage.removeItem('hawaTechAppData');
-            records = [];
-            updateUI();
-            alert("تم تصفير المنظومة وقاعدة البيانات بنجاح");
-        } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
-    }
-
-    window.onload = function() { 
-        applySavedTheme();
-        updateDateTime(); 
-        updateUI(); 
-    };
 </script>
-
 </body>
 </html>
