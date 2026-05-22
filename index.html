@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Pallet Deconstruction Edition)</title>
+    <title>Hawa-Tech App Pro (Advanced Dashboard Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -457,25 +457,6 @@
             margin-top: 15px;
             cursor: pointer;
         }
-        
-        /* تصميم مخصص لقسم الطبلية الواردة */
-        .pallet-arrival-section {
-            border: 2px solid #0d57d2;
-            background-color: rgba(31, 111, 235, 0.03);
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-        .pallet-active-badge {
-            background-color: #238636;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: bold;
-            display: inline-block;
-            margin-top: 5px;
-        }
     </style>
 </head>
 <body>
@@ -490,39 +471,25 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
-    <!-- قسم جلب وتثبيت الطبلية الأم من البراد قبل التفكيك -->
-    <div class="pallet-arrival-section">
-        <div class="section-subtitle" style="color: #0d57d2;">❄️ خطوة 1: إدخال الطبلية الأم الواردة من البراد للتفكيك:</div>
-        <div class="inputs-grid" style="margin-bottom: 8px;">
-            <input type="text" id="incomingPalletId" placeholder="رقم / كود الطبلية">
-            <input type="number" id="incomingPalletWeight" step="0.01" placeholder="وزن الطبلية الإجمالي (كغ)">
-        </div>
-        <button class="btn-action btn-add" style="width:100%; padding: 10px;" onclick="lockIncomingPallet()">🔒 تثبيت واعتماد الطبلية الحالية للتفكيك</button>
-        <div id="activePalletDisplay" style="text-align: center; min-height: 22px;">
-            <span class="pallet-active-badge" style="background-color: #6e7681;">لا توجد طبلية نشطة حالياً</span>
-        </div>
-    </div>
-
-    <div class="section-subtitle">🔪 خطوة 2: سحب وتفكيك الأصناف من الطبلية النشطة:</div>
     <div class="inputs-grid">
         <input type="text" id="managerName" placeholder="اسم المسؤول">
         <input type="text" id="workerName" placeholder="اسم العامل">
         <input type="text" id="emailOpt" placeholder="الإيميل (اختياري)">
-        <input type="number" id="boxCount" placeholder="عدد الأقفاص المفرغة" oninput="updateLiveWeight()">
+        <input type="number" id="boxCount" placeholder="عدد الأقفاص" oninput="updateLiveWeight()">
     </div>
 
-    <!-- وزن خشب الطبلية أو الفارغ الاختياري الإضافي أثناء التفكيك إن وجد -->
+    <!-- خانة وزن الطبلية الاختيارية الجديدة مدمجة تماماً دون المساس بالترتيب -->
     <div style="margin-bottom: 12px;">
-        <input type="number" id="palletWeightOpt" step="0.01" placeholder="وزن فارغ إضافي / خشب (اختياري - كغ)" oninput="updateLiveWeight()">
+        <input type="number" id="palletWeightOpt" step="0.01" placeholder="وزن الطبلية (اختياري - كغ)" oninput="updateLiveWeight()">
     </div>
 
     <div class="weight-display" id="weightDisplayBox">0.00</div>
     
     <div style="margin-bottom: 15px;">
-        <input type="number" id="grossInput" step="0.01" placeholder="الوزن القائم للصنف الحالي (كغ)" oninput="updateLiveWeight()">
+        <input type="number" id="grossInput" step="0.01" placeholder="أدخل الوزن القائم الحالي (كغ)" oninput="updateLiveWeight()">
     </div>
 
-    <button class="btn-main" onclick="saveCurrentRecord()">تثبيت الصنف المفكك الحالي وحفظه ✅</button>
+    <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن فقط ✅</button>
 
     <div class="ai-panel" id="aiPanel">
         🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow لمراقبة خط الأوزان الحالية.
@@ -532,7 +499,7 @@
         <div class="manage-title">إدارة الأصناف الحالية:</div>
         <div style="display: flex; gap: 6px; margin-bottom: 6px;">
             <select id="itemSelect" onchange="updateUI()">
-                <option value="">-- اختر الصنف المستخرج --</option>
+                <option value="">-- اختر الصنف --</option>
                 <option value="جوانح">جوانح</option>
                 <option value="صدر مسحب">صدر مسحب</option>
                 <option value="فخاد">فخاد</option>
@@ -589,7 +556,7 @@
     </div>
 
     <div class="search-box-container">
-        <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث هنا عن أي شيء (اسم، صنف، وزن، صلاحية، تاريخ، رقم طبلية)..." oninput="updateUI()">
+        <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث هنا عن أي شيء (اسم، صنف، وزن، صلاحية، تاريخ، رقم طلبية)..." oninput="updateUI()">
     </div>
 
     <div class="table-responsive">
@@ -598,10 +565,9 @@
                 <tr>
                     <th>الوقت</th>
                     <th>نوع العملية</th>
-                    <th>الطبلية الأم</th>
                     <th>الصنف</th>
-                    <th>الوزن المفكك</th>
-                    <th>صافي الصنف</th>
+                    <th>الوزنة كاملة</th>
+                    <th>صافي الوزنة</th>
                     <th>التفاصيل الكاملة</th>
                     <th>إجراء</th>
                 </tr>
@@ -625,7 +591,7 @@
 
 <div class="modal-overlay" id="detailsModal">
     <div class="modal-content">
-        <div class="modal-header">👁️ تفاصيل الوزنة وتفكيك الطبلية (Live View)</div>
+        <div class="modal-header">👁️ تفاصيل الوزنة الموسعة (Live View)</div>
         <div class="modal-body-grid" id="modalBody">
         </div>
         <button class="btn-modal-close" onclick="closeModal()">إغلاق النافذة</button>
@@ -634,10 +600,6 @@
 
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
-    // متغيرات للاحتفاظ بالطبلية الأم النشطة الحالية في الجلسة
-    let currentPalletId = localStorage.getItem('hawaTechActivePalletId') || "";
-    let currentPalletWeight = parseFloat(localStorage.getItem('hawaTechActivePalletWeight')) || 0;
-
     let myChart = null;
     const tarePerBox = 1.40;
 
@@ -670,35 +632,7 @@
     }
     setInterval(updateDateTime, 1000);
 
-    // دالة لتثبيت الطبلية القادمة من البراد
-    function lockIncomingPallet() {
-        const id = document.getElementById('incomingPalletId').value.trim();
-        const weight = parseFloat(document.getElementById('incomingPalletWeight').value) || 0;
-        
-        if(!id || weight <= 0) {
-            alert("الرجاء إدخال رقم الطبلية ووزنها الإجمالي الصحيح القادم من البراد لفتحها");
-            return;
-        }
-        
-        currentPalletId = id;
-        currentPalletWeight = weight;
-        
-        localStorage.setItem('hawaTechActivePalletId', currentPalletId);
-        localStorage.setItem('hawaTechActivePalletWeight', currentPalletWeight.toString());
-        
-        refreshPalletBadge();
-        alert(`تم اعتماد وتثبيت الطبلية رقم (${id}) بنجاح. يمكنك الآن البدء في تفكيك الأصناف منها 👇`);
-    }
-
-    function refreshPalletBadge() {
-        const display = document.getElementById('activePalletDisplay');
-        if(currentPalletId) {
-            display.innerHTML = `<span class="pallet-active-badge">📦 طبلية نشطة حالياً: رقم ${currentPalletId} (${currentPalletWeight.toFixed(2)} كغ)</span>`;
-        } else {
-            display.innerHTML = `<span class="pallet-active-badge" style="background-color: #6e7681;">لا توجد طبلية نشطة حالياً</span>`;
-        }
-    }
-
+    // تحديث دالة الحساب لتشمل الطبلية يدويًا وبشكل اختياري ومباشر
     function updateLiveWeight() {
         const gross = parseFloat(document.getElementById('grossInput').value) || 0;
         const boxes = parseFloat(document.getElementById('boxCount').value) || 0;
@@ -750,24 +684,12 @@
         return total;
     }
 
-    // حساب مجموع ما تم سحبه وتفكيكه من طبلية معينة
-    function getAccumulatedDrawnFromPallet(palletId) {
-        if(!palletId) return 0;
-        let total = 0;
-        records.forEach(r => {
-            if(r.recordType === "وزنة_فردية" && r.palletParentId === palletId) {
-                total += parseFloat(r.gross) || 0; // نجمع القائم الإجمالي المفكك لمعرفة المسحوب من وزن الطبلية الأم
-            }
-        });
-        return total;
-    }
-
     async function runAIPrediction() {
         const panel = document.getElementById('aiPanel');
         const filteredWeights = records.filter(r => r.recordType === "وزنة_فردية");
         
         if (filteredWeights.length < 3) {
-            panel.innerHTML = `🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومراقبة لعمليات تفكيك الطبالي والأوزان المستخرجة الحالية.`;
+            panel.innerHTML = `🔮 <strong>مساعد Google AI:</strong> المنظومة جاهزة ومربوطة بـ TensorFlow لمراقبة خط الأوزان الحالية.`;
             return;
         }
 
@@ -811,14 +733,11 @@
         const totalTare = (boxes * tarePerBox) + palletWeight;
         const net = gross - totalTare;
 
-        if (!item) { alert("يرجى اختيار الصنف المستخرج أولاً"); return; }
+        if (!item) { alert("يرجى اختيار الصنف أولاً"); return; }
         if (gross === 0) { alert("يرجى إدخال الوزن الحالي لحفظ السجل"); return; }
-        if (!currentPalletId) { alert("⚠️ تنبيه: لم تقم بتثبيت طبلية أم نشطة! يرجى إدخال بيانات الطبلية الواردة بالخطوة 1 أولاً لربط الأوزان بها."); return; }
 
         const newRecord = {
             recordType: "وزنة_فردية",
-            palletParentId: currentPalletId, // ربط الوزنة بالطبلية الأم
-            palletParentWeight: currentPalletWeight.toFixed(2),
             manager: manager,
             worker: worker,
             email: email,
@@ -842,7 +761,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم حفظ صنف (${item}) ومربوط تلقائياً بالطبلية الأم رقم (${currentPalletId}) بنجاح ✅`);
+        alert(`تم حفظ وزنة صنف (${item}) وعاملها بنجاح ✅`);
     }
 
     function transferOrderToFridge() {
@@ -880,8 +799,6 @@
 
         const orderRecord = {
             recordType: "ترحيل_براد",
-            palletParentId: currentPalletId || "تفكيك خارجي",
-            palletParentWeight: currentPalletWeight > 0 ? currentPalletWeight.toFixed(2) : "-",
             manager: manager,
             worker: "-",
             email: document.getElementById('emailOpt').value || "لا يوجد",
@@ -936,24 +853,13 @@
         const r = records[index];
         const modalBody = document.getElementById('modalBody');
         
-        // حساب حي لعملية تفكيك الطبلية المرتبطة
-        let totalDrawn = 0;
-        let remainingWeight = 0;
-        let parentPalletWeightNum = parseFloat(r.palletParentWeight) || 0;
-        
-        if(r.palletParentId && r.palletParentId !== "-") {
-            totalDrawn = getAccumulatedDrawnFromPallet(r.palletParentId);
-            remainingWeight = parentPalletWeightNum - totalDrawn;
-            if(remainingWeight < 0) remainingWeight = 0;
-        }
-
         let weightHTML = '';
         if(r.recordType === "وزنة_فردية") {
             weightHTML = `
-                <div class="modal-item"><span>الوزن القائم الحالي للصنف:</span> <span style="font-weight:bold; color:#238636;">${r.gross} كغ</span></div>
-                <div class="modal-item"><span>عدد الصناديق / الأقفاص المفرغة:</span> <span>${r.boxes} أقفاص</span></div>
-                <div class="modal-item"><span>وزن الفارغ الإضافي المخصوم:</span> <span>${r.palletWeight || "0.00"} كغ</span></div>
-                <div class="modal-item"><span>صافي وزن الصنف النظيف:</span> <span style="color:#1f6feb; font-weight:bold;">${r.net} كغ</span></div>
+                <div class="modal-item"><span>الوزن القائم (الإجمالي):</span> <span style="font-weight:bold; color:#238636;">${r.gross} كغ</span></div>
+                <div class="modal-item"><span>عدد الصناديق / الأقفاص:</span> <span>${r.boxes} أقفاص</span></div>
+                <div class="modal-item"><span>وزن الطبلية المخصوم:</span> <span>${r.palletWeight || "0.00"} كغ</span></div>
+                <div class="modal-item"><span>صافي الوزن الفعلي:</span> <span style="color:#1f6feb; font-weight:bold;">${r.net} كغ</span></div>
             `;
         } else {
             weightHTML = `
@@ -963,16 +869,11 @@
         }
 
         modalBody.innerHTML = `
-            <div class="modal-item" style="background-color:rgba(13,87,210,0.08); padding: 5px;"><span>📦 رقم الطبلية الأم المرتبطة:</span> <span style="font-weight:bold; color:#0d57d2;">${r.palletParentId || "غير محددة"}</span></div>
-            <div class="modal-item"><span>⚖️ وزن الطبلية الأم الأصلي (بالبراد):</span> <span style="font-weight:bold;">${parentPalletWeightNum > 0 ? parentPalletWeightNum.toFixed(2) + ' كغ' : '-'}</span></div>
-            <div class="modal-item" style="color: #238636;"><span>📈 إجمالي المسحوب من الطبلية حتى الآن:</span> <span style="font-weight:bold;">${totalDrawn > 0 ? totalDrawn.toFixed(2) + ' كغ' : '-'}</span></div>
-            <div class="modal-item" style="color: #da3637;"><span>📉 المتبقي التقريبي بالطبلية بالبراد:</span> <span style="font-weight:bold;">${parentPalletWeightNum > 0 ? remainingWeight.toFixed(2) + ' كغ' : '-'}</span></div>
-            <hr style="border:0; border-top:1px dashed var(--border-color); margin: 5px 0;">
-            <div class="modal-item"><span>نوع السجل الحالي:</span> <span style="font-weight:bold; color:${r.recordType === 'ترحيل_براد' ? '#e65100':'#1f6feb'};">${r.recordType === "ترحيل_براد" ? "📦 ترحيل ساعة للبراد" : "🔪 تفكيك صنف من طبلية"}</span></div>
+            <div class="modal-item"><span>نوع السجل:</span> <span style="font-weight:bold; color:${r.recordType === 'ترحيل_براد' ? '#e65100':'#1f6feb'};">${r.recordType === "ترحيل_براد" ? "📦 ترحيل ساعة للبراد" : "⚖️ وزنة خط إنتاج"}</span></div>
             <div class="modal-item"><span>التاريخ والوقت:</span> <span>${r.date} | ${r.time}</span></div>
             <div class="modal-item"><span>اسم المسؤول (المشرف):</span> <span>${r.manager}</span></div>
             <div class="modal-item"><span>اسم العامل على الخط:</span> <span>${r.worker}</span></div>
-            <div class="modal-item"><span>الصنف المستخرج:</span> <span>${r.item}</span></div>
+            <div class="modal-item"><span>الصنف المستهدف:</span> <span>${r.item}</span></div>
             ${weightHTML}
             <div class="modal-item"><span>رقم الطلبية المفتوحة:</span> <span>${r.orderNumber}</span></div>
             <div class="modal-item"><span>المكان المرسل إليه:</span> <span>${r.destination}</span></div>
@@ -1007,7 +908,6 @@
     }
 
     function updateUI() {
-        refreshPalletBadge();
         const tbody = document.getElementById('tableBody');
         const tfoot = document.getElementById('tableFoot');
         tbody.innerHTML = "";
@@ -1047,8 +947,7 @@
 
             const isTransfer = r.recordType === "ترحيل_براد";
             const rowClass = isTransfer ? "row-order-transfer" : "row-weight-only";
-            const typeLabel = isTransfer ? "📦 ترحيل ساعة" : "🔪 تفكيك صنف";
-            const palletLabel = r.palletParentId && r.palletParentId !== "-" ? r.palletParentId : "خارجي";
+            const typeLabel = isTransfer ? "📦 ترحيل ساعة" : "⚖️ وزنة خط";
 
             const tableGrossDisplay = (r.gross && r.gross !== "-") ? r.gross + ' كغ' : '-';
             const tableNetDisplay = isTransfer ? `صافي الطلب: ${r.net} كغ` : `${r.net} كغ`;
@@ -1056,7 +955,6 @@
             const row = `<tr class="${rowClass}">
                 <td>${r.time}</td>
                 <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${typeLabel}</td>
-                <td style="font-weight:bold; color:#0d57d2;">${palletLabel}</td>
                 <td>${r.item}</td>
                 <td class="highlight-weight">${tableGrossDisplay}</td>
                 <td class="net-weight" style="color: ${isTransfer ? '#e65100' : '#1f6feb'}">${tableNetDisplay}</td>
@@ -1070,8 +968,7 @@
             const currentGrossForSelected = getCurrentPeriodGrossTotal(selectedItem);
             const footerRow = `<tr class="row-virtual-footer">
                 <td>لايف</td>
-                <td>📊 عداد الصنف الحالي</td>
-                <td>-</td>
+                <td>📊 عداد الحالي للمنتج</td>
                 <td>${selectedItem}</td>
                 <td>${currentGrossForSelected.toFixed(2)} كغ</td>
                 <td>${displayNetForSelected.toFixed(2)} كغ</td>
@@ -1097,7 +994,7 @@
             data: {
                 labels: currentLabels.length > 0 ? currentLabels : ["لا يوجد أوزان معلقة"],
                 datasets: [{
-                    label: 'صافي إنتاج الأصناف المستخرجة (كغ)',
+                    label: 'صافي إنتاج الأصناف غير المترحّلة (كغ)',
                     data: currentValuesNet.length > 0 ? currentValuesNet : [0],
                     backgroundColor: barColor,
                     borderRadius: 6,
@@ -1133,8 +1030,8 @@
                                 const tareW = (parseFloat(grossW) - parseFloat(netW)).toFixed(2);
                                 return [
                                     ` • صافي الوزن النظيف: ${netW} كغ`,
-                                    ` • الوزن القائم الحالي: ${grossW} كغ`,
-                                    ` • مخصوم الأقفاص والفارغ: ${tareW} كغ`
+                                    ` • الوزن القائم الشامل: ${grossW} كغ`,
+                                    ` • مخصوم الأقفاص والطبلية: ${tareW} كغ`
                                 ];
                             }
                         }
@@ -1165,31 +1062,29 @@
         const staffData = filtered.map(r => {
             sumNet += parseFloat(r.net);
             return {
-                "كود الطبلية الأم": r.palletParentId,
-                "وزن الطبلية الأصلي (كغ)": r.palletParentWeight ? parseFloat(r.palletParentWeight) : 0,
                 "اسم المسؤول": r.manager,
                 "اسم العامل": r.worker,
-                "الصنف المستخرج": r.item,
-                "عدد الصناديق المفرغة": r.boxes,
-                "وزن فارغ إضافي (كغ)": r.palletWeight ? parseFloat(r.palletWeight) : 0,
+                "الصنف": r.item,
+                "عدد الصناديق": r.boxes,
+                "وزن الطبلية المخصوم (كغ)": r.palletWeight ? parseFloat(r.palletWeight) : 0,
                 "الوزن القائم (كغ)": parseFloat(r.gross),
-                "صافي وزن الصنف النظيف (كغ)": parseFloat(r.net),
+                "صافي الوزنة النظيف (كغ)": parseFloat(r.net),
                 "الوقت": r.time,
                 "التاريخ": r.date
             };
         });
 
         staffData.push({
-            "كود الطبلية الأم": "الإجمالي النظيف الفعلي الشامل",
-            "وزن الطبلية الأصلي (كغ)": "", "اسم المسؤول": "", "اسم العامل": "", "الصنف المستخرج": "", "عدد الصناديق المفرغة": "", "وزن فارغ إضافي (كغ)": "", "الوزن القائم (كغ)": "",
-            "صافي وزن الصنف النظيف (كغ)": sumNet,
+            "اسم المسؤول": "الإجمالي النظيف الفعلي الشامل",
+            "اسم العامل": "", "الصنف": "", "عدد الصناديق": "", "وزن الطبلية المخصوم (كغ)": "", "الوزن القائم (كغ)": "",
+            "صافي الوزنة النظيف (كغ)": sumNet,
             "الوقت": "", "التاريخ": ""
         });
 
         const ws = XLSX.utils.json_to_sheet(staffData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "تفكيك الموظفين والأوزان");
-        XLSX.writeFile(wb, `HawaTech_Pallet_Deconstruction_Report.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "كشف الموظفين والأوزان");
+        XLSX.writeFile(wb, `HawaTech_Staff_Weights_Report.xlsx`);
     }
 
     function exportOrdersExcel() {
@@ -1222,11 +1117,7 @@
         const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
             localStorage.removeItem('hawaTechAppData');
-            localStorage.removeItem('hawaTechActivePalletId');
-            localStorage.removeItem('hawaTechActivePalletWeight');
             records = [];
-            currentPalletId = "";
-            currentPalletWeight = 0;
             updateUI();
             alert("تم تصفير المنظومة وقاعدة البيانات بنجاح");
         } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
