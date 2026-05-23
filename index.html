@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Complete Restored Edition)</title>
+    <title>Hawa-Tech App Pro (Complete Frozen Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -149,7 +149,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 8px;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
         input, select {
             width: 100%;
@@ -224,6 +224,7 @@
             font-weight: bold;
             border-radius: 10px;
             cursor: pointer;
+            margin-top: 5px;
             margin-bottom: 5px;
         }
 
@@ -273,7 +274,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
-            min-width: 700px;
+            min-width: 900px; /* تم تكبير العرض لاستيعاب الخانات الجديدة */
         }
         th, td {
             padding: 10px 6px;
@@ -313,6 +314,13 @@
             font-weight: bold;
             cursor: pointer;
         }
+        .date-label {
+            font-size: 11px;
+            display: block;
+            text-align: right;
+            margin-bottom: 2px;
+            color: var(--text-color);
+        }
     </style>
 </head>
 <body>
@@ -327,7 +335,7 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
-    <!-- قسم وزن الطبلية الحالية (ثابت عند التنقل بين الأصناف) -->
+    <!-- قسم وزن الطبلية الحالية -->
     <div class="countdown-zone">
         <div style="font-size: 13px; font-weight: bold;">⚖️ الوزن المتبقي الفعلي بالطبلية الحالية (ثابت عابر للأصناف):</div>
         <div class="countdown-row">
@@ -373,7 +381,6 @@
 
     <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن فقط ✅</button>
 
-    <!-- واجهة مساعد الـ AI المعاد بالكامل -->
     <div class="ai-panel" id="aiPanel">🔮 مساعد الـ AI بانتظار تسجيل الأوزان لتوليد التوصيات...</div>
 
     <div class="optional-section">
@@ -384,13 +391,34 @@
         </div>
     </div>
 
+    <!-- قسم ترحيل البراد المعدل والمضاف إليه البيانات الجديدة -->
     <div class="optional-section" style="border: 1px solid #e65100; background-color: rgba(230,81,0,0.03);">
-        <div class="section-subtitle" style="color: #e65100;">📦 ترحيل بيانات نهاية الساعة للبراد:</div>
+        <div class="section-subtitle" style="color: #e65100;">📦 ترحيل بيانات نهاية الساعة للبراد وحالة التجميد:</div>
+        
         <div class="inputs-grid-three">
             <input type="number" id="chickenCountOpt" placeholder="عدد الفروج">
             <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية">
             <input type="text" id="destinationOpt" placeholder="المرسل إليه">
         </div>
+
+        <!-- الخانات الجديدة: موقع البراد ودرجة الحرارة -->
+        <div class="inputs-grid">
+            <input type="text" id="fridgeLocation" placeholder="موقع البراد (مثال: براد A-3)">
+            <input type="text" id="fridgeTemp" placeholder="درجة الحرارة (مثال: -18°C)">
+        </div>
+
+        <!-- الخانات الجديدة: فترات تاريخ التجميد من وإلى -->
+        <div class="inputs-grid">
+            <div>
+                <span class="date-label">تاريخ التجميد من:</span>
+                <input type="date" id="freezeDateFrom">
+            </div>
+            <div>
+                <span class="date-label">تاريخ التجميد إلى:</span>
+                <input type="date" id="freezeDateTo">
+            </div>
+        </div>
+
         <button class="btn-transfer-hourly" onclick="transferOrderToFridge()">ترحيل الطلبية الحالية إلى البراد 📦</button>
     </div>
 
@@ -410,9 +438,9 @@
                     <th>نوع العملية</th>
                     <th>الصنف الفرعي</th>
                     <th>الأصل</th>
-                    <th>الأقفاص</th>
-                    <th>القائم</th>
-                    <th>صافي الوزنة</th>
+                    <th>الصافي</th>
+                    <th>الموقع/الحرارة</th>
+                    <th>فترة التجميد</th>
                     <th>إجراء</th>
                 </tr>
             </thead>
@@ -435,7 +463,6 @@
     let myChart = null;
     const tarePerBox = 1.40;
 
-    // تشغيل التوقيت الحي في الخلفية
     setInterval(() => {
         const now = new Date();
         document.getElementById('liveDate').innerText = "التاريخ: " + now.toLocaleDateString('ar-EG');
@@ -464,7 +491,6 @@
     }
 
     function handleItemChange() {
-        // تم إلغاء المسح التلقائي للأصل، الخانة تحافظ على قيمتها لضمان عدم قفز العداد للـ 1000
         updateUI();
     }
 
@@ -516,6 +542,10 @@
             net: net.toFixed(2),
             item: item, 
             parentItem: parentItem,
+            fridgeLocation: "-",
+            fridgeTemp: "-",
+            freezeDateFrom: "-",
+            freezeDateTo: "-",
             time: new Date().toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG')
         });
@@ -533,6 +563,12 @@
         const destination = document.getElementById('destinationOpt').value || "غير محدد";
         const chickenCount = document.getElementById('chickenCountOpt').value || 0;
         const inputStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
+        
+        // التقاط الخانات الجديدة
+        const loc = document.getElementById('fridgeLocation').value || "غير محدد";
+        const temp = document.getElementById('fridgeTemp').value || "غير محدد";
+        const dFrom = document.getElementById('freezeDateFrom').value || "-";
+        const dTo = document.getElementById('freezeDateTo').value || "-";
 
         if (!parentItem) { alert("أدخل اسم الأصل للترحيل!"); return; }
 
@@ -549,6 +585,10 @@
             orderNumber: orderNumber,
             destination: destination,
             chickenCount: chickenCount,
+            fridgeLocation: loc,
+            fridgeTemp: temp,
+            freezeDateFrom: dFrom,
+            freezeDateTo: dTo,
             originalStockLoaded: inputStock.toFixed(2),
             computedRemaining: (inputStock - currentNet).toFixed(2),
             time: new Date().toLocaleTimeString('ar-EG'), 
@@ -556,11 +596,18 @@
         });
 
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
+        
+        // تنظيف المدخلات بعد الحفظ
         document.getElementById('orderNumberOpt').value = "";
         document.getElementById('destinationOpt').value = "";
         document.getElementById('chickenCountOpt').value = "";
+        document.getElementById('fridgeLocation').value = "";
+        document.getElementById('fridgeTemp').value = "";
+        document.getElementById('freezeDateFrom').value = "";
+        document.getElementById('freezeDateTo').value = "";
+        
         updateUI();
-        alert("تم ترحيل بيانات الساعة للبراد بنجاح!");
+        alert("تم ترحيل بيانات الساعة والموقع والتجميد بنجاح!");
     }
 
     function runAiInference() {
@@ -573,7 +620,7 @@
         records.forEach(r => { if(r.recordType === "وزنة_فردية") totalNet += parseFloat(r.net); });
         const avg = totalNet / records.filter(r => r.recordType === "وزنة_فردية").length;
         
-        aiPanel.innerText = `🔮 ذكاء الآلة (Hawa-AI): تم تحليل عدد ${records.filter(r => r.recordType === "وزنة_فردية").length} وزنات. متوسط الصافي الحالي هو ${avg.toFixed(2)} كغ لكل عملية. نوصي بمراقبة وتيرة سحب الطبلية لضمان انسيابية خط الإنتاج وعدم تراكم الأقفاص التالفة.`;
+        aiPanel.innerText = `🔮 ذكاء الآلة (Hawa-AI): تم تحليل عدد ${records.filter(r => r.recordType === "وزنة_فردية").length} وزنات. متوسط الصافي الحالي هو ${avg.toFixed(2)} كغ لكل عملية. نوصي بمراقبة درجات حرارة التجميد عند إرسال الشحنات الكبيرة لتجنب الفقد الحراري.`;
     }
 
     function updateUI() {
@@ -588,14 +635,18 @@
             if (r.parentItem === parentInputVal && r.recordType === "وزنة_فردية") totalNet += parseFloat(r.net);
             if (r.recordType === "وزنة_فردية") chartData[r.parentItem] = (chartData[r.parentItem] || 0) + parseFloat(r.net);
 
+            // عرض مميز ومختصر للموقع وفترة التجميد في الجدول المباشر
+            const locTempDisplay = r.recordType === 'ترحيل_براد' ? `${r.fridgeLocation} / ${r.fridgeTemp}` : '-';
+            const freezePeriod = (r.recordType === 'ترحيل_براد' && r.freezeDateFrom !== "-") ? `من ${r.freezeDateFrom} إلى ${r.freezeDateTo}` : '-';
+
             tbody.innerHTML += `<tr>
                 <td>${r.time}</td>
                 <td>${r.recordType === 'ترحيل_براد' ? '📦 ترحيل' : '⚖️ وزنة'}</td>
                 <td>${r.item}</td>
                 <td>${r.parentItem}</td>
-                <td>${r.boxes || '0'}</td>
-                <td>${r.gross || '-'}</td>
                 <td>${r.net} كغ</td>
+                <td>${locTempDisplay}</td>
+                <td>${freezePeriod}</td>
                 <td><button style="color:red; background:none; border:none; cursor:pointer;" onclick="deleteRecord(${idx})">❌</button></td>
             </tr>`;
         });
@@ -647,7 +698,6 @@
         }
     }
 
-    // دالة تصدير ملف إكسل العمال والإنتاجية الكاملة
     function exportStaffExcel() {
         if(records.length === 0) { alert("لا توجد بيانات لتصديرها!"); return; }
         const wsData = [["التاريخ", "الوقت", "نوع العملية", "المسؤول", "العامل", "الصنف", "الأصل", "الأقفاص", "الوزن القائم", "الصافي"]];
@@ -660,18 +710,18 @@
         XLSX.writeFile(wb, `HawaTech_Staff_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
-    // دالة تصدير ملف إكسل البراد والمتبقي من الطبالي لترحيل الداتا للسيستم الرئيسي
+    // تصدير ملف البراد المحدث بكافة الخصائص الجديدة المطلوبة
     function exportOrdersExcel() {
         const filterData = records.filter(r => r.recordType === "ترحيل_براد");
         if(filterData.length === 0) { alert("لا توجد عمليات ترحيل براد مسجلة حتى الآن!"); return; }
-        const wsData = [["التاريخ", "الوقت", "الأصل/الطبلية", "إجمالي الصافي المرحل", "رقم الطلبية", "المرسل إليه", "عدد الفروج", "الوزن الأصلي للطبلية", "الوزن المتبقي بالبراد"]];
+        const wsData = [["التاريخ", "الوقت", "الأصل/الطبلية", "إجمالي الصافي المرحل", "رقم الطلبية", "المرسل إليه", "عدد الفروج", "موقع البراد", "درجة الحرارة", "تاريخ التجميد من", "تاريخ التجميد إلى", "الوزن الأصلي", "المتبقي"]];
         filterData.forEach(r => {
-            wsData.push([r.date, r.time, r.parentItem, r.net, r.orderNumber, r.destination, r.chickenCount, r.originalStockLoaded, r.computedRemaining]);
+            wsData.push([r.date, r.time, r.parentItem, r.net, r.orderNumber, r.destination, r.chickenCount, r.fridgeLocation, r.fridgeTemp, r.freezeDateFrom, r.freezeDateTo, r.originalStockLoaded, r.computedRemaining]);
         });
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(wsData);
-        XLSX.utils.book_append_sheet(wb, ws, "تقرير البراد والترحيل");
-        XLSX.writeFile(wb, `HawaTech_Fridge_Orders_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "تقرير البراد والترحيل والتجميد");
+        XLSX.writeFile(wb, `HawaTech_Fridge_Orders_Full_${new Date().toLocaleDateString()}.xlsx`);
     }
 
     function toggleTheme() { document.body.classList.toggle('dark-version'); }
