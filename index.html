@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Ultimate Restored Edition)</title>
+    <title>Hawa-Tech App Pro (Hourly Counter Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -175,34 +175,22 @@
             margin-bottom: 15px;
         }
 
-        /* تنسيق قسم العدادات السريعة التراكمية المفقود */
-        .summary-counters-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
+        /* تنسيق العداد الوهمي المخصص لوزنات الساعة الحالية قبل الترحيل */
+        .hourly-dummy-container {
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            border: 1px solid #00acc1;
+            color: #006064;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
             margin-bottom: 15px;
         }
-        .counter-card {
-            background: var(--section-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 10px 4px;
-            text-align: center;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .counter-card .c-title {
-            font-size: 11px;
-            color: #666;
-            margin-bottom: 4px;
-            font-weight: bold;
-        }
-        .dark-version .counter-card .c-title {
-            color: #aaa;
-        }
-        .counter-card .c-val {
-            font-size: 15px;
-            font-weight: bold;
-            color: var(--header-color);
+        .dark-version .hourly-dummy-container {
+            background: linear-gradient(135deg, #002d32 0%, #004d40 100%);
+            border: 1px solid #00897b;
+            color: #e0f2f1;
         }
 
         .ai-panel {
@@ -265,7 +253,7 @@
             text-align: center;
             padding: 12px;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 15px;
             border-radius: 8px;
             margin-bottom: 18px;
         }
@@ -411,20 +399,9 @@
 
     <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن فقط ✅</button>
 
-    <!-- (تمت الإعادة هنا) شريط العدادات السريعة تحت الوزنات مباشرة -->
-    <div class="summary-counters-row">
-        <div class="counter-card">
-            <div class="c-title">صافي الأصل</div>
-            <div class="c-val" id="cntNet">0.00</div>
-        </div>
-        <div class="counter-card">
-            <div class="c-title">إجمالي الأقفاص</div>
-            <div class="c-val" id="cntBoxes">0</div>
-        </div>
-        <div class="counter-card">
-            <div class="c-title">عدد الوزنات</div>
-            <div class="c-val" id="cntRecords">0</div>
-        </div>
+    <!-- (تمت الإعادة هنا) العداد الوهمي التراكمي المخصص لوزنات الساعة الحالية قبل الترحيل -->
+    <div class="hourly-dummy-container">
+        ⏱️ مجموع وزنات الساعة الحالية (يُصَفّر عند الترحيل): <span id="hourlyDummyCounter" style="font-size: 18px; color: #00796b;">0.00</span> كغ
     </div>
 
     <div class="ai-panel" id="aiPanel">🔮 مساعد الـ AI بانتظار تسجيل الأوزان لتوليد التوصيات...</div>
@@ -466,7 +443,7 @@
     </div>
 
     <div class="total-display">
-        إجمالي الصافي المسجل للأصل الحالي: <span id="totalNetDisplay">0.00</span> كغ
+        إجمالي الصافي الكلي المسجل للأصل في السيستم: <span id="totalNetDisplay">0.00</span> كغ
     </div>
 
     <div class="chart-container" id="chartDiv" style="margin-bottom: 15px;">
@@ -614,16 +591,36 @@
 
         if (!parentItem) { alert("أدخل اسم الأصل للترحيل!"); return; }
 
-        let currentNet = 0;
-        records.forEach(r => {
-            if(r.recordType === "وزنة_فردية" && r.parentItem === parentItem) currentNet += parseFloat(r.net);
+        // حساب إجمالي كمية الساعة الحالية ليتم ترحيلها
+        let currentHourlyNet = 0;
+        
+        // المنطق البرمجي لحساب وزنات الساعة الحالية فقط (التي لم يتم ترحيلها بعد)
+        // نحدد آخر عملية ترحيل تمت لهذا الأصل
+        let lastTransferIdx = -1;
+        for (let i = records.length - 1; i >= 0; i--) {
+            if (records[i].recordType === "ترحيل_براد" && records[i].parentItem === parentItem) {
+                lastTransferIdx = i;
+                break;
+            }
+        }
+
+        // نجمع فقط الأوزان الفردية المسجلة بعد عملية الترحيل الأخيرة
+        records.forEach((r, idx) => {
+            if (idx > lastTransferIdx && r.recordType === "وزنة_فردية" && r.parentItem === parentItem) {
+                currentHourlyNet += parseFloat(r.net);
+            }
         });
+
+        if (currentHourlyNet === 0) {
+            alert("لا توجد وزنات جديدة مسجلة لهذه الساعة لتتمكن من ترحيلها!");
+            return;
+        }
 
         records.push({
             recordType: "ترحيل_براد",
             parentItem: parentItem, 
-            item: "ترحيل كلي",
-            net: currentNet.toFixed(2), 
+            item: "ترحيل ساعة كلي",
+            net: currentHourlyNet.toFixed(2), 
             orderNumber: orderNumber,
             destination: destination,
             chickenCount: chickenCount,
@@ -632,7 +629,7 @@
             freezeDateFrom: dFrom,
             freezeDateTo: dTo,
             originalStockLoaded: inputStock.toFixed(2),
-            computedRemaining: (inputStock - currentNet).toFixed(2),
+            computedRemaining: (inputStock - currentHourlyNet).toFixed(2), // سيتم تحديث منطق المتبقي الكلي بالـ UI
             time: new Date().toLocaleTimeString('ar-EG'), 
             date: new Date().toLocaleDateString('ar-EG')
         });
@@ -648,7 +645,7 @@
         document.getElementById('freezeDateTo').value = "";
         
         updateUI();
-        alert("تم ترحيل بيانات الساعة والموقع والتجميد بنجاح!");
+        alert("تم ترحيل بيانات الساعة الحالية وتصفير عداد الساعة التراكمي بنجاح! 📦");
     }
 
     function runAiInference() {
@@ -661,7 +658,7 @@
         records.forEach(r => { if(r.recordType === "وزنة_فردية") totalNet += parseFloat(r.net); });
         const avg = totalNet / records.filter(r => r.recordType === "وزنة_فردية").length;
         
-        aiPanel.innerText = `🔮 ذكاء الآلة (Hawa-AI): تم تحليل عدد ${records.filter(r => r.recordType === "وزنة_فردية").length} وزنات. متوسط الصافي الحالي هو ${avg.toFixed(2)} كغ لكل عملية. نوصي بمراقبة درجات حرارة التجميد عند إرسال الشحنات الكبيرة لتجنب الفقد الحراري.`;
+        aiPanel.innerText = `🔮 ذكاء الآلة (Hawa-AI): تم تحليل الأوزان الفردية بنجاح. نوصي بمراجعة وضبط العداد الوهمي عند ترحيل كل ساعة لضمان مطابقة الوزن الفعلي مع كميات البراد الصادرة للسيستم العام.`;
     }
 
     function updateUI() {
@@ -669,16 +666,26 @@
         tbody.innerHTML = "";
         const parentInputVal = document.getElementById('parentItemInput').value.trim();
         
-        let totalNet = 0;
-        let totalBoxes = 0;
-        let countWeightRecords = 0;
+        let totalNetAllTime = 0;
+        let currentHourlySum = 0;
         let chartData = {};
+
+        // البحث عن آخر ترحيل ساعة لتحديد نقطة انطلاق العداد الوهمي
+        let lastTransferIdx = -1;
+        for (let i = records.length - 1; i >= 0; i--) {
+            if (records[i].recordType === "ترحيل_براد" && records[i].parentItem === parentInputVal) {
+                lastTransferIdx = i;
+                break;
+            }
+        }
 
         records.forEach((r, idx) => {
             if (r.parentItem === parentInputVal && r.recordType === "وزنة_فردية") {
-                totalNet += parseFloat(r.net);
-                totalBoxes += parseFloat(r.boxes) || 0;
-                countWeightRecords++;
+                totalNetAllTime += parseFloat(r.net);
+                // العداد الوهمي: يحسب فقط الأوزان التي جاءت بعد آخر عملية ترحيل ساعة
+                if (idx > lastTransferIdx) {
+                    currentHourlySum += parseFloat(r.net);
+                }
             }
             if (r.recordType === "وزنة_فردية") chartData[r.parentItem] = (chartData[r.parentItem] || 0) + parseFloat(r.net);
 
@@ -697,12 +704,12 @@
             </tr>`;
         });
 
-        // تحديث العدادات السريعة التراكمية في الواجهة فوراً للأصل الحالي
-        document.getElementById('cntNet').innerText = totalNet.toFixed(2) + " كغ";
-        document.getElementById('cntBoxes').innerText = totalBoxes;
-        document.getElementById('cntRecords').innerText = countWeightRecords;
-
-        document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
+        // طباعة قيمة العداد الوهمي للساعة الحالية في الشاشة
+        document.getElementById('hourlyDummyCounter').innerText = currentHourlySum.toFixed(2);
+        
+        // طباعة الإجمالي العام المحفوظ
+        document.getElementById('totalNetDisplay').innerText = totalNetAllTime.toFixed(2);
+        
         calculateLiveCountdown();
         renderChart(chartData);
     }
