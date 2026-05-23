@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Fixed Scale Edition)</title>
+    <title>Hawa-Tech App Pro (Trip Counter Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -228,6 +228,7 @@
             margin-bottom: 5px;
         }
 
+        /* تنسيق صف عداد السيارة (الرحلة التراكمي المباشر داخل الجدول) */
         .trip-counter-row {
             background-color: #e0f2f1 !important;
             font-weight: bold;
@@ -346,14 +347,15 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
+    <!-- قسم وزن الطبلية الحالية التناقصي عابر للأصناف -->
     <div class="countdown-zone">
-        <div style="font-size: 13px; font-weight: bold;">⚖️ شاشة تتبع كمية الطبلية المسحوبة من البراد (محمية ضد التحديث):</div>
+        <div style="font-size: 13px; font-weight: bold;">⚖️ الوزن المتبقي الفعلي بالطبلية الحالية:</div>
         <div class="countdown-row">
             <input type="number" id="fridgeStockInput" placeholder="أدخل وزن الطبلية الأصلي (مثال: 1000)" oninput="saveStockToCache()">
             <button id="lockBtn" class="btn-lock" onclick="toggleStockLock()">🔓 فتح</button>
         </div>
         <div class="countdown-live-text" id="countdownResultText">
-            الوزن المتبقي حالياً: <span style="font-size: 18px; color: #d32f2f;">0.00</span> كغ
+            الوزن المتبقي لايف في الطبلية الحالية: <span style="font-size: 18px; color: #d32f2f;">0.00</span> كغ
         </div>
     </div>
 
@@ -497,33 +499,28 @@
         }
     }
 
-    // 🌟 تم تعديل الدالة لكي لا تصفّر العداد التناقصي عند تبديل الصنف الفرعي 🌟
     function handleItemChange() {
-        // تحديث محتوى الجدول فقط دون المساس بقيم المخزون التناقصي المخزن كاش
-        calculateLiveCountdown();
+        updateUI();
     }
 
-    // 🌟 منطق حساب مطور لحماية العداد التناقصي وربطه بالأصل 🌟
     function calculateLiveCountdown() {
         const originalStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
         const parentInputVal = document.getElementById('parentItemInput').value.trim();
         
-        if (originalStock === 0) {
-            document.getElementById('countdownResultText').innerHTML = `الوزن المتبقي حالياً: <span style="font-size: 18px; color: #d32f2f;">0.00</span> كغ`;
+        if (!parentInputVal || originalStock === 0) {
+            document.getElementById('countdownResultText').innerHTML = `الوزن المتبقي لايف في الطبلية الحالية: <span style="font-size: 18px; color: #d32f2f;">0.00</span> كغ`;
             return;
         }
 
         let totalRegisteredNet = 0;
         records.forEach(r => {
-            // نخصم كل الأوزان التابعة لهذا الأصل بغض النظر عن تبديل الصنف الفرعي
-            if (r.recordType === "وزنة_فردية" && parentInputVal && (r.parentItem || "").trim().toLowerCase() === parentInputVal.toLowerCase()) {
+            if (r.recordType === "وزنة_فردية" && (r.parentItem || "").trim().toLowerCase() === parentInputVal.toLowerCase()) {
                 totalRegisteredNet += parseFloat(r.net) || 0;
             }
         });
 
         const remaining = originalStock - totalRegisteredNet;
-        const displayName = parentInputVal ? `في (${parentInputVal})` : '';
-        document.getElementById('countdownResultText').innerHTML = `الوزن المتبقي حالياً ${displayName}: <span style="font-size: 20px; color: #2e7d32; font-weight: bold;">${remaining.toFixed(2)}</span> كغ`;
+        document.getElementById('countdownResultText').innerHTML = `المتبقي في (${parentInputVal}): <span style="font-size: 20px; color: #2e7d32; font-weight: bold;">${remaining.toFixed(2)}</span> كغ`;
     }
 
     function updateLiveWeight() {
@@ -638,13 +635,13 @@
     function runAiInference() {
         const aiPanel = document.getElementById('aiPanel');
         if (records.length === 0) {
-            aiPanel.innerText = "🔮 مساعد الـ AI بانتظار تسجيل الأوزان لتوليد التوصيات... ";
+            aiPanel.innerText = "🔮 مساعد الـ AI بانتظار تسجيل الأوزان لتوليد التوصيات...";
             return;
         }
         let totalNet = 0;
         records.forEach(r => { if(r.recordType === "وزنة_فردية") totalNet += parseFloat(r.net); });
         const avg = totalNet / records.filter(r => r.recordType === "وزنة_فردية").length;
-        aiPanel.innerText = `🔮 ذكاء الآلة (Hawa-AI): تم تأمين شاشة التتبع ضد التحديث والتبديل بشكل كامل وثابت.`;
+        aiPanel.innerText = `🔮 ذكاء الآلة (Hawa-AI): عداد السيارة التراكمي في الجدول يساعدك على معرفة الوزن الجاهز للتحميل فوراً قبل كبس زر الترحيل الشامل.`;
     }
 
     function updateUI() {
@@ -656,6 +653,7 @@
         let currentHourlySum = 0;
         let chartData = {};
 
+        // تحديد موقع آخر ترحيل ساعة لمعرفة ما لم يتم ترحيله بعد
         let lastTransferIdx = -1;
         for (let i = records.length - 1; i >= 0; i--) {
             if (records[i].recordType === "ترحيل_براد" && records[i].parentItem === parentInputVal) {
@@ -664,6 +662,7 @@
             }
         }
 
+        // حساب قيم عداد السيارة الفعلي الحالية قبل الرسم
         records.forEach((r, idx) => {
             if (r.parentItem === parentInputVal && r.recordType === "وزنة_فردية") {
                 totalNetAllTime += parseFloat(r.net);
@@ -674,6 +673,7 @@
             if (r.recordType === "وزنة_فردية") chartData[r.parentItem] = (chartData[r.parentItem] || 0) + parseFloat(r.net);
         });
 
+        // 🚗 حقن "عداد السيارة التراكمي" كشريط علوي داخل الجدول إذا وجدت وزنات معلقة
         if (currentHourlySum > 0) {
             tbody.innerHTML += `<tr class="trip-counter-row">
                 <td colspan="4" style="text-align: right; padding-right: 15px;">🚗 عداد النقلة الحالية (الوزنات المعلقة قبل الترحيل للبراد):</td>
@@ -681,6 +681,7 @@
             </tr>`;
         }
 
+        // رسم بقية السطور العادية
         records.forEach((r, idx) => {
             const locTempDisplay = r.recordType === 'ترحيل_براد' ? `${r.fridgeLocation} / ${r.fridgeTemp}` : '-';
             const freezePeriod = (r.recordType === 'ترحيل_براد' && r.freezeDateFrom !== "-") ? `من ${r.freezeDateFrom} إلى ${r.freezeDateTo}` : '-';
