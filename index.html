@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Final Absolute Fix)</title>
+    <title>Hawa-Tech App Pro (Complete Restored Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -175,6 +175,18 @@
             margin-bottom: 15px;
         }
 
+        .ai-panel {
+            background: var(--panel-bg);
+            color: var(--panel-text);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 13px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            line-height: 1.5;
+        }
+
         .optional-section {
             background-color: var(--section-bg);
             border: 1px solid var(--border-color);
@@ -261,7 +273,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
-            min-width: 650px;
+            min-width: 700px;
         }
         th, td {
             padding: 10px 6px;
@@ -315,9 +327,9 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
-    <!-- قسم تتبع كمية الطبلية المطور (ثبات تام عابر للأصناف) -->
+    <!-- قسم وزن الطبلية الحالية (ثابت عند التنقل بين الأصناف) -->
     <div class="countdown-zone">
-        <div style="font-size: 13px; font-weight: bold;">⚖️ الوزن المتبقي الفعلي بالطبلية الحالية (ثابت ولا يتأثر بتغيير الصنف):</div>
+        <div style="font-size: 13px; font-weight: bold;">⚖️ الوزن المتبقي الفعلي بالطبلية الحالية (ثابت عابر للأصناف):</div>
         <div class="countdown-row">
             <input type="number" id="fridgeStockInput" placeholder="أدخل وزن الطبلية الأصلي (مثال: 1000)" oninput="saveStockToCache()">
             <button id="lockBtn" class="btn-lock" onclick="toggleStockLock()">🔓 فتح</button>
@@ -335,7 +347,7 @@
     </div>
 
     <div style="margin-bottom: 12px;">
-        <input type="number" id="palletWeightOpt" step="0.01" placeholder="وزن الطبلية (اختياري - كغ)" oninput="updateLiveWeight()">
+        <input type="number" id="palletWeightOpt" step="0.01" placeholder="وزن الطبلية الفارغة (اختياري - كغ)" oninput="updateLiveWeight()">
     </div>
 
     <div class="weight-display" id="weightDisplayBox">0.00</div>
@@ -347,7 +359,6 @@
     <div class="manage-section">
         <div class="manage-title">📋 اختيار الصنف الحالي وكتابة الصنف الأساسي:</div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
-            <!-- تم تعديل الأكشن هنا ليمنع مسح أو تصفير خانة الأصل يدوياً -->
             <select id="itemSelect" onchange="handleItemChange()">
                 <option value="">-- اختر الصنف الحالي --</option>
             </select>
@@ -362,7 +373,8 @@
 
     <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن فقط ✅</button>
 
-    <div class="ai-panel" id="aiPanel">🔮 مساعد الـ AI بانتظار تسجيل الأوزان...</div>
+    <!-- واجهة مساعد الـ AI المعاد بالكامل -->
+    <div class="ai-panel" id="aiPanel">🔮 مساعد الـ AI بانتظار تسجيل الأوزان لتوليد التوصيات...</div>
 
     <div class="optional-section">
         <div class="section-subtitle">⚖️ معايير وزن الفروج والطلب المستهدف:</div>
@@ -386,7 +398,7 @@
         إجمالي الصافي المسجل للأصل الحالي: <span id="totalNetDisplay">0.00</span> كغ
     </div>
 
-    <div class="chart-container" id="chartDiv">
+    <div class="chart-container" id="chartDiv" style="margin-bottom: 15px;">
         <canvas id="miniChart" style="max-height: 180px;"></canvas>
     </div>
 
@@ -396,8 +408,10 @@
                 <tr>
                     <th>الوقت</th>
                     <th>نوع العملية</th>
-                    <th>الصنف (الأصل)</th>
-                    <th>الوزن القائم</th>
+                    <th>الصنف الفرعي</th>
+                    <th>الأصل</th>
+                    <th>الأقفاص</th>
+                    <th>القائم</th>
                     <th>صافي الوزنة</th>
                     <th>إجراء</th>
                 </tr>
@@ -417,9 +431,16 @@
 <script>
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
     let isStockLocked = JSON.parse(localStorage.getItem('hawaTechStockLocked')) || false;
-    let customItemsList = JSON.parse(localStorage.getItem('hawaTechItemsList')) || ["مسحب مع جلدة", "مسحب بدون جلدة", "قطع عادية"];
+    let customItemsList = JSON.parse(localStorage.getItem('hawaTechItemsList')) || ["مسحب مع جلدة", "مسحب بدون جلدة", "قطع عادية", "شيش طاووق"];
     let myChart = null;
     const tarePerBox = 1.40;
+
+    // تشغيل التوقيت الحي في الخلفية
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('liveDate').innerText = "التاريخ: " + now.toLocaleDateString('ar-EG');
+        document.getElementById('liveTime').innerText = "الوقت: " + now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    }, 1000);
 
     function saveStockToCache() {
         localStorage.setItem('hawaTechCachedStock', document.getElementById('fridgeStockInput').value);
@@ -442,10 +463,8 @@
         }
     }
 
-    // ⭐ الإصلاح القاتل للثغرة: العداد لا يمسح ولا يتأثر مطلقاً عند تبديل الفرع
     function handleItemChange() {
-        // حذفنا تماماً كود التصفير أو الملء العشوائي لخانة الأصل
-        // الآن عند اختيار صنف جديد، اسم الأصل يظل كما هو مكتوب ثابتاً ومحفوظاً
+        // تم إلغاء المسح التلقائي للأصل، الخانة تحافظ على قيمتها لضمان عدم قفز العداد للـ 1000
         updateUI();
     }
 
@@ -491,8 +510,12 @@
             recordType: "وزنة_فردية",
             manager: document.getElementById('managerName').value || "مسؤول",
             worker: document.getElementById('workerName').value || "عامل",
-            boxes: boxes, gross: gross.toFixed(2), net: net.toFixed(2),
-            item: item, parentItem: parentItem,
+            email: document.getElementById('emailOpt').value || "-",
+            boxes: boxes, 
+            gross: gross.toFixed(2), 
+            net: net.toFixed(2),
+            item: item, 
+            parentItem: parentItem,
             time: new Date().toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}),
             date: new Date().toLocaleDateString('ar-EG')
         });
@@ -501,14 +524,17 @@
         document.getElementById('grossInput').value = "";
         document.getElementById('weightDisplayBox').innerText = "0.00";
         updateUI();
+        runAiInference();
     }
 
     function transferOrderToFridge() {
         const parentItem = document.getElementById('parentItemInput').value.trim();
-        const orderNumber = document.getElementById('orderNumberOpt').value;
+        const orderNumber = document.getElementById('orderNumberOpt').value || "بدون رقم";
+        const destination = document.getElementById('destinationOpt').value || "غير محدد";
+        const chickenCount = document.getElementById('chickenCountOpt').value || 0;
         const inputStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
 
-        if (!parentItem || !orderNumber) { alert("أدخل اسم الأصل ورقم الطلبية للترحيل!"); return; }
+        if (!parentItem) { alert("أدخل اسم الأصل للترحيل!"); return; }
 
         let currentNet = 0;
         records.forEach(r => {
@@ -517,17 +543,37 @@
 
         records.push({
             recordType: "ترحيل_براد",
-            parentItem: parentItem, item: document.getElementById('itemSelect').value || "عام",
-            net: currentNet.toFixed(2), orderNumber: orderNumber,
+            parentItem: parentItem, 
+            item: "ترحيل كلي",
+            net: currentNet.toFixed(2), 
+            orderNumber: orderNumber,
+            destination: destination,
+            chickenCount: chickenCount,
             originalStockLoaded: inputStock.toFixed(2),
             computedRemaining: (inputStock - currentNet).toFixed(2),
-            time: new Date().toLocaleTimeString('ar-EG'), date: new Date().toLocaleDateString('ar-EG')
+            time: new Date().toLocaleTimeString('ar-EG'), 
+            date: new Date().toLocaleDateString('ar-EG')
         });
 
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         document.getElementById('orderNumberOpt').value = "";
+        document.getElementById('destinationOpt').value = "";
+        document.getElementById('chickenCountOpt').value = "";
         updateUI();
         alert("تم ترحيل بيانات الساعة للبراد بنجاح!");
+    }
+
+    function runAiInference() {
+        const aiPanel = document.getElementById('aiPanel');
+        if (records.length === 0) {
+            aiPanel.innerText = "🔮 مساعد الـ AI بانتظار تسجيل الأوزان لتوليد التوصيات...";
+            return;
+        }
+        let totalNet = 0;
+        records.forEach(r => { if(r.recordType === "وزنة_فردية") totalNet += parseFloat(r.net); });
+        const avg = totalNet / records.filter(r => r.recordType === "وزنة_فردية").length;
+        
+        aiPanel.innerText = `🔮 ذكاء الآلة (Hawa-AI): تم تحليل عدد ${records.filter(r => r.recordType === "وزنة_فردية").length} وزنات. متوسط الصافي الحالي هو ${avg.toFixed(2)} كغ لكل عملية. نوصي بمراقبة وتيرة سحب الطبلية لضمان انسيابية خط الإنتاج وعدم تراكم الأقفاص التالفة.`;
     }
 
     function updateUI() {
@@ -545,7 +591,9 @@
             tbody.innerHTML += `<tr>
                 <td>${r.time}</td>
                 <td>${r.recordType === 'ترحيل_براد' ? '📦 ترحيل' : '⚖️ وزنة'}</td>
-                <td>${r.item} (${r.parentItem})</td>
+                <td>${r.item}</td>
+                <td>${r.parentItem}</td>
+                <td>${r.boxes || '0'}</td>
                 <td>${r.gross || '-'}</td>
                 <td>${r.net} كغ</td>
                 <td><button style="color:red; background:none; border:none; cursor:pointer;" onclick="deleteRecord(${idx})">❌</button></td>
@@ -564,27 +612,77 @@
             type: 'bar',
             data: {
                 labels: Object.keys(data),
-                datasets: [{ label: 'صافي الإنتاج الحالي', data: Object.values(data), backgroundColor: '#004d80' }]
+                datasets: [{ label: 'صافي الإنتاج حسب الأصل كغ', data: Object.values(data), backgroundColor: '#004d80' }]
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
-    function deleteRecord(idx) { records.splice(idx,1); localStorage.setItem('hawaTechAppData', JSON.stringify(records)); updateUI(); }
+    function deleteRecord(idx) { records.splice(idx,1); localStorage.setItem('hawaTechAppData', JSON.stringify(records)); updateUI(); runAiInference(); }
+    
     function populateItemsSelect() {
         const sel = document.getElementById('itemSelect');
         sel.innerHTML = '<option value="">-- اختر الصنف الحالي --</option>';
         customItemsList.forEach(i => sel.innerHTML += `<option value="${i}">${i}</option>`);
     }
-    function addItem() { const n = document.getElementById('newItemInput').value.trim(); if(n){ customItemsList.push(n); localStorage.setItem('hawaTechItemsList', JSON.stringify(customItemsList)); populateItemsSelect(); } }
+    
+    function addItem() { 
+        const n = document.getElementById('newItemInput').value.trim(); 
+        if(n && !customItemsList.includes(n)){ 
+            customItemsList.push(n); 
+            localStorage.setItem('hawaTechItemsList', JSON.stringify(customItemsList)); 
+            populateItemsSelect(); 
+            document.getElementById('newItemInput').value = "";
+        } 
+    }
+    
+    function deleteItem() {
+        const sel = document.getElementById('itemSelect').value;
+        if(sel) {
+            customItemsList = customItemsList.filter(i => i !== sel);
+            localStorage.setItem('hawaTechItemsList', JSON.stringify(customItemsList));
+            populateItemsSelect();
+        } else {
+            alert("اختر صنفاً من القائمة أولاً لحذفه!");
+        }
+    }
+
+    // دالة تصدير ملف إكسل العمال والإنتاجية الكاملة
+    function exportStaffExcel() {
+        if(records.length === 0) { alert("لا توجد بيانات لتصديرها!"); return; }
+        const wsData = [["التاريخ", "الوقت", "نوع العملية", "المسؤول", "العامل", "الصنف", "الأصل", "الأقفاص", "الوزن القائم", "الصافي"]];
+        records.forEach(r => {
+            wsData.push([r.date, r.time, r.recordType, r.manager, r.worker, r.item, r.parentItem, r.boxes, r.gross, r.net]);
+        });
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(wb, ws, "إنتاجية العمال");
+        XLSX.writeFile(wb, `HawaTech_Staff_Report_${new Date().toLocaleDateString()}.xlsx`);
+    }
+
+    // دالة تصدير ملف إكسل البراد والمتبقي من الطبالي لترحيل الداتا للسيستم الرئيسي
+    function exportOrdersExcel() {
+        const filterData = records.filter(r => r.recordType === "ترحيل_براد");
+        if(filterData.length === 0) { alert("لا توجد عمليات ترحيل براد مسجلة حتى الآن!"); return; }
+        const wsData = [["التاريخ", "الوقت", "الأصل/الطبلية", "إجمالي الصافي المرحل", "رقم الطلبية", "المرسل إليه", "عدد الفروج", "الوزن الأصلي للطبلية", "الوزن المتبقي بالبراد"]];
+        filterData.forEach(r => {
+            wsData.push([r.date, r.time, r.parentItem, r.net, r.orderNumber, r.destination, r.chickenCount, r.originalStockLoaded, r.computedRemaining]);
+        });
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(wb, ws, "تقرير البراد والترحيل");
+        XLSX.writeFile(wb, `HawaTech_Fridge_Orders_${new Date().toLocaleDateString()}.xlsx`);
+    }
+
     function toggleTheme() { document.body.classList.toggle('dark-version'); }
-    function resetDataWithPassword() { if(prompt("أدخل رمز التصفير:") === '1957') { localStorage.clear(); location.reload(); } }
+    function resetDataWithPassword() { if(prompt("أدخل رمز التصفير الشامل:") === '1957') { localStorage.clear(); location.reload(); } }
 
     window.onload = function() {
         populateItemsSelect();
         if(localStorage.getItem('hawaTechCachedStock')) document.getElementById('fridgeStockInput').value = localStorage.getItem('hawaTechCachedStock');
         updateLockUI();
         updateUI();
+        runAiInference();
     }
 </script>
 </body>
