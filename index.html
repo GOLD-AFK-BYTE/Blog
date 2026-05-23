@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Continuous Tracking Edition)</title>
+    <title>Hawa-Tech App Pro (Cross-SubItem Continuous Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -102,17 +102,17 @@
         }
         
         .countdown-zone {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            border: 2px solid #1e88e5;
+            background: linear-gradient(135deg, #eecff3 0%, #efbbf7 100%);
+            border: 2px solid #a11eb5;
             border-radius: 12px;
             padding: 12px;
             margin-bottom: 15px;
-            color: #0d47a1;
+            color: #4a0d4f;
         }
         .dark-version .countdown-zone {
-            background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
-            border: 2px solid #415a77;
-            color: #e0e1dd;
+            background: linear-gradient(135deg, #220d2a 0%, #30163b 100%);
+            border: 2px solid #774175;
+            color: #fce8ff;
         }
         .countdown-row {
             display: flex;
@@ -121,7 +121,7 @@
             margin-top: 5px;
         }
         .btn-lock {
-            background-color: #1e88e5;
+            background-color: #8e44ad;
             color: white;
             border: none;
             padding: 10px 14px;
@@ -457,9 +457,9 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
-    <!-- قسم تتبع كمية الطبلية المسحوبة المطور للربط التراكمي المستمر -->
+    <!-- 🌟 شاشة تتبع كمية الطبلية المسحوبة المحدثة للخصم الشامل العابر للأصناف الفرعية -->
     <div class="countdown-zone">
-        <div style="font-size: 13px; font-weight: bold;">⚖️ شاشة تتبع كمية الطبلية المسحوبة من البراد (تراكمي ومقاوم للـ Refresh):</div>
+        <div style="font-size: 13px; font-weight: bold;">⚖️ شاشة تتبع وزن الطبلية المشترك (تناقص مستمر عابر لجميع الأصناف الفرعية):</div>
         <div class="countdown-row">
             <input type="number" id="fridgeStockInput" placeholder="أدخل الوزن المسحوب الأصلي (مثال: 1000)" oninput="saveStockToCache()">
             <button id="lockBtn" class="btn-lock" onclick="toggleStockLock()">🔓 فتح</button>
@@ -487,7 +487,7 @@
     </div>
 
     <div class="manage-section">
-        <div class="manage-title" style="font-size: 14px; color: #1f6feb;">📋 الصنف الحالي والأصل (إدخال يدوي حر):</div>
+        <div class="manage-title" style="font-size: 14px; color: #8e44ad;">📋 الصنف الحالي والأصل (إدخال يدوي حر):</div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <select id="itemSelect" onchange="autoFillParentOnSelect()">
                 <option value="">-- اختر الصنف الحالي --</option>
@@ -650,7 +650,7 @@
         }
     }
 
-    // ⭐ إصلاح العداد التناقصي ليعتمد على التراكم الحقيقي الشامل لكل الوزنات السابقة دون البدء من 1000 في كل مرة
+    // ⭐ تعديل جوهري: العداد يحسب النقص بناءً على "الأصل المشترك" وليس اسم الفرع، ليربط الأصناف ببعضها تلقائياً
     function calculateLiveCountdown() {
         const originalStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
         const parentInputVal = document.getElementById('parentItemInput').value.trim();
@@ -660,9 +660,9 @@
             return;
         }
 
-        // حساب كافة الوزنات المسجلة لهذا الأصل منذ البداية المطلقة
         let totalRegisteredNet = 0;
         records.forEach(r => {
+            // الخصم يعتمد حصرياً على تطابق الأصل (Parent) بغض النظر عن تغير الصنف الفرعي (Item)
             if (r.recordType === "وزنة_فردية" && (r.parentItem || "").trim().toLowerCase() === parentInputVal.toLowerCase()) {
                 totalRegisteredNet += parseFloat(r.net) || 0;
             }
@@ -735,7 +735,6 @@
         displayBox.innerText = gross > 0 ? (net > 0 ? net.toFixed(2) : "0.00") : "0.00";
     }
 
-    // جلب صافي الفترة الحالية المرتبطة بآخر ترحيل ساعة
     function getCurrentPeriodNetTotal(targetParent) {
         if (!targetParent) return 0;
         const cleanParent = targetParent.trim().toLowerCase();
@@ -836,10 +835,9 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم حفظ وزنة (${item}) بنجاح ✅`);
+        alert(`تم حفظ وزنة (${item}) التابعة للأصل (${parentItem}) بنجاح ✅`);
     }
 
-    // ⭐ إصلاح ترحيل البراد ليتعامل برمجياً مع المتبقي التراكمي بطريقة صحيحة هندسياً
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
         const parentItem = document.getElementById('parentItemInput').value.trim();
@@ -866,7 +864,6 @@
             }
         }
 
-        // حساب "المتبقي السابق" قبل هذه الساعة مباشرة لمنع البدء من 1000 في كل مرة
         let totalNetBeforeThisHour = 0;
         let foundTransfersCount = 0;
         
@@ -881,7 +878,6 @@
             }
         });
 
-        // المتبقي الصافي الحقيقي في هذه اللحظة داخل الصالة
         const computedCurrentRemaining = inputStockValue - totalNetBeforeThisHour;
 
         const manager = document.getElementById('managerName').value || "غير محدد";
@@ -917,14 +913,13 @@
             freezeStart: freezeStart,
             freezeEnd: freezeEnd,
             originalStockLoaded: inputStockValue.toFixed(2),
-            computedRemaining: computedCurrentRemaining.toFixed(2), // حفظ المتبقي المستمر التراكمي بدقة
-            transferSequence: foundTransfersCount + 1 // ترتيب حركة الترحيل (الساعة الأولى، الثانية..)
+            computedRemaining: computedCurrentRemaining.toFixed(2),
+            transferSequence: foundTransfersCount + 1
         };
 
         records.push(orderRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
 
-        // تنظيف المدخلات اللحظية للساعة الحالية
         document.getElementById('grossInput').value = "";
         document.getElementById('boxCount').value = "";
         document.getElementById('palletWeightOpt').value = "";
@@ -940,7 +935,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل الحركة رقم (${foundTransfersCount + 1}) بنجاح! المتبقي الحالي بالطبلية: ${computedCurrentRemaining.toFixed(2)} كغ 📦.`);
+        alert(`تم ترحيل الحركة بنجاح! المتبقي الكلي من نفس الأصل: ${computedCurrentRemaining.toFixed(2)} كغ 📦.`);
     }
 
     function deleteRecord(index) {
@@ -1094,7 +1089,6 @@
         XLSX.writeFile(wb, `HawaTech_Staff_Weights_Report.xlsx`);
     }
 
-    // ⭐ تصدير ملف إكسل البراد بنظام التتبع التراكمي للمتبقي لحل المشكلة نهائياً
     function exportOrdersExcel() {
         const filtered = records.filter(r => r.recordType === "ترحيل_براد");
         if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
