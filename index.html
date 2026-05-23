@@ -101,7 +101,6 @@
             border: 1px solid #1b4d22;
         }
         
-        /* تصميم العداد التناقصي الذكي المحسن والمقاوم للـ Refresh */
         .countdown-zone {
             background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
             border: 2px solid #1e88e5;
@@ -458,7 +457,6 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
-    <!-- قسم العداد التناقصي الاسترشادي المحمي والمقاوم للـ Refresh والـ Reset بالكامل -->
     <div class="countdown-zone">
         <div style="font-size: 13px; font-weight: bold;">⚖️ شاشة تتبع كمية الطبلية المسحوبة من البراد (محمية ضد التحديث):</div>
         <div class="countdown-row">
@@ -610,14 +608,12 @@
     const tarePerBox = 1.40;
     let lastUsedParentMap = JSON.parse(localStorage.getItem('hawaTechLastUsedParentMap')) || {};
 
-    // حفظ قيمة المخزون المسحوب في الذاكرة المستمرة فور الكتابة لمنع مسحها بالـ Refresh
     function saveStockToCache() {
         const val = document.getElementById('fridgeStockInput').value;
         localStorage.setItem('hawaTechCachedStock', val);
         calculateLiveCountdown();
     }
 
-    // تفعيل وإلغاء القفل مع الحفظ المستمر للحالة في الذاكرة
     function toggleStockLock() {
         const input = document.getElementById('fridgeStockInput');
         const btn = document.getElementById('lockBtn');
@@ -636,7 +632,6 @@
         }
     }
 
-    // استعادة حالة القفل والقيمة المخزنة بعد الـ Refresh تلقائياً
     function restoreStockCacheOnLoad() {
         const cachedVal = localStorage.getItem('hawaTechCachedStock');
         const input = document.getElementById('fridgeStockInput');
@@ -657,7 +652,6 @@
         }
     }
 
-    // حساب العداد التناقصي لايف بالاعتماد على قاعدة البيانات والذاكرة
     function calculateLiveCountdown() {
         const originalStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
         const parentInputVal = document.getElementById('parentItemInput').value.trim();
@@ -713,13 +707,12 @@
         });
     }
 
+    // 🔥 تعديل الحماية هنا: لو الصنف الفرعي الجديد ليس له أصل، يترك الأصل الحالي دون حذفه أو تصفيره
     function autoFillParentOnSelect() {
         const selectedItem = document.getElementById('itemSelect').value;
         const parentInput = document.getElementById('parentItemInput');
         if (selectedItem && lastUsedParentMap[selectedItem]) {
             parentInput.value = lastUsedParentMap[selectedItem];
-        } else {
-            parentInput.value = "";
         }
         updateUI();
     }
@@ -901,13 +894,12 @@
             maxW: maxW,
             freezeStart: freezeStart,
             freezeEnd: freezeEnd,
-            originalStockLoaded: inputStockValue.toFixed(2) // توثيق مخزون السحب الأصلي لحل أخطاء الإكسل
+            originalStockLoaded: inputStockValue.toFixed(2)
         };
 
         records.push(orderRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
 
-        // تنظيف الخانات بعد الترحيل الناجح
         document.getElementById('grossInput').value = "";
         document.getElementById('boxCount').value = "";
         document.getElementById('palletWeightOpt').value = "";
@@ -1076,15 +1068,14 @@
         XLSX.writeFile(wb, `HawaTech_Staff_Weights_Report.xlsx`);
     }
 
-    // بناء ملف إكسل البراد المحسن الخالي من الأخطاء والرموز المتداخلة تجميعياً
     function exportOrdersExcel() {
         const filtered = records.filter(r => r.recordType === "ترحيل_براد");
-        if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
+        if(filtered.length === 0) { alert("لا توجد طلبيات حركة للبراد حالياً لتصديرها!"); return; }
         
         const ordersData = filtered.map(r => {
             const stockLoaded = parseFloat(r.originalStockLoaded) || 0;
             const extractedNet = parseFloat(r.net) || 0;
-            const remainingInPallet = stockLoaded - extractedNet; // حساب المرتجع الصافي الفعلي
+            const remainingInPallet = stockLoaded - extractedNet;
 
             return {
                 "رقم الطلبية المرحّلة": r.orderNumber,
@@ -1108,7 +1099,7 @@
     function resetDataWithPassword() {
         const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
-            localStorage.clear(); // تنظيف الذاكرة المستمرة بالكامل والعدادات التناقصية
+            localStorage.clear();
             records = [];
             lastUsedParentMap = {};
             document.getElementById('fridgeStockInput').value = "";
@@ -1121,7 +1112,7 @@
     window.onload = function() { 
         applySavedTheme();
         populateItemsSelect();
-        restoreStockCacheOnLoad(); // تشغيل استعادة الذاكرة فوراً لمنع الـ Refresh من تصفير العداد
+        restoreStockCacheOnLoad();
         updateDateTime(); 
         updateUI(); 
     };
