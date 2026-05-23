@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Persistence & Fridge Fixed Edition)</title>
+    <title>Hawa-Tech App Pro (Continuous Tracking Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -101,7 +101,6 @@
             border: 1px solid #1b4d22;
         }
         
-        /* تصميم العداد التناقصي الذكي المحسن والمقاوم للـ Refresh */
         .countdown-zone {
             background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
             border: 2px solid #1e88e5;
@@ -458,11 +457,11 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
-    <!-- قسم العداد التناقصي الاسترشادي المحمي والمقاوم للـ Refresh والـ Reset بالكامل -->
+    <!-- قسم تتبع كمية الطبلية المسحوبة المطور للربط التراكمي المستمر -->
     <div class="countdown-zone">
-        <div style="font-size: 13px; font-weight: bold;">⚖️ شاشة تتبع كمية الطبلية المسحوبة من البراد (محمية ضد التحديث):</div>
+        <div style="font-size: 13px; font-weight: bold;">⚖️ شاشة تتبع كمية الطبلية المسحوبة من البراد (تراكمي ومقاوم للـ Refresh):</div>
         <div class="countdown-row">
-            <input type="number" id="fridgeStockInput" placeholder="أدخل الوزن المسحوب (مثال: 1000)" oninput="saveStockToCache()">
+            <input type="number" id="fridgeStockInput" placeholder="أدخل الوزن المسحوب الأصلي (مثال: 1000)" oninput="saveStockToCache()">
             <button id="lockBtn" class="btn-lock" onclick="toggleStockLock()">🔓 فتح</button>
         </div>
         <div class="countdown-live-text" id="countdownResultText">
@@ -529,7 +528,7 @@
     </div>
 
     <div class="optional-section" style="border: 1px solid #e65100; background-color: rgba(230,81,0,0.03); margin-bottom: 15px;">
-        <div class="section-subtitle" style="color: #e65100;">📦 ترحيل بيانات نهاية الساعة (إلى البراد دون تكرار الحساب):</div>
+        <div class="section-subtitle" style="color: #e65100;">📦 ترحيل بيانات نهاية الساعة (إلى البراد بنظام الخصم من المتبقي):</div>
         <div class="inputs-grid-three" style="margin-bottom: 8px;">
             <input type="number" id="chickenCountOpt" placeholder="عدد الفروج">
             <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية">
@@ -576,7 +575,7 @@
 
     <div class="excel-buttons-zone">
         <button class="btn-excel-custom bg-staff" onclick="exportStaffExcel()">📊 1. تحميل ملف إكسل الخاص بالموظفين والأوزان</button>
-        <button class="btn-excel-custom bg-orders" onclick="exportOrdersExcel()">📊 2. تحميل ملف إكسل التقارير المترحلة للبراد (خالٍ من الأخطاء)</button>
+        <button class="btn-excel-custom bg-orders" onclick="exportOrdersExcel()">📊 2. تحميل ملف إكسل التقارير المترحلة للبراد (حل مشكلة المتبقي)</button>
     </div>
 
     <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد الكامل والبيانات</button>
@@ -602,7 +601,7 @@
         "إرجاع كمية فائضة للبراد",
         "مسحب مع جلدة",
         "مسحب بدون جلدة",
-        "كسر fخاد / قطع عادية"
+        "كسر فخاد / قطع عادية"
     ];
     
     let customItemsList = JSON.parse(localStorage.getItem('hawaTechItemsList')) || defaultItems;
@@ -610,18 +609,15 @@
     const tarePerBox = 1.40;
     let lastUsedParentMap = JSON.parse(localStorage.getItem('hawaTechLastUsedParentMap')) || {};
 
-    // حفظ قيمة المخزون المسحوب في الذاكرة المستمرة فور الكتابة لمنع مسحها بالـ Refresh
     function saveStockToCache() {
         const val = document.getElementById('fridgeStockInput').value;
         localStorage.setItem('hawaTechCachedStock', val);
         calculateLiveCountdown();
     }
 
-    // تفعيل وإلغاء القفل مع الحفظ المستمر للحالة في الذاكرة
     function toggleStockLock() {
         const input = document.getElementById('fridgeStockInput');
         const btn = document.getElementById('lockBtn');
-        
         isStockLocked = !isStockLocked;
         localStorage.setItem('hawaTechStockLocked', JSON.stringify(isStockLocked));
         
@@ -636,15 +632,12 @@
         }
     }
 
-    // استعادة حالة القفل والقيمة المخزنة بعد الـ Refresh تلقائياً
     function restoreStockCacheOnLoad() {
         const cachedVal = localStorage.getItem('hawaTechCachedStock');
         const input = document.getElementById('fridgeStockInput');
         const btn = document.getElementById('lockBtn');
         
-        if (cachedVal !== null) {
-            input.value = cachedVal;
-        }
+        if (cachedVal !== null) input.value = cachedVal;
 
         if(isStockLocked) {
             input.disabled = true;
@@ -657,7 +650,7 @@
         }
     }
 
-    // حساب العداد التناقصي لايف بالاعتماد على قاعدة البيانات والذاكرة
+    // ⭐ إصلاح العداد التناقصي ليعتمد على التراكم الحقيقي الشامل لكل الوزنات السابقة دون البدء من 1000 في كل مرة
     function calculateLiveCountdown() {
         const originalStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
         const parentInputVal = document.getElementById('parentItemInput').value.trim();
@@ -667,10 +660,16 @@
             return;
         }
 
-        const currentRegisteredNet = getCurrentPeriodNetTotal(parentInputVal);
-        const remaining = originalStock - currentRegisteredNet;
+        // حساب كافة الوزنات المسجلة لهذا الأصل منذ البداية المطلقة
+        let totalRegisteredNet = 0;
+        records.forEach(r => {
+            if (r.recordType === "وزنة_فردية" && (r.parentItem || "").trim().toLowerCase() === parentInputVal.toLowerCase()) {
+                totalRegisteredNet += parseFloat(r.net) || 0;
+            }
+        });
 
-        document.getElementById('countdownResultText').innerHTML = `الوزن المتبقي في الـ (${parentInputVal}) حالياً: <span style="font-size: 20px; color: #2e7d32; font-weight: bold;">${remaining.toFixed(2)}</span> كغ`;
+        const remaining = originalStock - totalRegisteredNet;
+        document.getElementById('countdownResultText').innerHTML = `المتبقي الحقيقي في (${parentInputVal}) حالياً: <span style="font-size: 20px; color: #2e7d32; font-weight: bold;">${remaining.toFixed(2)}</span> كغ`;
     }
 
     function toggleTheme() {
@@ -736,22 +735,21 @@
         displayBox.innerText = gross > 0 ? (net > 0 ? net.toFixed(2) : "0.00") : "0.00";
     }
 
+    // جلب صافي الفترة الحالية المرتبطة بآخر ترحيل ساعة
     function getCurrentPeriodNetTotal(targetParent) {
         if (!targetParent) return 0;
         const cleanParent = targetParent.trim().toLowerCase();
         
         let lastTransferIndex = -1;
         for (let i = records.length - 1; i >= 0; i--) {
-            const rParent = (records[i].parentItem || "").trim().toLowerCase();
-            if (records[i].recordType === "ترحيل_براد" && rParent === cleanParent) {
+            if (records[i].recordType === "ترحيل_براد" && (records[i].parentItem || "").trim().toLowerCase() === cleanParent) {
                 lastTransferIndex = i;
                 break;
             }
         }
         let total = 0;
         records.forEach((r, index) => {
-            const rParent = (r.parentItem || "").trim().toLowerCase();
-            if (r.recordType === "وزنة_فردية" && rParent === cleanParent && index > lastTransferIndex) {
+            if (r.recordType === "وزنة_فردية" && (r.parentItem || "").trim().toLowerCase() === cleanParent && index > lastTransferIndex) {
                 total += parseFloat(r.net) || 0;
             }
         });
@@ -764,16 +762,14 @@
 
         let lastTransferIndex = -1;
         for (let i = records.length - 1; i >= 0; i--) {
-            const rParent = (records[i].parentItem || "").trim().toLowerCase();
-            if (records[i].recordType === "ترحيل_براد" && rParent === cleanParent) {
+            if (records[i].recordType === "ترحيل_براد" && (records[i].parentItem || "").trim().toLowerCase() === cleanParent) {
                 lastTransferIndex = i;
                 break;
             }
         }
         let total = 0;
         records.forEach((r, index) => {
-            const rParent = (r.parentItem || "").trim().toLowerCase();
-            if (r.recordType === "وزنة_فردية" && rParent === cleanParent && index > lastTransferIndex) {
+            if (r.recordType === "وزنة_فردية" && (r.parentItem || "").trim().toLowerCase() === cleanParent && index > lastTransferIndex) {
                 total += parseFloat(r.gross) || 0;
             }
         });
@@ -840,9 +836,10 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم حفظ وزنة (${item}) التابع للأصل (${parentItem}) بنجاح ✅`);
+        alert(`تم حفظ وزنة (${item}) بنجاح ✅`);
     }
 
+    // ⭐ إصلاح ترحيل البراد ليتعامل برمجياً مع المتبقي التراكمي بطريقة صحيحة هندسياً
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
         const parentItem = document.getElementById('parentItemInput').value.trim();
@@ -864,10 +861,28 @@
                 totalGrossCalculated = liveGross;
                 totalNetCalculated = liveNet;
             } else {
-                alert(`⚠️ عذراً! لا توجد وزنات تراكمية مسجلة تحت اسم الأصل اليدوي (${parentItem})`);
+                alert(`⚠️ عذراً! لا توجد وزنات تراكمية جديدة مسجلة لهذه الساعة تحت الأصل اليدوي (${parentItem})`);
                 return;
             }
         }
+
+        // حساب "المتبقي السابق" قبل هذه الساعة مباشرة لمنع البدء من 1000 في كل مرة
+        let totalNetBeforeThisHour = 0;
+        let foundTransfersCount = 0;
+        
+        records.forEach(r => {
+            if ((r.parentItem || "").trim().toLowerCase() === parentItem.toLowerCase()) {
+                if (r.recordType === "وزنة_فردية") {
+                    totalNetBeforeThisHour += parseFloat(r.net) || 0;
+                }
+                if (r.recordType === "ترحيل_براد") {
+                    foundTransfersCount++;
+                }
+            }
+        });
+
+        // المتبقي الصافي الحقيقي في هذه اللحظة داخل الصالة
+        const computedCurrentRemaining = inputStockValue - totalNetBeforeThisHour;
 
         const manager = document.getElementById('managerName').value || "غير محدد";
         const chickenCount = document.getElementById('chickenCountOpt').value || "-";
@@ -901,13 +916,15 @@
             maxW: maxW,
             freezeStart: freezeStart,
             freezeEnd: freezeEnd,
-            originalStockLoaded: inputStockValue.toFixed(2) // توثيق مخزون السحب الأصلي لحل أخطاء الإكسل
+            originalStockLoaded: inputStockValue.toFixed(2),
+            computedRemaining: computedCurrentRemaining.toFixed(2), // حفظ المتبقي المستمر التراكمي بدقة
+            transferSequence: foundTransfersCount + 1 // ترتيب حركة الترحيل (الساعة الأولى، الثانية..)
         };
 
         records.push(orderRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
 
-        // تنظيف الخانات بعد الترحيل الناجح
+        // تنظيف المدخلات اللحظية للساعة الحالية
         document.getElementById('grossInput').value = "";
         document.getElementById('boxCount').value = "";
         document.getElementById('palletWeightOpt').value = "";
@@ -923,7 +940,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل طلبيّة صنف (${item}) بنجاح وإغلاق الدورة المستندية لها 📦.`);
+        alert(`تم ترحيل الحركة رقم (${foundTransfersCount + 1}) بنجاح! المتبقي الحالي بالطبلية: ${computedCurrentRemaining.toFixed(2)} كغ 📦.`);
     }
 
     function deleteRecord(index) {
@@ -942,16 +959,17 @@
             <div class="modal-item"><span>الوزن القائم (الإجمالي):</span> <span>${r.gross} كغ</span></div>
             <div class="modal-item"><span>صافي الوزن الفعلي:</span> <span>${r.net} كغ</span></div>
         ` : `
-            <div class="modal-item"><span>الوزن المسحوب الأصلي من البراد:</span> <span>${r.originalStockLoaded || "0.00"} كغ</span></div>
-            <div class="modal-item"><span>إجمالي صافي الكمية المستخرجة:</span> <span>${r.net} كغ</span></div>
+            <div class="modal-item"><span>الوزن الأصلي الأولي للطبلية:</span> <span>${r.originalStockLoaded || "0.00"} كغ</span></div>
+            <div class="modal-item"><span>صافي المستخرج في هذه الحركة:</span> <span>${r.net} كغ</span></div>
+            <div class="modal-item"><span>المتبقي الصافي المستمر بالطبلية:</span> <span style="color:#d32f2f; font-weight:bold;">${r.computedRemaining || "0.00"} كغ</span></div>
         `;
 
         modalBody.innerHTML = `
-            <div class="modal-item"><span>نوع السجل:</span> <span>${r.recordType === "ترحيل_براد" ? "📦 ترحيل ساعة للبراد" : "⚖️ وزنة خط إنتاج"}</span></div>
+            <div class="modal-item"><span>نوع السجل:</span> <span>${r.recordType === "ترحيل_براد" ? "📦 ترحيل حركة ساعة للبراد" : "⚖️ وزنة خط إنتاج"}</span></div>
             <div class="modal-item"><span>التاريخ والوقت:</span> <span>${r.date} | ${r.time}</span></div>
             <div class="modal-item"><span>اسم الصنف الأساسي (الأصل):</span> <span>${r.parentItem || "غير محدد"}</span></div>
             ${weightHTML}
-            <div class="modal-item"><span>رقم الطلبية المفتوحة:</span> <span>${r.orderNumber}</span></div>
+            <div class="modal-item"><span>رقم الطلبية / كود الحركة:</span> <span>${r.orderNumber || "-"}</span></div>
         `;
         document.getElementById('detailsModal').style.display = "flex";
     }
@@ -1014,10 +1032,10 @@
             const isTransfer = r.recordType === "ترحيل_براد";
             const rowHtml = `<tr class="${isTransfer ? 'row-order-transfer' : 'row-weight-only'}">
                 <td>${r.time}</td>
-                <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${isTransfer ? '📦 ترحيل ساعة' : '⚖️ وزنة خط'}</td>
+                <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${isTransfer ? '📦 حركة ترحيل متسلسلة' : '⚖️ وزنة خط'}</td>
                 <td>${r.item} <span style="font-size:11px; color:#8e44ad; font-weight:bold;">← (${currentRecordParent})</span></td>
                 <td class="highlight-weight">${(r.gross && r.gross !== "-") ? r.gross + ' كغ' : '-'}</td>
-                <td class="net-weight" style="color: ${isTransfer ? '#e65100' : '#1f6feb'}">${isTransfer ? 'صافي الطلب: ' + r.net : r.net} كغ</td>
+                <td class="net-weight" style="color: ${isTransfer ? '#e65100' : '#1f6feb'}">${isTransfer ? 'صافي الحركة: ' + r.net : r.net} كغ</td>
                 <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">عرض التفاصيل 👁️</button></td>
                 <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
             </tr>`;
@@ -1029,7 +1047,7 @@
             tfoot.innerHTML = `<tr class="row-virtual-footer">
                 <td>لايف</td><td>📊 تجميع الأصول والفرعيات</td><td>الأصل: ${parentInputVal}</td>
                 <td>${currentGrossForSelected.toFixed(2)} كغ</td><td>${displayNetForSelected.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#4a148c;">(تجميع شامل لكافة الوزنات المرتبطة بهذا الأصل)</td>
+                <td colspan="2" style="font-size:11px; color:#4a148c;">(تجميع صافي الساعة الحالية المرتبطة بالأصل المذكور)</td>
             </tr>`;
         }
 
@@ -1076,39 +1094,36 @@
         XLSX.writeFile(wb, `HawaTech_Staff_Weights_Report.xlsx`);
     }
 
-    // بناء ملف إكسل البراد المحسن الخالي من الأخطاء والرموز المتداخلة تجميعياً
+    // ⭐ تصدير ملف إكسل البراد بنظام التتبع التراكمي للمتبقي لحل المشكلة نهائياً
     function exportOrdersExcel() {
         const filtered = records.filter(r => r.recordType === "ترحيل_براد");
         if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
         
         const ordersData = filtered.map(r => {
-            const stockLoaded = parseFloat(r.originalStockLoaded) || 0;
-            const extractedNet = parseFloat(r.net) || 0;
-            const remainingInPallet = stockLoaded - extractedNet; // حساب المرتجع الصافي الفعلي
-
             return {
-                "رقم الطلبية المرحّلة": r.orderNumber,
+                "رقم الحركة / الساعة": r.transferSequence || 1,
+                "كود / رقم الطلبية": r.orderNumber,
                 "الصنف الأساسي (الأصل)": r.parentItem || "غير محدد",
-                "1. الوزن المسحوب الأصلي من البراد (كغ)": stockLoaded,
-                "2. إجمالي الصافي المستخرج للإنتاج (كغ)": extractedNet,
-                "3. الوزن المرتجع الفعلي الفائض للثلاجة (كغ)": remainingInPallet,
-                "المكان المرسل إليه": r.destination,
-                "موقع البراد الداخلي": r.fridgeLocation,
-                "درجة الحرارة (C°)": r.temperature,
-                "وقت وتاريخ الترحيل": `${r.date} | ${r.time}`
+                "الوزن الأولي المسحوب للطبلية (كغ)": parseFloat(r.originalStockLoaded),
+                "الوزن المستهلك في هذه الساعة (كغ)": parseFloat(r.net),
+                "المتبقي الجاري بالطبلية (كغ)": parseFloat(r.computedRemaining),
+                "الجهة المرسل إليها": r.destination,
+                "موقع الثلاجة الداخلي": r.fridgeLocation,
+                "درجة الحرارة المستهدفة (C°)": r.temperature,
+                "التوقيت الفعلي للترسيب": `${r.date} | ${r.time}`
             };
         });
 
         const ws = XLSX.utils.json_to_sheet(ordersData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "تقارير حركة البراد المحسنة");
-        XLSX.writeFile(wb, `HawaTech_Fridge_Perfect_Report.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "تقارير حركة البراد المتسلسلة");
+        XLSX.writeFile(wb, `HawaTech_Fridge_Continuous_Report.xlsx`);
     }
 
     function resetDataWithPassword() {
         const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
-            localStorage.clear(); // تنظيف الذاكرة المستمرة بالكامل والعدادات التناقصية
+            localStorage.clear();
             records = [];
             lastUsedParentMap = {};
             document.getElementById('fridgeStockInput').value = "";
@@ -1121,7 +1136,7 @@
     window.onload = function() { 
         applySavedTheme();
         populateItemsSelect();
-        restoreStockCacheOnLoad(); // تشغيل استعادة الذاكرة فوراً لمنع الـ Refresh من تصفير العداد
+        restoreStockCacheOnLoad();
         updateDateTime(); 
         updateUI(); 
     };
