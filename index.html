@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Complete Frozen Edition)</title>
+    <title>Hawa-Tech App Pro (Ultimate Restored Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -175,6 +175,36 @@
             margin-bottom: 15px;
         }
 
+        /* تنسيق قسم العدادات السريعة التراكمية المفقود */
+        .summary-counters-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .counter-card {
+            background: var(--section-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 4px;
+            text-align: center;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .counter-card .c-title {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+        .dark-version .counter-card .c-title {
+            color: #aaa;
+        }
+        .counter-card .c-val {
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--header-color);
+        }
+
         .ai-panel {
             background: var(--panel-bg);
             color: var(--panel-text);
@@ -274,7 +304,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
-            min-width: 900px; /* تم تكبير العرض لاستيعاب الخانات الجديدة */
+            min-width: 900px;
         }
         th, td {
             padding: 10px 6px;
@@ -335,9 +365,9 @@
         <span id="liveTime">الوقت: جارٍ التحميل...</span>
     </div>
 
-    <!-- قسم وزن الطبلية الحالية -->
+    <!-- قسم وزن الطبلية الحالية التناقصي عابر للأصناف -->
     <div class="countdown-zone">
-        <div style="font-size: 13px; font-weight: bold;">⚖️ الوزن المتبقي الفعلي بالطبلية الحالية (ثابت عابر للأصناف):</div>
+        <div style="font-size: 13px; font-weight: bold;">⚖️ الوزن المتبقي الفعلي بالطبلية الحالية:</div>
         <div class="countdown-row">
             <input type="number" id="fridgeStockInput" placeholder="أدخل وزن الطبلية الأصلي (مثال: 1000)" oninput="saveStockToCache()">
             <button id="lockBtn" class="btn-lock" onclick="toggleStockLock()">🔓 فتح</button>
@@ -381,6 +411,22 @@
 
     <button class="btn-main" onclick="saveCurrentRecord()">تثبيت وحفظ الوزن فقط ✅</button>
 
+    <!-- (تمت الإعادة هنا) شريط العدادات السريعة تحت الوزنات مباشرة -->
+    <div class="summary-counters-row">
+        <div class="counter-card">
+            <div class="c-title">صافي الأصل</div>
+            <div class="c-val" id="cntNet">0.00</div>
+        </div>
+        <div class="counter-card">
+            <div class="c-title">إجمالي الأقفاص</div>
+            <div class="c-val" id="cntBoxes">0</div>
+        </div>
+        <div class="counter-card">
+            <div class="c-title">عدد الوزنات</div>
+            <div class="c-val" id="cntRecords">0</div>
+        </div>
+    </div>
+
     <div class="ai-panel" id="aiPanel">🔮 مساعد الـ AI بانتظار تسجيل الأوزان لتوليد التوصيات...</div>
 
     <div class="optional-section">
@@ -391,7 +437,6 @@
         </div>
     </div>
 
-    <!-- قسم ترحيل البراد المعدل والمضاف إليه البيانات الجديدة -->
     <div class="optional-section" style="border: 1px solid #e65100; background-color: rgba(230,81,0,0.03);">
         <div class="section-subtitle" style="color: #e65100;">📦 ترحيل بيانات نهاية الساعة للبراد وحالة التجميد:</div>
         
@@ -401,13 +446,11 @@
             <input type="text" id="destinationOpt" placeholder="المرسل إليه">
         </div>
 
-        <!-- الخانات الجديدة: موقع البراد ودرجة الحرارة -->
         <div class="inputs-grid">
             <input type="text" id="fridgeLocation" placeholder="موقع البراد (مثال: براد A-3)">
             <input type="text" id="fridgeTemp" placeholder="درجة الحرارة (مثال: -18°C)">
         </div>
 
-        <!-- الخانات الجديدة: فترات تاريخ التجميد من وإلى -->
         <div class="inputs-grid">
             <div>
                 <span class="date-label">تاريخ التجميد من:</span>
@@ -564,7 +607,6 @@
         const chickenCount = document.getElementById('chickenCountOpt').value || 0;
         const inputStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
         
-        // التقاط الخانات الجديدة
         const loc = document.getElementById('fridgeLocation').value || "غير محدد";
         const temp = document.getElementById('fridgeTemp').value || "غير محدد";
         const dFrom = document.getElementById('freezeDateFrom').value || "-";
@@ -597,7 +639,6 @@
 
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
         
-        // تنظيف المدخلات بعد الحفظ
         document.getElementById('orderNumberOpt').value = "";
         document.getElementById('destinationOpt').value = "";
         document.getElementById('chickenCountOpt').value = "";
@@ -629,13 +670,18 @@
         const parentInputVal = document.getElementById('parentItemInput').value.trim();
         
         let totalNet = 0;
+        let totalBoxes = 0;
+        let countWeightRecords = 0;
         let chartData = {};
 
         records.forEach((r, idx) => {
-            if (r.parentItem === parentInputVal && r.recordType === "وزنة_فردية") totalNet += parseFloat(r.net);
+            if (r.parentItem === parentInputVal && r.recordType === "وزنة_فردية") {
+                totalNet += parseFloat(r.net);
+                totalBoxes += parseFloat(r.boxes) || 0;
+                countWeightRecords++;
+            }
             if (r.recordType === "وزنة_فردية") chartData[r.parentItem] = (chartData[r.parentItem] || 0) + parseFloat(r.net);
 
-            // عرض مميز ومختصر للموقع وفترة التجميد في الجدول المباشر
             const locTempDisplay = r.recordType === 'ترحيل_براد' ? `${r.fridgeLocation} / ${r.fridgeTemp}` : '-';
             const freezePeriod = (r.recordType === 'ترحيل_براد' && r.freezeDateFrom !== "-") ? `من ${r.freezeDateFrom} إلى ${r.freezeDateTo}` : '-';
 
@@ -650,6 +696,11 @@
                 <td><button style="color:red; background:none; border:none; cursor:pointer;" onclick="deleteRecord(${idx})">❌</button></td>
             </tr>`;
         });
+
+        // تحديث العدادات السريعة التراكمية في الواجهة فوراً للأصل الحالي
+        document.getElementById('cntNet').innerText = totalNet.toFixed(2) + " كغ";
+        document.getElementById('cntBoxes').innerText = totalBoxes;
+        document.getElementById('cntRecords').innerText = countWeightRecords;
 
         document.getElementById('totalNetDisplay').innerText = totalNet.toFixed(2);
         calculateLiveCountdown();
@@ -710,7 +761,6 @@
         XLSX.writeFile(wb, `HawaTech_Staff_Report_${new Date().toLocaleDateString()}.xlsx`);
     }
 
-    // تصدير ملف البراد المحدث بكافة الخصائص الجديدة المطلوبة
     function exportOrdersExcel() {
         const filterData = records.filter(r => r.recordType === "ترحيل_براد");
         if(filterData.length === 0) { alert("لا توجد عمليات ترحيل براد مسجلة حتى الآن!"); return; }
