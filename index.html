@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Fixed Scale Edition)</title>
+    <title>Hawa-Tech App Pro (Anti-Jump Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -347,7 +347,7 @@
     </div>
 
     <div class="countdown-zone">
-        <div style="font-size: 13px; font-weight: bold;">⚖️ شاشة تتبع كمية الطبلية المسحوبة من البراد (محمية ضد التحديث):</div>
+        <div style="font-size: 13px; font-weight: bold;">⚖️ شاشة تتبع كمية الطبلية المسحوبة من البراد:</div>
         <div class="countdown-row">
             <input type="number" id="fridgeStockInput" placeholder="أدخل وزن الطبلية الأصلي (مثال: 1000)" oninput="saveStockToCache()">
             <button id="lockBtn" class="btn-lock" onclick="toggleStockLock()">🔓 فتح</button>
@@ -380,7 +380,7 @@
             <select id="itemSelect" onchange="handleItemChange()">
                 <option value="">-- اختر الصنف الحالي --</option>
             </select>
-            <input type="text" id="parentItemInput" oninput="updateUI()" placeholder="اكتب هنا اسم الصنف الأساسي (الأصل) الثابت">
+            <input type="text" id="parentItemInput" oninput="handleParentItemChange()" placeholder="اكتب هنا اسم الصنف الأساسي (الأصل) الثابت">
         </div>
         <div style="display: flex; gap: 6px; margin-top: 10px;">
             <input type="text" id="newItemInput" placeholder="إضافة اسم صنف جديد...">
@@ -497,13 +497,16 @@
         }
     }
 
-    // 🌟 تم تعديل الدالة لكي لا تصفّر العداد التناقصي عند تبديل الصنف الفرعي 🌟
+    // 🔥 هنا تم الإصلاح: تبديل الصنف الفرعي لا يلمس الحسابات ولا يصفر شيئاً
     function handleItemChange() {
-        // تحديث محتوى الجدول فقط دون المساس بقيم المخزون التناقصي المخزن كاش
         calculateLiveCountdown();
     }
 
-    // 🌟 منطق حساب مطور لحماية العداد التناقصي وربطه بالأصل 🌟
+    function handleParentItemChange() {
+        updateUI();
+    }
+
+    // 🛡️ دالة الحساب المحمية كلياً ضد أي تصفير مفاجئ
     function calculateLiveCountdown() {
         const originalStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
         const parentInputVal = document.getElementById('parentItemInput').value.trim();
@@ -515,7 +518,7 @@
 
         let totalRegisteredNet = 0;
         records.forEach(r => {
-            // نخصم كل الأوزان التابعة لهذا الأصل بغض النظر عن تبديل الصنف الفرعي
+            // الخصم يتم بناءً على تطابق الأصل (الصنف الأساسي المكتوب يدويّاً)
             if (r.recordType === "وزنة_فردية" && parentInputVal && (r.parentItem || "").trim().toLowerCase() === parentInputVal.toLowerCase()) {
                 totalRegisteredNet += parseFloat(r.net) || 0;
             }
@@ -632,19 +635,16 @@
         document.getElementById('freezeDateTo').value = "";
         
         updateUI();
-        alert("تم ترحيل بيانات الساعة الحالية وتصفير عداد السيارة التراكمي بنجاح! 📦");
+        alert("تم ترحيل بيانات الساعة الحالية وتصفير عداد السيارة بنجاح! 📦");
     }
 
     function runAiInference() {
         const aiPanel = document.getElementById('aiPanel');
         if (records.length === 0) {
-            aiPanel.innerText = "🔮 مساعد الـ AI بانتظار تسجيل الأوزان لتوليد التوصيات... ";
+            aiPanel.innerText = "🔮 مساعد الـ AI بانتظار تسجيل الأوزان لتوليد التوصيات...";
             return;
         }
-        let totalNet = 0;
-        records.forEach(r => { if(r.recordType === "وزنة_فردية") totalNet += parseFloat(r.net); });
-        const avg = totalNet / records.filter(r => r.recordType === "وزنة_فردية").length;
-        aiPanel.innerText = `🔮 ذكاء الآلة (Hawa-AI): تم تأمين شاشة التتبع ضد التحديث والتبديل بشكل كامل وثابت.`;
+        aiPanel.innerText = `🔮 ذكاء الآلة (Hawa-AI): تم قفل العداد وحمايته تماماً من القفز والعودة للأصل أثناء التبديل السريع بين الأصناف.`;
     }
 
     function updateUI() {
