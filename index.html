@@ -270,7 +270,6 @@
         .btn-delete { background-color: #da3637; }
         .btn-add { background-color: #238636; }
         
-        /* تصميم منطقة أزرار التراجع والسهمين فوق خانة البحث */
         .undo-redo-container {
             display: flex;
             justify-content: center;
@@ -396,7 +395,6 @@
             margin-bottom: 15px;
         }
         
-        /* تعديل تصميم منطقة الميزان ليتناسب مع زر التفعيل الجديد التلقائي */
         .scale-link-container {
             text-align: center;
             font-size: 12px;
@@ -637,10 +635,7 @@
 </div>
 
 <script>
-    // مصفوفة واحدة مستقرة تحتوي على كل الحالات دون حذف أي سطر
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
-    
-    // مصفوفة ذاكرة التراجع والإعادة لحماية البيانات من الحذف الخطأ
     let recordsHistoryStack = [];
     
     let palletConfig = JSON.parse(localStorage.getItem('hawaTechPalletConfig')) || {
@@ -662,16 +657,14 @@
     const tarePerBox = 1.40;
     let lastUsedParentMap = JSON.parse(localStorage.getItem('hawaTechLastUsedParentMap')) || {};
 
-    // دالة حفظ الحالة لحماية التراجع والإعادة قبل أي تعديل
     function saveStateForUndo() {
-        if (recordsHistoryStack.length > 20) recordsHistoryStack.shift(); // حد أقصى 20 خطوة تراجع
+        if (recordsHistoryStack.length > 20) recordsHistoryStack.shift();
         recordsHistoryStack.push(JSON.stringify(records));
     }
 
     function undoLastAction() {
         if (recordsHistoryStack.length === 0) { alert("لا توجد عمليات سابقة للتراجع عنها!"); return; }
         const lastState = recordsHistoryStack.pop();
-        // حفظ الحالة الحالية كـ Redo قبل التراجع
         localStorage.setItem('hawaTechRedoState', JSON.stringify(records));
         
         records = JSON.parse(lastState);
@@ -692,7 +685,6 @@
         alert("تم إعادة تطبيق الإجراء للأمام بنجاح ↪️");
     }
 
-    // كود تشغيل الميزان الإلكتروني الحي عبر الـ Web Serial API دون المساس ببقية البنية
     async function connectToScale() {
         const statusText = document.getElementById('scaleStatusText');
         const grossInput = document.getElementById('grossInput');
@@ -896,6 +888,9 @@
         const worker = document.getElementById('workerName').value || "عام";
         const email = document.getElementById('emailOpt').value || "لا يوجد";
         
+        const freezeStart = document.getElementById('freezeStartOpt').value || "-";
+        const freezeEnd = document.getElementById('freezeEndOpt').value || "-";
+        
         const totalTare = (boxes * tarePerBox) + palletWeight;
         const net = gross - totalTare;
 
@@ -903,7 +898,7 @@
         if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً"); return; }
         if (gross === 0) { alert("يرجى إدخال الوزن الحالي لحفظ السجل"); return; }
 
-        saveStateForUndo(); // حفظ الحالة الحالية للتراجع
+        saveStateForUndo();
 
         if (palletConfig.isActive) {
             palletConfig.currentRemaining -= net;
@@ -926,7 +921,9 @@
             item: item,
             parentItem: parentItem, 
             net: net.toFixed(2),     
-            minW: "-", maxW: "-", freezeStart: "-", freezeEnd: "-",
+            minW: "-", maxW: "-", 
+            freezeStart: freezeStart, 
+            freezeEnd: freezeEnd,
             chickenCount: "-", orderNumber: "-", destination: "-", fridgeLocation: "-", temperature: "-",
             palletSource: palletConfig.isActive ? palletConfig.initialWeight.toFixed(2) : "-"
         };
@@ -960,7 +957,7 @@
             return;
         }
 
-        saveStateForUndo(); // حفظ الحالة الحالية للتراجع
+        saveStateForUndo();
 
         const manager = document.getElementById('managerName').value || "غير محدد";
         const chickenCount = document.getElementById('chickenCountOpt').value || "-";
@@ -1018,7 +1015,7 @@
 
     function deleteRecord(index) {
         if(confirm("هل أنت متأكد من حذف هذا السجل؟")) {
-            saveStateForUndo(); // حفظ الحالة الحالية للتراجع قبل الحذف الفعلي
+            saveStateForUndo();
             const target = records[index];
             if (target && target.recordType === "وزنة_فردية" && palletConfig.isActive) {
                 palletConfig.currentRemaining += parseFloat(target.net) || 0;
@@ -1045,6 +1042,8 @@
             <div class="modal-item"><span>الصنف الأساسي (الأصل):</span> <span>${r.parentItem || "غير محدد"}</span></div>
             <div class="modal-item"><span>الوزن الإجمالي (القائم):</span> <span>${r.gross} كغ</span></div>
             <div class="modal-item"><span>صافي الوزن:</span> <span>${r.net} كغ</span></div>
+            <div class="modal-item"><span>تاريخ التجميد:</span> <span>${r.freezeStart || "-"}</span></div>
+            <div class="modal-item"><span>نهاية الصلاحية:</span> <span>${r.freezeEnd || "-"}</span></div>
             <div class="modal-item"><span>رقم الطلبية:</span> <span>${r.orderNumber || "-"}</span></div>
             <div class="modal-item"><span>الجهة المستلمة:</span> <span>${r.destination || "-"}</span></div>
         `;
@@ -1206,6 +1205,7 @@
         runAIPrediction();
     }
 
+    // هنا تعديل التصدير المطلوب دون لمس أي حسابات أو أكواد أخرى
     function exportStaffExcel() {
         const filtered = records.filter(r => r.recordType === "وزنة_فردية" || r.recordType === "وزنة_مؤرشفة");
         if(filtered.length === 0) { alert("لا توجد بيانات وزنات عمال لتصديرها"); return; }
@@ -1215,9 +1215,17 @@
             sumNet += parseFloat(r.net);
             return {
                 "حالة الوزنة": r.recordType === "وزنة_فردية" ? "بالصالة" : "مرحلة للبراد",
-                "اسم المسؤول": r.manager, "اسم العامل": r.worker, "الصنف المختار": r.item,
-                "الصنف الأساسي (الأصل)": r.parentItem || "غير محدد", "عدد الصناديق": r.boxes,
-                "الوزن القائم (كغ)": parseFloat(r.gross), "صافي الوزن (كغ)": parseFloat(r.net), "الوقت": r.time, "التاريخ": r.date
+                "اسم المسؤول": r.manager, 
+                "اسم العامل": r.worker, 
+                "الصنف المختار": r.item,
+                "الصنف الأساسي (الأصل)": r.parentItem || "غير مححدد", 
+                "عدد الصناديق": r.boxes,
+                "الوزن القائم (كغ)": parseFloat(r.gross), 
+                "صافي الوزن (كغ)": parseFloat(r.net), 
+                "تاريخ التجميد": r.freezeStart || "-",
+                "تاريخ نهاية الصلاحية": r.freezeEnd || "-",
+                "الوقت": r.time, 
+                "التاريخ": r.date
             };
         });
         staffData.push({ "حالة الوزنة": "الإجمالي العام", "صافي الوزن (كغ)": sumNet });
@@ -1230,7 +1238,7 @@
 
     function exportOrdersExcel() {
         const filtered = records.filter(r => r.recordType === "ترحيل_براد");
-        if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
+        if(filtered.length === 0) { alert("لا توجد طلبيات حركة للبراد حالياً لتصديرها!"); return; }
         
         const ordersData = filtered.map(r => {
             return {
@@ -1238,6 +1246,8 @@
                 "الصنف الفرعي": r.item,
                 "الصنف الأساسي (الأصل)": r.parentItem || "غير محدد",
                 "صافي الكمية المستخرجة (كغ)": parseFloat(r.net),
+                "تاريخ التجميد": r.freezeStart || "-",
+                "تاريخ نهاية الصلاحية": r.freezeEnd || "-",
                 "المكان المرسل إليه": r.destination,
                 "موقع البراد الداخلي": r.fridgeLocation,
                 "درجة الحرارة (C°)": r.temperature,
@@ -1252,7 +1262,7 @@
     }
 
     function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
+        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
             localStorage.clear();
             records = [];
