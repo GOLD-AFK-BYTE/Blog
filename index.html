@@ -608,14 +608,12 @@
     const tarePerBox = 1.40;
     let lastUsedParentMap = JSON.parse(localStorage.getItem('hawaTechLastUsedParentMap')) || {};
 
-    // حفظ قيمة المخزون المسحوب في الذاكرة المستمرة فور الكتابة لمنع مسحها بالـ Refresh
     function saveStockToCache() {
         const val = document.getElementById('fridgeStockInput').value;
         localStorage.setItem('hawaTechCachedStock', val);
         calculateLiveCountdown();
     }
 
-    // تفعيل وإلغاء القفل مع الحفظ المستمر للحالة في الذاكرة
     function toggleStockLock() {
         const input = document.getElementById('fridgeStockInput');
         const btn = document.getElementById('lockBtn');
@@ -634,7 +632,6 @@
         }
     }
 
-    // استعادة حالة القفل والقيمة المخزنة بعد الـ Refresh تلقائياً
     function restoreStockCacheOnLoad() {
         const cachedVal = localStorage.getItem('hawaTechCachedStock');
         const input = document.getElementById('fridgeStockInput');
@@ -655,7 +652,6 @@
         }
     }
 
-    // حساب العداد التناقصي لايف بالاعتماد على قاعدة البيانات والذاكرة
     function calculateLiveCountdown() {
         const originalStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
         const parentInputVal = document.getElementById('parentItemInput').value.trim();
@@ -711,7 +707,6 @@
         });
     }
 
-    // تعديل ذكي: عند اختيار صنف فرعي ليس له ربط محفوظ، لا نقوم بمسح الأصل يدويّاً لكي يستمر العداد بالتناقص
     function autoFillParentOnSelect() {
         const selectedItem = document.getElementById('itemSelect').value;
         const parentInput = document.getElementById('parentItemInput');
@@ -834,8 +829,8 @@
         document.getElementById('boxCount').value = "";
         document.getElementById('palletWeightOpt').value = "";
         document.getElementById('grossInput').value = "";
-        document.getElementById('weightDisplayBox').innerText = "0.00";
         
+        // تعديل مهم: نحدث الواجهة أولاً قبل أي تصفير للشاشة
         updateUI();
         alert(`تم حفظ وزنة (${item}) التابع للأصل (${parentItem}) بنجاح ✅`);
     }
@@ -916,7 +911,6 @@
         document.getElementById('maxWeightOpt').value = "";
         document.getElementById('freezeStartOpt').value = "";
         document.getElementById('freezeEndOpt').value = "";
-        document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
         alert(`تم ترحيل طلبيّة صنف (${item}) بنجاح وإغلاق الدورة المستندية لها 📦.`);
@@ -951,176 +945,3 @@
         `;
         document.getElementById('detailsModal').style.display = "flex";
     }
-
-    function closeModal() { document.getElementById('detailsModal').style.display = "none"; }
-
-    function addItem() {
-        const name = document.getElementById('newItemInput').value.trim();
-        if(name && !customItemsList.includes(name)) {
-            customItemsList.push(name);
-            localStorage.setItem('hawaTechItemsList', JSON.stringify(customItemsList));
-            populateItemsSelect();
-            document.getElementById('itemSelect').value = name;
-            autoFillParentOnSelect();
-        }
-        document.getElementById('newItemInput').value = "";
-    }
-
-    function deleteItem() {
-        const val = document.getElementById('itemSelect').value;
-        if(val) {
-            customItemsList = customItemsList.filter(i => i !== val);
-            localStorage.setItem('hawaTechItemsList', JSON.stringify(customItemsList));
-            populateItemsSelect();
-            document.getElementById('parentItemInput').value = "";
-            updateUI();
-        }
-    }
-
-    function updateUI() {
-        const tbody = document.getElementById('tableBody');
-        const tfoot = document.getElementById('tableFoot');
-        tbody.innerHTML = ""; tfoot.innerHTML = "";
-        
-        const parentInputVal = document.getElementById('parentItemInput').value.trim();
-        let displayNetForSelected = 0;
-        let chartDataNet = {};
-        const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
-
-        if (parentInputVal) displayNetForSelected = getCurrentPeriodNetTotal(parentInputVal);
-        document.getElementById('totalNetDisplay').innerText = displayNetForSelected.toFixed(2);
-
-        records.forEach((r, index) => {
-            const allObjectValuesStr = Object.values(r).join(" ").toLowerCase();
-            if (searchQuery !== "" && !allObjectValuesStr.includes(searchQuery)) return;
-
-            const currentRecordParent = r.parentItem || "غير محدد";
-            let lastTransferIndexForThisItem = -1;
-            for (let i = index - 1; i >= 0; i--) {
-                if (records[i].recordType === "ترحيل_براد" && (records[i].parentItem || "غير محدد").trim().toLowerCase() === currentRecordParent.trim().toLowerCase()) {
-                    lastTransferIndexForThisItem = i;
-                    break;
-                }
-            }
-
-            if (r.recordType === "وزنة_فردية" && index > lastTransferIndexForThisItem) {
-                chartDataNet[currentRecordParent] = (chartDataNet[currentRecordParent] || 0) + (parseFloat(r.net) || 0);
-            }
-
-            const isTransfer = r.recordType === "ترحيل_براد";
-            const rowHtml = `<tr class="${isTransfer ? 'row-order-transfer' : 'row-weight-only'}">
-                <td>${r.time}</td>
-                <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${isTransfer ? '📦 ترحيل ساعة' : '⚖️ وزنة خط'}</td>
-                <td>${r.item} <span style="font-size:11px; color:#8e44ad; font-weight:bold;">← (${currentRecordParent})</span></td>
-                <td class="highlight-weight">${(r.gross && r.gross !== "-") ? r.gross + ' كغ' : '-'}</td>
-                <td class="net-weight" style="color: ${isTransfer ? '#e65100' : '#1f6feb'}">${isTransfer ? 'صافي الطلب: ' + r.net : r.net} كغ</td>
-                <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">عرض التفاصيل 👁️</button></td>
-                <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
-            </tr>`;
-            tbody.innerHTML += rowHtml;
-        });
-
-        if(parentInputVal && displayNetForSelected > 0) {
-            const currentGrossForSelected = getCurrentPeriodGrossTotal(parentInputVal);
-            tfoot.innerHTML = `<tr class="row-virtual-footer">
-                <td>لايف</td><td>📊 تجميع الأصول والفرعيات</td><td>الأصل: ${parentInputVal}</td>
-                <td>${currentGrossForSelected.toFixed(2)} كغ</td><td>${displayNetForSelected.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#4a148c;">(تجميع شامل لكافة الوزنات المرتبطة بهذا الأصل)</td>
-            </tr>`;
-        }
-
-        const computedStyle = getComputedStyle(document.body);
-        const ctx = document.getElementById('miniChart').getContext('2d');
-        if(myChart) myChart.destroy();
-        
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(chartDataNet).length > 0 ? Object.keys(chartDataNet) : ["لا يوجد أوزان حالياً"],
-                datasets: [{
-                    label: 'صافي الإنتاج الحالي للأصول المكتوبة (كغ)',
-                    data: Object.values(chartDataNet).length > 0 ? Object.values(chartDataNet) : [0],
-                    backgroundColor: computedStyle.getPropertyValue('--chart-bar').trim(),
-                    borderRadius: 6
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-
-        calculateLiveCountdown();
-        runAIPrediction();
-    }
-
-    function exportStaffExcel() {
-        const filtered = records.filter(r => r.recordType === "وزنة_فردية");
-        if(filtered.length === 0) { alert("لا توجد بيانات وزنات عمال لتصديرها"); return; }
-        
-        let sumNet = 0;
-        const staffData = filtered.map(r => {
-            sumNet += parseFloat(r.net);
-            return {
-                "اسم المسؤول": r.manager, "اسم العامل": r.worker, "الصنف المختار": r.item,
-                "الصنف الأساسي (الأصل اليدوي)": r.parentItem || "غير محدد", "عدد الصناديق": r.boxes,
-                "الوزن القائم (كغ)": parseFloat(r.gross), "صافي الوزنة النظيف (كغ)": parseFloat(r.net), "الوقت": r.time, "التاريخ": r.date
-            };
-        });
-        staffData.push({ "اسم المسؤول": "الإجمالي النظيف الفعلي الشامل", "صافي الوزنة النظيف (كغ)": sumNet });
-
-        const ws = XLSX.utils.json_to_sheet(staffData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "كشف العمال");
-        XLSX.writeFile(wb, `HawaTech_Staff_Weights_Report.xlsx`);
-    }
-
-    function exportOrdersExcel() {
-        const filtered = records.filter(r => r.recordType === "ترحيل_براد");
-        if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
-        
-        const ordersData = filtered.map(r => {
-            const stockLoaded = parseFloat(r.originalStockLoaded) || 0;
-            const extractedNet = parseFloat(r.net) || 0;
-            const remainingInPallet = stockLoaded - extractedNet;
-
-            return {
-                "رقم الطلبية المرحّلة": r.orderNumber,
-                "الصنف الأساسي (الأصل)": r.parentItem || "غير محدد",
-                "1. الوزن المسحوب الأصلي من البراد (كغ)": stockLoaded,
-                "2. إجمالي الصافي المستخرج للإنتاج (كغ)": extractedNet,
-                "3. الوزن المرتجع الفعلي الفائض للثلاجة (كغ)": remainingInPallet,
-                "المكان المرسل إليه": r.destination,
-                "موقع البراد الداخلي": r.fridgeLocation,
-                "درجة الحرارة (C°)": r.temperature,
-                "وقت وتاريخ الترحيل": `${r.date} | ${r.time}`
-            };
-        });
-
-        const ws = XLSX.utils.json_to_sheet(ordersData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "تقارير حركة البراد المحسنة");
-        XLSX.writeFile(wb, `HawaTech_Fridge_Perfect_Report.xlsx`);
-    }
-
-    function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
-        if (pw === '1957') {
-            localStorage.clear();
-            records = [];
-            lastUsedParentMap = {};
-            document.getElementById('fridgeStockInput').value = "";
-            isStockLocked = false;
-            updateUI();
-            alert("تم تصفير المنظومة والذاكرة التناقصية بنجاح");
-        } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
-    }
-
-    window.onload = function() { 
-        applySavedTheme();
-        populateItemsSelect();
-        restoreStockCacheOnLoad();
-        updateDateTime(); 
-        updateUI(); 
-    };
-</script>
-
-</body>
-</html>
