@@ -270,6 +270,30 @@
         .btn-delete { background-color: #da3637; }
         .btn-add { background-color: #238636; }
         
+        /* تصميم منطقة أزرار التراجع والسهمين فوق خانة البحث */
+        .undo-redo-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 8px;
+        }
+        .btn-history-arrow {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-size: 18px;
+            font-weight: bold;
+            padding: 8px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .btn-history-arrow:hover {
+            background-color: var(--header-color);
+            color: white;
+        }
+
         .search-box-container {
             margin-bottom: 10px;
         }
@@ -371,14 +395,16 @@
             cursor: pointer;
             margin-bottom: 15px;
         }
-        .scale-link {
+        
+        /* تعديل تصميم منطقة الميزان ليتناسب مع زر التفعيل الجديد التلقائي */
+        .scale-link-container {
             text-align: center;
-            font-size: 11px;
+            font-size: 12px;
             color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 8px;
-            border-radius: 6px;
-            background-color: var(--input-bg);
+            border: 2px dashed #238636;
+            padding: 12px;
+            border-radius: 10px;
+            background-color: rgba(35,134,54,0.03);
         }
         
         .ai-panel {
@@ -559,6 +585,11 @@
         <canvas id="miniChart" style="max-height: 220px;"></canvas>
     </div>
 
+    <div class="undo-redo-container">
+        <button class="btn-history-arrow" onclick="undoLastAction()" title="تراجع عن آخر إجراء (سهم للخلف)">↩️ تراجع</button>
+        <button class="btn-history-arrow" onclick="redoLastAction()" title="إعادة تقديم الإجراء (سهم للأمام)">↪️ إعادة</button>
+    </div>
+
     <div class="search-box-container">
         <input type="text" id="tableSearchInput" class="search-input" placeholder="🔍 ابحث هنا عن أي شيء..." oninput="updateUI()">
     </div>
@@ -590,7 +621,10 @@
 
     <button class="btn-reset" onclick="resetDataWithPassword()">❌ تصفير العداد الكامل والبيانات</button>
 
-    <div class="scale-link">📍 ربط الميزان الإلكتروني</div>
+    <div class="scale-link-container">
+        <button id="connectScaleBtn" class="btn-action btn-add" style="width: 100%; margin-bottom: 6px; font-size: 14px;" onclick="connectToScale()">📍 بدء الاتصال الحي بالميزان الإلكتروني</button>
+        <div id="scaleStatusText" style="font-weight: bold; color: #555;">الحالة: الميزان غير متصل حالياً</div>
+    </div>
 </div>
 
 <div class="modal-overlay" id="detailsModal">
@@ -605,6 +639,9 @@
 <script>
     // مصفوفة واحدة مستقرة تحتوي على كل الحالات دون حذف أي سطر
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
+    
+    // مصفوفة ذاكرة التراجع والإعادة لحماية البيانات من الحذف الخطأ
+    let recordsHistoryStack = [];
     
     let palletConfig = JSON.parse(localStorage.getItem('hawaTechPalletConfig')) || {
         initialWeight: 0,
@@ -624,6 +661,85 @@
     let myChart = null;
     const tarePerBox = 1.40;
     let lastUsedParentMap = JSON.parse(localStorage.getItem('hawaTechLastUsedParentMap')) || {};
+
+    // دالة حفظ الحالة لحماية التراجع والإعادة قبل أي تعديل
+    function saveStateForUndo() {
+        if (recordsHistoryStack.length > 20) recordsHistoryStack.shift(); // حد أقصى 20 خطوة تراجع
+        recordsHistoryStack.push(JSON.stringify(records));
+    }
+
+    function undoLastAction() {
+        if (recordsHistoryStack.length === 0) { alert("لا توجد عمليات سابقة للتراجع عنها!"); return; }
+        const lastState = recordsHistoryStack.pop();
+        // حفظ الحالة الحالية كـ Redo قبل التراجع
+        localStorage.setItem('hawaTechRedoState', JSON.stringify(records));
+        
+        records = JSON.parse(lastState);
+        localStorage.setItem('hawaTechAppData', JSON.stringify(records));
+        updateUI();
+        alert("تم التراجع خطوة للخلف بنجاح ↩️");
+    }
+
+    function redoLastAction() {
+        const redoState = localStorage.getItem('hawaTechRedoState');
+        if (!redoState) { alert("لا يوجد إجراء لإعادتة للأمام!"); return; }
+        
+        recordsHistoryStack.push(JSON.stringify(records));
+        records = JSON.parse(redoState);
+        localStorage.setItem('hawaTechAppData', JSON.stringify(records));
+        localStorage.removeItem('hawaTechRedoState');
+        updateUI();
+        alert("تم إعادة تطبيق الإجراء للأمام بنجاح ↪️");
+    }
+
+    // كود تشغيل الميزان الإلكتروني الحي عبر الـ Web Serial API دون المساس ببقية البنية
+    async function connectToScale() {
+        const statusText = document.getElementById('scaleStatusText');
+        const grossInput = document.getElementById('grossInput');
+
+        if (!('serial' in navigator)) {
+            alert("عذراً، هذا المتصفح لا يدعم الاتصال المباشر بالموازين. يرجى استخدام Google Chrome أو Microsoft Edge.");
+            return;
+        }
+
+        try {
+            statusText.innerText = "جاري فتح منفذ الاتصال... ⏱️";
+            const port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 9600 });
+            
+            statusText.innerText = "🟢 متصل بالميزان لايف ويقرأ الأوزان حالياً!";
+            statusText.style.color = "#238636";
+
+            const decoder = new TextDecoderStream();
+            const inputDone = port.readable.pipeTo(decoder.writable);
+            const reader = decoder.readable.getReader();
+
+            let buffer = "";
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) { reader.releaseLock(); break; }
+                if (value) {
+                    buffer += value;
+                    if (buffer.includes('\n')) {
+                        let lines = buffer.split('\n');
+                        let lastLine = lines[lines.length - 2].trim();
+                        let cleanWeight = lastLine.replace(/[^0-9.]/g, "");
+                        let parsedWeight = parseFloat(cleanWeight);
+
+                        if (!isNaN(parsedWeight) && parsedWeight > 0) {
+                            grossInput.value = parsedWeight.toFixed(2);
+                            updateLiveWeight();
+                        }
+                        buffer = lines[lines.length - 1];
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            statusText.innerText = "❌ فشل الاتصال. تأكد من الكابل وإعدادات الميزان.";
+            statusText.style.color = "#da3637";
+        }
+    }
 
     function toggleStockLock() {
         const input = document.getElementById('fridgeStockInput');
@@ -736,7 +852,6 @@
         displayBox.innerText = gross > 0 ? (net > 0 ? net.toFixed(2) : "0.00") : "0.00";
     }
 
-    // حساب صافي الإنتاج الحالي في الصالة لصنف فرعي معين وأصل معين
     function getSpecificSubItemNetTotal(subItem, parentItem) {
         let total = 0;
         records.forEach(r => {
@@ -788,6 +903,8 @@
         if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً"); return; }
         if (gross === 0) { alert("يرجى إدخال الوزن الحالي لحفظ السجل"); return; }
 
+        saveStateForUndo(); // حفظ الحالة الحالية للتراجع
+
         if (palletConfig.isActive) {
             palletConfig.currentRemaining -= net;
             localStorage.setItem('hawaTechPalletConfig', JSON.stringify(palletConfig));
@@ -826,7 +943,6 @@
         alert(`تم حفظ وزنة (${item}) التابع للأصل (${parentItem}) بنجاح ✅`);
     }
 
-    // الإصلاح الحاسم للترحيل: ترحيل الصنف الفرعي الحالي المحدد فقط، دون لمس أو مسح بقية الأصناف
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
         const parentItem = document.getElementById('parentItemInput').value.trim();
@@ -836,7 +952,6 @@
         if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
 
-        // حساب الكميات لهذا الصنف الفرعي المحدد فقط وليس كل الأصل
         let totalNetCalculated = getSpecificSubItemNetTotal(item, parentItem);
         let totalGrossCalculated = getSpecificSubItemGrossTotal(item, parentItem);
 
@@ -844,6 +959,8 @@
             alert(`⚠️ عذراً! لا توجد وزنات نشطة حالياً في الصالة للصنف الفرعي (${item}) تحت الأصل (${parentItem}).`);
             return;
         }
+
+        saveStateForUndo(); // حفظ الحالة الحالية للتراجع
 
         const manager = document.getElementById('managerName').value || "غير محدد";
         const chickenCount = document.getElementById('chickenCountOpt').value || "-";
@@ -880,8 +997,6 @@
             originalStockLoaded: palletConfig.isActive ? palletConfig.initialWeight.toFixed(2) : "0.00"
         };
 
-        // بدلاً من مسح الأسطر، نقوم بتغيير حالة الأوزان المُرَحَّلة لهذا الصنف الفرعي فقط إلى "وزنة_مؤرشفة"
-        // هكذا تبقى مسجلة بالجدول وتظهر بالرسم البياني وتتحول للون الهادئ، ولا تضيع أي وزنة بعدها نهائياً!
         records.forEach(r => {
             if (r.recordType === "وزنة_فردية" && r.item === item && r.parentItem === parentItem) {
                 r.recordType = "وزنة_مؤرشفة";
@@ -903,6 +1018,7 @@
 
     function deleteRecord(index) {
         if(confirm("هل أنت متأكد من حذف هذا السجل؟")) {
+            saveStateForUndo(); // حفظ الحالة الحالية للتراجع قبل الحذف الفعلي
             const target = records[index];
             if (target && target.recordType === "وزنة_فردية" && palletConfig.isActive) {
                 palletConfig.currentRemaining += parseFloat(target.net) || 0;
@@ -971,7 +1087,6 @@
         let displayNetForSelected = 0;
         let displayGrossForSelected = 0;
         
-        // هيكل بيانات الرسم البياني (يحسب المنظومة بالكامل لصالح الأصناف الحقيقية الظاهرة بالجدول)
         let chartLabelsMap = {}; 
 
         if (currentSubItem && parentInputVal) {
@@ -990,7 +1105,6 @@
             const parentName = r.parentItem || "غير محدد";
             const uniqueChartKey = `${subItemName} (${parentName})`;
 
-            // تجميع البيانات للرسم البياني بناءً على كل شيء بالجدول (نشط ومؤرشف) لعدم فقدان البيانات بصرياً
             if (!chartLabelsMap[uniqueChartKey]) {
                 chartLabelsMap[uniqueChartKey] = { activeInHall: 0, transferredToFridge: 0 };
             }
@@ -1027,7 +1141,6 @@
             tbody.innerHTML += rowHtml;
         });
 
-        // تذييل الجدول المباشر للصنف الحالي النشط
         if(currentSubItem && parentInputVal && displayNetForSelected > 0) {
             tfoot.innerHTML = `<tr class="row-virtual-footer">
                 <td>لايف</td><td>📊 إجمالي الصنف الحالي</td><td>${currentSubItem} ← (${parentInputVal})</td>
@@ -1036,7 +1149,6 @@
             </tr>`;
         }
 
-        // تحديث وإصلاح الرسم البياني تماماً ليعرض ما في الجدول بالملي
         const computedStyle = getComputedStyle(document.body);
         const ctx = document.getElementById('miniChart').getContext('2d');
         if(myChart) myChart.destroy();
@@ -1084,7 +1196,6 @@
                         const activeW = myChart.data.datasets[0].data[index];
                         const archW = myChart.data.datasets[1].data[index];
                         
-                        // هنا تلبية طلبك المباشر ليعطيك الصنف الفرعي ومجموع كل منهما بالملي وبأعلى دقة
                         alert(`📊 كشف حركة الصنف المكتوب بالجدول:\n----------------------------------------\nالصنف المستهدف: ${itemLabel}\n\n⚖️ الصافي المتبقي بالصالة: ${activeW.toFixed(2)} كغ\n📦 الصافي المُرَحَّل للبراد: ${archW.toFixed(2)} كغ\n📈 إجمالي الوزن الكلي له: ${(activeW + archW).toFixed(2)} كغ`);
                     }
                 }
@@ -1141,7 +1252,7 @@
     }
 
     function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد:");
+        const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
             localStorage.clear();
             records = [];
