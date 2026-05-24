@@ -530,7 +530,7 @@
         <div class="section-subtitle" style="color: #e65100;">📦 ترحيل بيانات نهاية الساعة (إلى البراد دون تكرار الحساب):</div>
         <div class="inputs-grid-three" style="margin-bottom: 8px;">
             <input type="number" id="chickenCountOpt" placeholder="عدد الفروج">
-            <input type="text" id="orderNumberOpt" placeholder="رقم الطلبية">
+            <input type="text" id="orderNumberOpt" placeholder="رقم الطلية">
             <input type="text" id="destinationOpt" placeholder="المرسل إليه">
         </div>
         <div class="inputs-grid" style="margin-bottom: 10px;">
@@ -608,12 +608,14 @@
     const tarePerBox = 1.40;
     let lastUsedParentMap = JSON.parse(localStorage.getItem('hawaTechLastUsedParentMap')) || {};
 
+    // حفظ قيمة المخزون المسحوب في الذاكرة المستمرة فور الكتابة لمنع مسحها بالـ Refresh
     function saveStockToCache() {
         const val = document.getElementById('fridgeStockInput').value;
         localStorage.setItem('hawaTechCachedStock', val);
         calculateLiveCountdown();
     }
 
+    // تفعيل وإلغاء القفل مع الحفظ المستمر للحالة في الذاكرة
     function toggleStockLock() {
         const input = document.getElementById('fridgeStockInput');
         const btn = document.getElementById('lockBtn');
@@ -632,6 +634,7 @@
         }
     }
 
+    // استعادة حالة القفل والقيمة المخزنة بعد الـ Refresh تلقائياً
     function restoreStockCacheOnLoad() {
         const cachedVal = localStorage.getItem('hawaTechCachedStock');
         const input = document.getElementById('fridgeStockInput');
@@ -652,6 +655,7 @@
         }
     }
 
+    // حساب العداد التناقصي لايف بالاعتماد على قاعدة البيانات والذاكرة
     function calculateLiveCountdown() {
         const originalStock = parseFloat(document.getElementById('fridgeStockInput').value) || 0;
         const parentInputVal = document.getElementById('parentItemInput').value.trim();
@@ -707,7 +711,7 @@
         });
     }
 
-    // 🔥 تعديل الحماية هنا: لو الصنف الفرعي الجديد ليس له أصل، يترك الأصل الحالي دون حذفه أو تصفيره
+    // تعديل ذكي: عند اختيار صنف فرعي ليس له ربط محفوظ، لا نقوم بمسح الأصل يدويّاً لكي يستمر العداد بالتناقص
     function autoFillParentOnSelect() {
         const selectedItem = document.getElementById('itemSelect').value;
         const parentInput = document.getElementById('parentItemInput');
@@ -802,7 +806,7 @@
 
         if (!item) { alert("يرجى اختيار اسم الصنف الحالي أولاً"); return; }
         if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً"); return; }
-        if (gross === 0) { alert("يرجى إدخال الوزن الحالي لحفظ السجل"); return; }
+        if (gross === 0) { alert("يرجى إدخل الوزن الحالي لحفظ السجل"); return; }
 
         lastUsedParentMap[item] = parentItem;
         localStorage.setItem('hawaTechLastUsedParentMap', JSON.stringify(lastUsedParentMap));
@@ -1070,7 +1074,7 @@
 
     function exportOrdersExcel() {
         const filtered = records.filter(r => r.recordType === "ترحيل_براد");
-        if(filtered.length === 0) { alert("لا توجد طلبيات حركة للبراد حالياً لتصديرها!"); return; }
+        if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
         
         const ordersData = filtered.map(r => {
             const stockLoaded = parseFloat(r.originalStockLoaded) || 0;
