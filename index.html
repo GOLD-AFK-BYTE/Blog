@@ -635,7 +635,7 @@
             palletConfig.currentRemaining = val;
             palletConfig.isActive = true;
         } else {
-            if(confirm("هل تريد إلغاء تشغيل الطبلية الحالية وتعديل الوزن?")) {
+            if(confirm("هل تريد إلغاء تشغيل الطبلية الحالية وتعديل الوزن؟")) {
                 palletConfig.isActive = false;
             } else { return; }
         }
@@ -734,6 +734,7 @@
         displayBox.innerText = gross > 0 ? (net > 0 ? net.toFixed(2) : "0.00") : "0.00";
     }
 
+    // هنا تعديل الجراحة الموضعية: عزل وحصر الحساب بالاسم المكتوب حالياً فقط لمنع تداخل الأصناف الأخرى
     function getCurrentPeriodNetTotal(targetParent) {
         if (!targetParent) return 0;
         const cleanParent = targetParent.trim().toLowerCase();
@@ -847,7 +848,6 @@
         alert(`تم حفظ وزنة (${item}) التابع للأصل (${parentItem}) بنجاح ✅`);
     }
 
-    // هنا تعديل الجراحة الموضعية: عزل ترحيل الصنف الحالي فقط دون سحب باقي الأصناف
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
         const parentItem = document.getElementById('parentItemInput').value.trim();
@@ -857,7 +857,6 @@
         if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
 
-        // تعديل ذكي: حساب مجموع الصافي المخصص فقط ومحصور بهذا الـ parentItem المكتوب حالياً
         let totalNetCalculated = getCurrentPeriodNetTotal(parentItem);
         let totalGrossCalculated = getCurrentPeriodGrossTotal(parentItem);
 
@@ -1046,7 +1045,6 @@
         const ctx = document.getElementById('miniChart').getContext('2d');
         if(myChart) myChart.destroy();
         
-        // تعديل الرسم البياني: تفعيل الأرقام المباشرة فوق الأعمدة تلقائياً لمنع التداخل والخلط
         myChart = new Chart(ctx, {
             type: 'bar',
             data: {
