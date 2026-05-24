@@ -629,7 +629,7 @@
         
         if (!palletConfig.isActive) {
             const val = parseFloat(input.value) || 0;
-            if (val <= 0) { alert("الرجاء إدخال وزن صحيح للطبلية المسحوبة أولاً!"); return; }
+            if (val <= 0) { alert("الرجاء إدخل وزن صحيح للطبلية المسحوبة أولاً!"); return; }
             
             palletConfig.initialWeight = val;
             palletConfig.currentRemaining = val;
@@ -734,23 +734,15 @@
         displayBox.innerText = gross > 0 ? (net > 0 ? net.toFixed(2) : "0.00") : "0.00";
     }
 
-    // هنا تعديل الجراحة الموضعية: عزل وحصر الحساب بالاسم المكتوب حالياً فقط لمنع تداخل الأصناف الأخرى
+    // تعديل موضعي دقيق: تجميع الأوزان غير المرحّلة الخاصة بهذا الصنف المكتوب فقط
     function getCurrentPeriodNetTotal(targetParent) {
         if (!targetParent) return 0;
         const cleanParent = targetParent.trim().toLowerCase();
         
-        let lastTransferIndex = -1;
-        for (let i = records.length - 1; i >= 0; i--) {
-            const rParent = (records[i].parentItem || "").trim().toLowerCase();
-            if (records[i].recordType === "ترحيل_براد" && rParent === cleanParent) {
-                lastTransferIndex = i;
-                break;
-            }
-        }
         let total = 0;
-        records.forEach((r, index) => {
+        records.forEach((r) => {
             const rParent = (r.parentItem || "").trim().toLowerCase();
-            if (r.recordType === "وزنة_فردية" && rParent === cleanParent && index > lastTransferIndex) {
+            if (r.recordType === "وزنة_فردية" && rParent === cleanParent) {
                 total += parseFloat(r.net) || 0;
             }
         });
@@ -761,18 +753,10 @@
         if (!targetParent) return 0;
         const cleanParent = targetParent.trim().toLowerCase();
 
-        let lastTransferIndex = -1;
-        for (let i = records.length - 1; i >= 0; i--) {
-            const rParent = (records[i].parentItem || "").trim().toLowerCase();
-            if (records[i].recordType === "ترحيل_براد" && rParent === cleanParent) {
-                lastTransferIndex = i;
-                break;
-            }
-        }
         let total = 0;
-        records.forEach((r, index) => {
+        records.forEach((r) => {
             const rParent = (r.parentItem || "").trim().toLowerCase();
-            if (r.recordType === "وزنة_فردية" && rParent === cleanParent && index > lastTransferIndex) {
+            if (r.recordType === "وزنة_فردية" && rParent === cleanParent) {
                 total += parseFloat(r.gross) || 0;
             }
         });
@@ -848,6 +832,7 @@
         alert(`تم حفظ وزنة (${item}) التابع للأصل (${parentItem}) بنجاح ✅`);
     }
 
+    // إصلاح الخلل الجذري: ترحيل الصنف المحدد فقط وتغيير حالته في المصفوفة لمنع خلطه مع باقي الأصناف
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
         const parentItem = document.getElementById('parentItemInput').value.trim();
@@ -857,6 +842,7 @@
         if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
 
+        const cleanParent = parentItem.trim().toLowerCase();
         let totalNetCalculated = getCurrentPeriodNetTotal(parentItem);
         let totalGrossCalculated = getCurrentPeriodGrossTotal(parentItem);
 
@@ -908,6 +894,13 @@
             originalStockLoaded: palletConfig.isActive ? palletConfig.initialWeight.toFixed(2) : "0.00"
         };
 
+        // تحويل نوع الوزنات المُرَحَّلة لهذا الصنف المحدد فقط لمنع حسابها مرة أخرى أو خلطها
+        records.forEach(r => {
+            if (r.recordType === "وزنة_فردية" && (r.parentItem || "").trim().toLowerCase() === cleanParent) {
+                r.recordType = "وزنة_مرحلة_سابقا";
+            }
+        });
+
         records.push(orderRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
 
@@ -926,7 +919,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل طلبيّة صنف (${item}) التابع للأصل (${parentItem}) بنجاح وبشكل منفصل 📦.`);
+        alert(`تم ترحيل طلبيّة صنف (${item}) التابع للأصل (${parentItem}) بنجاح وبشكل معزول تماماً عن باقي الأصناف 📦.`);
     }
 
     function deleteRecord(index) {
@@ -946,7 +939,7 @@
         const r = records[index];
         const modalBody = document.getElementById('modalBody');
         
-        let weightHTML = r.recordType === "وزنة_فردية" ? `
+        let weightHTML = (r.recordType === "وزنة_فردية" || r.recordType === "وزنة_مرحلة_سابقا") ? `
             <div class="modal-item"><span>الوزن القائم (الإجمالي):</span> <span>${r.gross} كغ</span></div>
             <div class="modal-item"><span>صافي الوزن الفعلي:</span> <span>${r.net} كغ</span></div>
         ` : `
@@ -1007,22 +1000,20 @@
             if (searchQuery !== "" && !allObjectValuesStr.includes(searchQuery)) return;
 
             const currentRecordParent = r.parentItem || "غير محدد";
-            let lastTransferIndexForThisItem = -1;
-            for (let i = index - 1; i >= 0; i--) {
-                if (records[i].recordType === "ترحيل_براد" && (records[i].parentItem || "غير محدد").trim().toLowerCase() === currentRecordParent.trim().toLowerCase()) {
-                    lastTransferIndexForThisItem = i;
-                    break;
-                }
-            }
 
-            if (r.recordType === "وزنة_فردية" && index > lastTransferIndexForThisItem) {
+            // إضافة الحساب لايف للرسم البياني للوزنات الفردية المتبقية بالصالة فقط
+            if (r.recordType === "وزنة_فردية") {
                 chartDataNet[currentRecordParent] = (chartDataNet[currentRecordParent] || 0) + (parseFloat(r.net) || 0);
             }
 
             const isTransfer = r.recordType === "ترحيل_براد";
-            const rowHtml = `<tr class="${isTransfer ? 'row-order-transfer' : 'row-weight-only'}">
+            const isPrevWeight = r.recordType === "وزنة_مرحلة_سابقا";
+            
+            const rowHtml = `<tr class="${isTransfer ? 'row-order-transfer' : 'row-weight-only'}" style="${isPrevWeight ? 'opacity: 0.6; background-color: #f9f9f9;' : ''}">
                 <td>${r.time}</td>
-                <td style="font-weight:bold; color: ${isTransfer ? '#e65100':'#1f6feb'}">${isTransfer ? '📦 ترحيل ساعة' : '⚖️ وزنة خط'}</td>
+                <td style="font-weight:bold; color: ${isTransfer ? '#e65100' : (isPrevWeight ? '#777' : '#1f6feb')}">
+                    ${isTransfer ? '📦 ترحيل ساعة' : (isPrevWeight ? '⚖️ خط (مرحل)' : '⚖️ وزنة خط')}
+                </td>
                 <td>${r.item} <span style="font-size:11px; color:#8e44ad; font-weight:bold;">← (${currentRecordParent})</span></td>
                 <td class="highlight-weight">${(r.gross && r.gross !== "-") ? r.gross + ' كغ' : '-'}</td>
                 <td class="net-weight" style="color: ${isTransfer ? '#e65100' : '#1f6feb'}">${isTransfer ? 'صافي الطلب: ' + r.net : r.net} كغ</td>
@@ -1035,9 +1026,9 @@
         if(parentInputVal && displayNetForSelected > 0) {
             const currentGrossForSelected = getCurrentPeriodGrossTotal(parentInputVal);
             tfoot.innerHTML = `<tr class="row-virtual-footer">
-                <td>لايف</td><td>📊 تجميع الأصول والفرعيات</td><td>الأصل: ${parentInputVal}</td>
+                <td>لايف</td><td>📊 تجمع الصنف الحالي</td><td>الأصل: ${parentInputVal}</td>
                 <td>${currentGrossForSelected.toFixed(2)} كغ</td><td>${displayNetForSelected.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#4a148c;">(تجميع شامل لكافة الوزنات المرتبطة بهذا الأصل)</td>
+                <td colspan="2" style="font-size:11px; color:#4a148c;">(صافي معزول بالكامل ومستعد للترحيل)</td>
             </tr>`;
         }
 
@@ -1064,13 +1055,12 @@
                         const index = elements[0].index;
                         const label = myChart.data.labels[index];
                         const value = myChart.data.datasets[0].data[index];
-                        alert(`📊 الصنف: ${label}\n⚖️ إجمالي المجموع الحالي: ${value.toFixed(2)} كغ`);
+                        // تلبية لطلبك: إظهار الأصناف ومجموع كل صنف بدقة فائقة عند الضغط
+                        alert(`📊 صنف الإنتاج الحالي بالصالة:\n-----------------------\nالصنف الأساسي: ${label}\nالمجموع الصافي المتراكم: ${value.toFixed(2)} كغ`);
                     }
                 },
                 plugins: {
-                    legend: {
-                        display: true
-                    },
+                    legend: { display: true },
                     tooltip: {
                         enabled: true,
                         callbacks: {
@@ -1078,8 +1068,7 @@
                                 let label = context.dataset.label || '';
                                 if (label) { label += ': '; }
                                 if (context.parsed.y !== null) { label += context.parsed.y.toFixed(2) + ' كغ'; }
-                                let baseWeight = palletConfig.isActive ? palletConfig.initialWeight.toFixed(2) : "0.00";
-                                return [label, `📦 الوزن الأساسي للطبلية الحالية: ${baseWeight} كغ`];
+                                return label;
                             }
                         }
                     }
@@ -1089,9 +1078,7 @@
                         beginAtZero: true,
                         grid: { color: computedStyle.getPropertyValue('--chart-grid').trim() }
                     },
-                    x: {
-                        grid: { display: false }
-                    }
+                    x: { grid: { display: false } }
                 }
             }
         });
@@ -1101,7 +1088,7 @@
     }
 
     function exportStaffExcel() {
-        const filtered = records.filter(r => r.recordType === "وزنة_فردية");
+        const filtered = records.filter(r => r.recordType === "وزنة_فردية" || r.recordType === "وزنة_مرحلة_سابقا");
         if(filtered.length === 0) { alert("لا توجد بيانات وزنات عمال لتصديرها"); return; }
         
         let sumNet = 0;
@@ -1121,6 +1108,7 @@
         XLSX.writeFile(wb, `HawaTech_Staff_Weights_Report.xlsx`);
     }
 
+    // تعديل كشف الإكسل ليعكس بدقة حركة البراد المحدثة والمنفصلة لكل صنف
     function exportOrdersExcel() {
         const filtered = records.filter(r => r.recordType === "ترحيل_براد");
         if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
@@ -1128,14 +1116,11 @@
         const ordersData = filtered.map(r => {
             const stockLoaded = parseFloat(r.originalStockLoaded) || 0;
             const extractedNet = parseFloat(r.net) || 0;
-            const remainingInPallet = stockLoaded - extractedNet;
 
             return {
                 "رقم الطلبية المرحّلة": r.orderNumber,
                 "الصنف الأساسي (الأصل)": r.parentItem || "غير محدد",
-                "1. الوزن المسحوب الأصلي من البراد (كغ)": stockLoaded,
-                "2. إجمالي الصافي المستخرج للإنتاج (كغ)": extractedNet,
-                "3. الوزن المرتجع الفعلي الفائض للثلاجة (كغ)": remainingInPallet,
+                "إجمالي الصافي المستخرج المرحل (كغ)": extractedNet,
                 "المكان المرسل إليه": r.destination,
                 "موقع البراد الداخلي": r.fridgeLocation,
                 "درجة الحرارة (C°)": r.temperature,
