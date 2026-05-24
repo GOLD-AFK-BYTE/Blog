@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawa-Tech App Pro (Persistence & Fridge Fixed Edition)</title>
+    <title>Hawa-Tech App Pro (Ultimate Stable Edition)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -308,7 +308,8 @@
             color: var(--header-color);
         }
         .row-weight-only { background-color: transparent; }
-        .row-order-transfer { background-color: rgba(230,81,0,0.06); }
+        .row-order-transfer { background-color: rgba(230,81,0,0.08); }
+        .row-weight-archived { background-color: rgba(0, 0, 0, 0.02); opacity: 0.65; }
         
         .row-virtual-footer {
             background-color: rgba(31, 111, 235, 0.08) !important;
@@ -568,7 +569,7 @@
                 <tr>
                     <th>الوقت</th>
                     <th>نوع العملية</th>
-                    <th>الصنف (الأصل اليدوي)</th>
+                    <th>الصنف الفرعي ← (الأصل)</th>
                     <th>الوزنة كاملة</th>
                     <th>صافي الوزنة</th>
                     <th>التفاصيل الكاملة</th>
@@ -602,10 +603,8 @@
 </div>
 
 <script>
-    // الحاوية الأساسية للإنتاج النشط في الصالة حالياً
+    // مصفوفة واحدة مستقرة تحتوي على كل الحالات دون حذف أي سطر
     let records = JSON.parse(localStorage.getItem('hawaTechAppData')) || [];
-    // الحاوية الأرشيفية المعزولة تماماً للأصناف المُرَحَّلة للبراد لمنع أي تداخل
-    let archivedFridgeRecords = JSON.parse(localStorage.getItem('hawaTechArchivedFridge')) || [];
     
     let palletConfig = JSON.parse(localStorage.getItem('hawaTechPalletConfig')) || {
         initialWeight: 0,
@@ -737,27 +736,21 @@
         displayBox.innerText = gross > 0 ? (net > 0 ? net.toFixed(2) : "0.00") : "0.00";
     }
 
-    // منطق ذكي بديل: الحساب يعتمد حصرياً على الأوزان الموجودة حالياً بالمصفوفة النشطة للصنف المكتوب
-    function getCurrentPeriodNetTotal(targetParent) {
-        if (!targetParent) return 0;
-        const cleanParent = targetParent.trim().toLowerCase();
+    // حساب صافي الإنتاج الحالي في الصالة لصنف فرعي معين وأصل معين
+    function getSpecificSubItemNetTotal(subItem, parentItem) {
         let total = 0;
-        records.forEach((r) => {
-            const rParent = (r.parentItem || "").trim().toLowerCase();
-            if (rParent === cleanParent) {
+        records.forEach(r => {
+            if (r.recordType === "وزنة_فردية" && r.item === subItem && r.parentItem === parentItem) {
                 total += parseFloat(r.net) || 0;
             }
         });
         return total;
     }
 
-    function getCurrentPeriodGrossTotal(targetParent) {
-        if (!targetParent) return 0;
-        const cleanParent = targetParent.trim().toLowerCase();
+    function getSpecificSubItemGrossTotal(subItem, parentItem) {
         let total = 0;
-        records.forEach((r) => {
-            const rParent = (r.parentItem || "").trim().toLowerCase();
-            if (rParent === cleanParent) {
+        records.forEach(r => {
+            if (r.recordType === "وزنة_فردية" && r.item === subItem && r.parentItem === parentItem) {
                 total += parseFloat(r.gross) || 0;
             }
         });
@@ -793,7 +786,7 @@
 
         if (!item) { alert("يرجى اختيار اسم الصنف الحالي أولاً"); return; }
         if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً"); return; }
-        if (gross === 0) { alert("يرجى إدخل الوزن الحالي لحفظ السجل"); return; }
+        if (gross === 0) { alert("يرجى إدخال الوزن الحالي لحفظ السجل"); return; }
 
         if (palletConfig.isActive) {
             palletConfig.currentRemaining -= net;
@@ -833,22 +826,22 @@
         alert(`تم حفظ وزنة (${item}) التابع للأصل (${parentItem}) بنجاح ✅`);
     }
 
-    // المنطق الذكي البديل: سحب كمية الصنف المعين بالكامل وترحيلها وحذفها فورياً من الجدول النشط لمنع تداخل الحسابات نهائياً
+    // الإصلاح الحاسم للترحيل: ترحيل الصنف الفرعي الحالي المحدد فقط، دون لمس أو مسح بقية الأصناف
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
         const parentItem = document.getElementById('parentItemInput').value.trim();
         const orderNumber = document.getElementById('orderNumberOpt').value;
         
-        if (!item) { alert("يرجى اختيار الصنف للطلب أولاً"); return; }
+        if (!item) { alert("يرجى اختيار الصنف الفرعي المراد ترحيله من القائمة المنسدلة أولاً"); return; }
         if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
 
-        const cleanParent = parentItem.trim().toLowerCase();
-        let totalNetCalculated = getCurrentPeriodNetTotal(parentItem);
-        let totalGrossCalculated = getCurrentPeriodGrossTotal(parentItem);
+        // حساب الكميات لهذا الصنف الفرعي المحدد فقط وليس كل الأصل
+        let totalNetCalculated = getSpecificSubItemNetTotal(item, parentItem);
+        let totalGrossCalculated = getSpecificSubItemGrossTotal(item, parentItem);
 
         if (totalNetCalculated === 0) {
-            alert(`⚠️ عذراً! لا توجد أوزان حالية مسجلة تحت اسم الأصل اليدوي (${parentItem}) لترحيلها.`);
+            alert(`⚠️ عذراً! لا توجد وزنات نشطة حالياً في الصالة للصنف الفرعي (${item}) تحت الأصل (${parentItem}).`);
             return;
         }
 
@@ -887,36 +880,31 @@
             originalStockLoaded: palletConfig.isActive ? palletConfig.initialWeight.toFixed(2) : "0.00"
         };
 
-        // النقل الآمن: أرشفة الترحيل بعيداً عن جدول خط الإنتاج اليومي النشط
-        archivedFridgeRecords.push(orderRecord);
-        localStorage.setItem('hawaTechArchivedFridge', JSON.stringify(archivedFridgeRecords));
+        // بدلاً من مسح الأسطر، نقوم بتغيير حالة الأوزان المُرَحَّلة لهذا الصنف الفرعي فقط إلى "وزنة_مؤرشفة"
+        // هكذا تبقى مسجلة بالجدول وتظهر بالرسم البياني وتتحول للون الهادئ، ولا تضيع أي وزنة بعدها نهائياً!
+        records.forEach(r => {
+            if (r.recordType === "وزنة_فردية" && r.item === item && r.parentItem === parentItem) {
+                r.recordType = "وزنة_مؤرشفة";
+            }
+        });
 
-        // التفريغ الذكي: حذف وزنات هذا الصنف المرحل فقط من الجدول النشط لتصفير عداده تماماً ومنع خلطه
-        records = records.filter(r => (r.parentItem || "").trim().toLowerCase() !== cleanParent);
+        records.push(orderRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
 
-        document.getElementById('grossInput').value = "";
-        document.getElementById('boxCount').value = "";
-        document.getElementById('palletWeightOpt').value = "";
         document.getElementById('chickenCountOpt').value = "";
         document.getElementById('orderNumberOpt').value = "";
         document.getElementById('destinationOpt').value = "";
         document.getElementById('fridgeLocationOpt').value = "";
         document.getElementById('temperatureOpt').value = "";
-        document.getElementById('minWeightOpt').value = "";
-        document.getElementById('maxWeightOpt').value = "";
-        document.getElementById('freezeStartOpt').value = "";
-        document.getElementById('freezeEndOpt').value = "";
-        document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`🎯 تم ترحيل صنف (${parentItem}) بالكامل وتفريغ حاويته النشطة للبدء من جديد بنظافة تامة.`);
+        alert(`🎯 تم ترحيل صنف (${item}) بنجاح! تم قفل أوزانه الحالية وتحويلها إلى البراد مع الحفاظ على باقي الأوزان بالجدول.`);
     }
 
     function deleteRecord(index) {
-        if(confirm("هل أنت متأكد من حذف هذه الوزنة؟")) {
+        if(confirm("هل أنت متأكد من حذف هذا السجل؟")) {
             const target = records[index];
-            if (target && palletConfig.isActive) {
+            if (target && target.recordType === "وزنة_فردية" && palletConfig.isActive) {
                 palletConfig.currentRemaining += parseFloat(target.net) || 0;
                 localStorage.setItem('hawaTechPalletConfig', JSON.stringify(palletConfig));
             }
@@ -930,12 +918,19 @@
         const r = records[index];
         const modalBody = document.getElementById('modalBody');
         
+        let typeStr = "وزنة إنتاج نشطة بالصالة";
+        if(r.recordType === "وزنة_مؤرشفة") typeStr = "وزنة إنتاج (تم ترحيلها للبراد)";
+        if(r.recordType === "ترحيل_براد") typeStr = "📦 إيصال ترحيل ساعة إلى البراد";
+
         modalBody.innerHTML = `
-            <div class="modal-item"><span>نوع السجل:</span> <span>⚖️ وزنة خط إنتاج نشطة</span></div>
+            <div class="modal-item"><span>نوع السجل:</span> <span>${typeStr}</span></div>
             <div class="modal-item"><span>التاريخ والوقت:</span> <span>${r.date} | ${r.time}</span></div>
-            <div class="modal-item"><span>اسم الصنف الأساسي (الأصل):</span> <span>${r.parentItem || "غير محدد"}</span></div>
-            <div class="modal-item"><span>الوزن القائم (الإجمالي):</span> <span>${r.gross} كغ</span></div>
-            <div class="modal-item"><span>صافي الوزن الفعلي:</span> <span>${r.net} كغ</span></div>
+            <div class="modal-item"><span>الصنف الفرعي:</span> <span>${r.item}</span></div>
+            <div class="modal-item"><span>الصنف الأساسي (الأصل):</span> <span>${r.parentItem || "غير محدد"}</span></div>
+            <div class="modal-item"><span>الوزن الإجمالي (القائم):</span> <span>${r.gross} كغ</span></div>
+            <div class="modal-item"><span>صافي الوزن:</span> <span>${r.net} كغ</span></div>
+            <div class="modal-item"><span>رقم الطلبية:</span> <span>${r.orderNumber || "-"}</span></div>
+            <div class="modal-item"><span>الجهة المستلمة:</span> <span>${r.destination || "-"}</span></div>
         `;
         document.getElementById('detailsModal').style.display = "flex";
     }
@@ -970,96 +965,128 @@
         const tfoot = document.getElementById('tableFoot');
         tbody.innerHTML = ""; tfoot.innerHTML = "";
         
+        const currentSubItem = document.getElementById('itemSelect').value;
         const parentInputVal = document.getElementById('parentItemInput').value.trim();
+        
         let displayNetForSelected = 0;
-        let chartDataNet = {};
-        const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
+        let displayGrossForSelected = 0;
+        
+        // هيكل بيانات الرسم البياني (يحسب المنظومة بالكامل لصالح الأصناف الحقيقية الظاهرة بالجدول)
+        let chartLabelsMap = {}; 
 
-        if (parentInputVal) displayNetForSelected = getCurrentPeriodNetTotal(parentInputVal);
+        if (currentSubItem && parentInputVal) {
+            displayNetForSelected = getSpecificSubItemNetTotal(currentSubItem, parentInputVal);
+            displayGrossForSelected = getSpecificSubItemGrossTotal(currentSubItem, parentInputVal);
+        }
         document.getElementById('totalNetDisplay').innerText = displayNetForSelected.toFixed(2);
 
-        // بناء الحسابات الحالية النشطة فقط للرسم البياني والجدول
+        const searchQuery = document.getElementById('tableSearchInput').value.trim().toLowerCase();
+
         records.forEach((r, index) => {
             const allObjectValuesStr = Object.values(r).join(" ").toLowerCase();
             if (searchQuery !== "" && !allObjectValuesStr.includes(searchQuery)) return;
 
-            const currentRecordParent = r.parentItem || "غير محدد";
-            chartDataNet[currentRecordParent] = (chartDataNet[currentRecordParent] || 0) + (parseFloat(r.net) || 0);
+            const subItemName = r.item;
+            const parentName = r.parentItem || "غير محدد";
+            const uniqueChartKey = `${subItemName} (${parentName})`;
 
-            const rowHtml = `<tr class="row-weight-only">
+            // تجميع البيانات للرسم البياني بناءً على كل شيء بالجدول (نشط ومؤرشف) لعدم فقدان البيانات بصرياً
+            if (!chartLabelsMap[uniqueChartKey]) {
+                chartLabelsMap[uniqueChartKey] = { activeInHall: 0, transferredToFridge: 0 };
+            }
+
+            if (r.recordType === "وزنة_فردية") {
+                chartLabelsMap[uniqueChartKey].activeInHall += parseFloat(r.net) || 0;
+            } else if (r.recordType === "وزنة_مؤرشفة") {
+                chartLabelsMap[uniqueChartKey].transferredToFridge += parseFloat(r.net) || 0;
+            }
+
+            let rowClass = "row-weight-only";
+            let typeText = "⚖️ وزنة نشطة";
+            let typeColor = "#1f6feb";
+
+            if (r.recordType === "وزنة_مؤرشفة") {
+                rowClass = "row-weight-archived";
+                typeText = "🔒 خط (مُرحّل)";
+                typeColor = "#777";
+            } else if (r.recordType === "ترحيل_براد") {
+                rowClass = "row-order-transfer";
+                typeText = "📦 إيصال براد";
+                typeColor = "#e65100";
+            }
+
+            const rowHtml = `<tr class="${rowClass}">
                 <td>${r.time}</td>
-                <td style="font-weight:bold; color: #1f6feb">⚖️ وزنة خط نشط</td>
-                <td>${r.item} <span style="font-size:11px; color:#8e44ad; font-weight:bold;">← (${currentRecordParent})</span></td>
-                <td class="highlight-weight">${r.gross} كغ</td>
-                <td class="net-weight" style="color: #1f6feb">${r.net} كغ</td>
-                <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">عرض التفاصيل 👁️</button></td>
+                <td style="font-weight:bold; color: ${typeColor}">${typeText}</td>
+                <td><b style="color:#002244;">${subItemName}</b> <span style="font-size:11px; color:#8e44ad;">← (${parentName})</span></td>
+                <td class="highlight-weight">${r.gross !== "-" ? r.gross + " كغ" : "-"}</td>
+                <td class="net-weight" style="color: ${typeColor}">${r.net} كغ</td>
+                <td><button class="btn-details-view" onclick="showExpandedLiveView(${index})">عرض 👁️</button></td>
                 <td><button class="btn-row-delete" onclick="deleteRecord(${index})">❌</button></td>
             </tr>`;
             tbody.innerHTML += rowHtml;
         });
 
-        // عرض السجلات المُرَحَّلة للبراد داخل الجدول للعرض فقط للتأكيد البصري
-        archivedFridgeRecords.forEach((r) => {
-            const allObjectValuesStr = Object.values(r).join(" ").toLowerCase();
-            if (searchQuery !== "" && !allObjectValuesStr.includes(searchQuery)) return;
-
-            const rowHtml = `<tr class="row-order-transfer" style="opacity: 0.85;">
-                <td>${r.time}</td>
-                <td style="font-weight:bold; color: #e65100">📦 مرحل للبراد</td>
-                <td>${r.item} <span style="font-size:11px; color:#27ae60; font-weight:bold;">← (${r.parentItem})</span></td>
-                <td class="highlight-weight">-</td>
-                <td class="net-weight" style="color: #e65100">صافي مُرَحَّل: ${r.net} كغ</td>
-                <td colspan="2" style="color: #e65100; font-size: 11px;">رقم الطلب: ${r.orderNumber} (محفوظ بالثلاجة)</td>
-            </tr>`;
-            tbody.innerHTML += rowHtml;
-        });
-
-        if(parentInputVal && displayNetForSelected > 0) {
-            const currentGrossForSelected = getCurrentPeriodGrossTotal(parentInputVal);
+        // تذييل الجدول المباشر للصنف الحالي النشط
+        if(currentSubItem && parentInputVal && displayNetForSelected > 0) {
             tfoot.innerHTML = `<tr class="row-virtual-footer">
-                <td>لايف</td><td>📊 إجمالي الصنف الحالي</td><td>الأصل: ${parentInputVal}</td>
-                <td>${currentGrossForSelected.toFixed(2)} كغ</td><td>${displayNetForSelected.toFixed(2)} كغ</td>
-                <td colspan="2" style="font-size:11px; color:#4a148c;">(صافي الصالة الفعلي المستقل حالياً)</td>
+                <td>لايف</td><td>📊 إجمالي الصنف الحالي</td><td>${currentSubItem} ← (${parentInputVal})</td>
+                <td>${displayGrossForSelected.toFixed(2)} كغ</td><td>${displayNetForSelected.toFixed(2)} كغ</td>
+                <td colspan="2" style="font-size:11px; color:#2e7d32;">جاهز للترحيل المنفصل سراً دون خلط الأوزان</td>
             </tr>`;
         }
 
+        // تحديث وإصلاح الرسم البياني تماماً ليعرض ما في الجدول بالملي
         const computedStyle = getComputedStyle(document.body);
         const ctx = document.getElementById('miniChart').getContext('2d');
         if(myChart) myChart.destroy();
+
+        let labels = Object.keys(chartLabelsMap);
+        let activeData = labels.map(k => chartLabelsMap[k].activeInHall);
+        let archivedData = labels.map(k => chartLabelsMap[k].transferredToFridge);
+
+        if(labels.length === 0) {
+            labels = ["لا يوجد أصناف بالجدول"];
+            activeData = [0];
+            archivedData = [0];
+        }
         
         myChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: Object.keys(chartDataNet).length > 0 ? Object.keys(chartDataNet) : ["لا يوجد أوزان حالياً"],
-                datasets: [{
-                    label: 'صافي الإنتاج الحالي في الصالة (كغ)',
-                    data: Object.values(chartDataNet).length > 0 ? Object.values(chartDataNet) : [0],
-                    backgroundColor: computedStyle.getPropertyValue('--chart-bar').trim(),
-                    borderRadius: 6
-                }]
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'الصافي النشط بالصالة (كغ)',
+                        data: activeData,
+                        backgroundColor: '#1f6feb',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'الصافي المرحل للبراد (كغ)',
+                        data: archivedData,
+                        backgroundColor: '#e65100',
+                        borderRadius: 4
+                    }
+                ]
             },
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false,
+                scales: {
+                    y: { stacked: true, beginAtZero: true, grid: { color: computedStyle.getPropertyValue('--chart-grid').trim() } },
+                    x: { stacked: true, grid: { display: false } }
+                },
                 onClick: (e, elements) => {
                     if (elements.length > 0) {
                         const index = elements[0].index;
-                        const label = myChart.data.labels[index];
-                        const value = myChart.data.datasets[0].data[index];
-                        // تلبية لطلبك الدقيق: عند الضغط يظهر وزن الصنف الذي تعمل عليه (طاووق أو غيره) بشكل فوري ومنفصل
-                        alert(`📊 كشف أوزان الصالة الحالية:\n-------------------------\nالصنف المستهدف: ${label}\nإجمالي الوزن الصافي المتراكم حالياً: ${value.toFixed(2)} كغ`);
+                        const itemLabel = myChart.data.labels[index];
+                        const activeW = myChart.data.datasets[0].data[index];
+                        const archW = myChart.data.datasets[1].data[index];
+                        
+                        // هنا تلبية طلبك المباشر ليعطيك الصنف الفرعي ومجموع كل منهما بالملي وبأعلى دقة
+                        alert(`📊 كشف حركة الصنف المكتوب بالجدول:\n----------------------------------------\nالصنف المستهدف: ${itemLabel}\n\n⚖️ الصافي المتبقي بالصالة: ${activeW.toFixed(2)} كغ\n📦 الصافي المُرَحَّل للبراد: ${archW.toFixed(2)} كغ\n📈 إجمالي الوزن الكلي له: ${(activeW + archW).toFixed(2)} كغ`);
                     }
-                },
-                plugins: {
-                    legend: { display: true },
-                    tooltip: { enabled: true }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: computedStyle.getPropertyValue('--chart-grid').trim() }
-                    },
-                    x: { grid: { display: false } }
                 }
             }
         });
@@ -1069,17 +1096,20 @@
     }
 
     function exportStaffExcel() {
-        if(records.length === 0) { alert("لا توجد بيانات وزنات عمال نشطة لتصديرها"); return; }
+        const filtered = records.filter(r => r.recordType === "وزنة_فردية" || r.recordType === "وزنة_مؤرشفة");
+        if(filtered.length === 0) { alert("لا توجد بيانات وزنات عمال لتصديرها"); return; }
+        
         let sumNet = 0;
-        const staffData = records.map(r => {
+        const staffData = filtered.map(r => {
             sumNet += parseFloat(r.net);
             return {
+                "حالة الوزنة": r.recordType === "وزنة_فردية" ? "بالصالة" : "مرحلة للبراد",
                 "اسم المسؤول": r.manager, "اسم العامل": r.worker, "الصنف المختار": r.item,
-                "الصنف الأساسي (الأصل اليدوي)": r.parentItem || "غير محدد", "عدد الصناديق": r.boxes,
-                "الوزن القائم (كغ)": parseFloat(r.gross), "صافي الوزن النظيف (كغ)": parseFloat(r.net), "الوقت": r.time, "التاريخ": r.date
+                "الصنف الأساسي (الأصل)": r.parentItem || "غير محدد", "عدد الصناديق": r.boxes,
+                "الوزن القائم (كغ)": parseFloat(r.gross), "صافي الوزن (كغ)": parseFloat(r.net), "الوقت": r.time, "التاريخ": r.date
             };
         });
-        staffData.push({ "اسم المسؤول": "الإجمالي النظيف الفعلي النشط", "صافي الوزن النظيف (كغ)": sumNet });
+        staffData.push({ "حالة الوزنة": "الإجمالي العام", "صافي الوزن (كغ)": sumNet });
 
         const ws = XLSX.utils.json_to_sheet(staffData);
         const wb = XLSX.utils.book_new();
@@ -1088,12 +1118,15 @@
     }
 
     function exportOrdersExcel() {
-        if(archivedFridgeRecords.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
-        const ordersData = archivedFridgeRecords.map(r => {
+        const filtered = records.filter(r => r.recordType === "ترحيل_براد");
+        if(filtered.length === 0) { alert("لا توجد طلبيات مرحلة للبراد حالياً لتصديرها!"); return; }
+        
+        const ordersData = filtered.map(r => {
             return {
                 "رقم الطلبية المرحّلة": r.orderNumber,
+                "الصنف الفرعي": r.item,
                 "الصنف الأساسي (الأصل)": r.parentItem || "غير محدد",
-                "إجمالي الصافي المرحل للبراد (كغ)": parseFloat(r.net),
+                "صافي الكمية المستخرجة (كغ)": parseFloat(r.net),
                 "المكان المرسل إليه": r.destination,
                 "موقع البراد الداخلي": r.fridgeLocation,
                 "درجة الحرارة (C°)": r.temperature,
@@ -1108,16 +1141,15 @@
     }
 
     function resetDataWithPassword() {
-        const pw = prompt("الرجاء إدخل الرمز السري للتصفير الكامل للعداد:");
+        const pw = prompt("الرجاء إدخال الرمز السري للتصفير الكامل للعداد:");
         if (pw === '1957') {
             localStorage.clear();
             records = [];
-            archivedFridgeRecords = [];
             lastUsedParentMap = {};
             palletConfig = { initialWeight: 0, currentRemaining: 0, isActive: false };
             document.getElementById('fridgeStockInput').value = "";
             updateUI();
-            alert("تم تصفير المنظومة والذاكرة التناقصية والأرشيف بنجاح");
+            alert("تم تصفير المنظومة والذاكرة بالكامل بنجاح 🧼");
         } else if(pw !== null) { alert("الرمز السري خاطئ!"); }
     }
 
