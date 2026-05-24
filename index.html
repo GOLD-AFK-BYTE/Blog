@@ -472,6 +472,7 @@
         <div class="countdown-row">
             <input type="number" id="fridgeStockInput" step="0.01" placeholder="أدخل الوزن الإجمالي المسحوب من البراد">
             <button id="lockBtn" class="btn-lock" onclick="toggleStockLock()">🎯 بدء السحب</button>
+            <button id="finishPalletBtn" class="btn-lock" style="background-color: #484f58;" onclick="forceClosePallet()">🏁 إغلاق الطبلية</button>
         </div>
         <div class="countdown-live-text" id="countdownResultText">
             المنظومة بانتظار إدخال وزن الطبلية وبدء التشغيل الفعلي...
@@ -644,6 +645,17 @@
         
         localStorage.setItem('hawaTechPalletConfig', JSON.stringify(palletConfig));
         updateUI();
+    }
+
+    // دالة لإنهاء وإغلاق الطبلية يدوياً وبشكل مستقل تماماً عند رغبة العميل
+    function forceClosePallet() {
+        if(confirm("هل أنت متأكد من إغلاق دورة الطبلية الحالية بالكامل وتصفير العداد للبدء بطبلية جديدة؟")) {
+            palletConfig = { initialWeight: 0, currentRemaining: 0, isActive: false };
+            localStorage.setItem('hawaTechPalletConfig', JSON.stringify(palletConfig));
+            document.getElementById('fridgeStockInput').value = "";
+            updateUI();
+            alert("تم إغلاق الطبلية بنجاح وجاهز للطبلية القادمة 🏁");
+        }
     }
 
     // حساب العداد لايف بناء على الحالة المستقلة لمنع التصفير العشوائي
@@ -841,6 +853,7 @@
         alert(`تم حفظ وزنة (${item}) التابع للأصل (${parentItem}) بنجاح ✅`);
     }
 
+    // ترحيل كذا صنف مخصص ومحدد دون لمس أو تصفير الدورة التناقصية للطبلية
     function transferOrderToFridge() {
         const item = document.getElementById('itemSelect').value;
         const parentItem = document.getElementById('parentItemInput').value.trim();
@@ -850,19 +863,21 @@
         if (!parentItem) { alert("يرجى كتابة اسم الصنف الأساسي (الأصل) يدوياً"); return; }
         if (!orderNumber) { alert("يرجى كتابة رقم الطلبية لتوثيق الترحيل"); return; }
 
-        // حساب إجمالي الإنتاج الصافي المستخرج من هذه الدورة الحالية
-        let totalNetCalculated = 0;
-        if (palletConfig.isActive) {
-            totalNetCalculated = palletConfig.initialWeight - palletConfig.currentRemaining;
-        } else {
-            totalNetCalculated = getCurrentPeriodNetTotal(parentItem);
-        }
-        
-        let totalGrossCalculated = getCurrentPeriodGrossTotal(parentItem) || totalNetCalculated;
+        // جلب مجموع الصافي الحالي المخصص فقط للصنف المكتوب في هذه الساعة دون تدمير العداد الكلي
+        let totalNetCalculated = getCurrentPeriodNetTotal(parentItem);
+        let totalGrossCalculated = getCurrentPeriodGrossTotal(parentItem);
 
         if (totalNetCalculated === 0) {
-            alert(`⚠️ عذراً! لا توجد كميات مستخرجة من الطبلية الحالية للترحيل.`);
-            return;
+            const liveGross = parseFloat(document.getElementById('grossInput').value) || 0;
+            const liveNet = parseFloat(document.getElementById('weightDisplayBox').innerText) || 0;
+            
+            if (liveGross > 0 && liveNet > 0) {
+                totalGrossCalculated = liveGross;
+                totalNetCalculated = liveNet;
+            } else {
+                alert(`⚠️ عذراً! لا توجد وزنات تراكمية مسجلة تحت اسم الأصل اليدوي (${parentItem}) لترحيلها حالياً.`);
+                return;
+            }
         }
 
         const manager = document.getElementById('managerName').value || "غير محدد";
@@ -903,11 +918,8 @@
         records.push(orderRecord);
         localStorage.setItem('hawaTechAppData', JSON.stringify(records));
 
-        // عند الترحيل النهائي، يُغلق ويصفر عداد الطبلية المباشر تمهيداً للجديدة
-        palletConfig = { initialWeight: 0, currentRemaining: 0, isActive: false };
-        localStorage.setItem('hawaTechPalletConfig', JSON.stringify(palletConfig));
+        // تمت إزالة تصفير وتدمير الـ palletConfig من هنا لكي تستمر الطبلية بسحب كذا صنف بأمان تام
 
-        document.getElementById('fridgeStockInput').value = "";
         document.getElementById('grossInput').value = "";
         document.getElementById('boxCount').value = "";
         document.getElementById('palletWeightOpt').value = "";
@@ -923,7 +935,7 @@
         document.getElementById('weightDisplayBox').innerText = "0.00";
         
         updateUI();
-        alert(`تم ترحيل طلبيّة صنف (${item}) بنجاح، توثيق المرتجع، وإغلاق دورة الطبلية 📦.`);
+        alert(`تم ترحيل طلبيّة صنف (${item}) بنجاح إلى البراد. العداد مستمر في تتبع باقي الطبلية 📦.`);
     }
 
     function deleteRecord(index) {
@@ -1043,6 +1055,7 @@
         const ctx = document.getElementById('miniChart').getContext('2d');
         if(myChart) myChart.destroy();
         
+        // تعديل الرسم البياني لعرض مجموع كل صنف مع الرقم الأساسي عند وضع الإصبع دون تعديل بنيته
         myChart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -1054,7 +1067,23 @@
                     borderRadius: 6
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) { label += context.parsed.y.toFixed(2) + ' كغ'; }
+                                let baseWeight = palletConfig.isActive ? palletConfig.initialWeight.toFixed(2) : "0.00";
+                                return [label, `📦 الوزن الأساسي للطبلية الحالية: ${baseWeight} كغ`];
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         calculateLiveCountdown();
